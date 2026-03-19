@@ -2,21 +2,29 @@ import { Elysia } from "elysia";
 import { fail, ok } from "../../common/http/response";
 import { securityPlugin } from "../../plugins/security";
 import {
-  AuthFailResponseSchema,
-  GetInfoAuthResponseSchema,
-  LoginAuthResponseSchema,
-  LoginAuthSchema,
-  LogoutAuthResponseSchema,
+    AuthFailResponseSchema,
+    GetInfoAuthResponseSchema,
+    LoginAuthResponseSchema,
+    LoginAuthSchema,
+    LogoutAuthResponseSchema,
 } from "./model";
 import { authService } from "./service";
+import { loginLogService } from "../monitor/login-log/service";
+import { onlineService } from "../monitor/online/service";
 
 export const authRoutes = new Elysia({ prefix: "/api/auth", name: "auth.routes" })
     .use(securityPlugin)
     .post(
         "/login",
-        async ({ body, jwt, set }) => {
+        async ({ body, jwt, request, set }) => {
             const authUser = authService.login(body);
             if (!authUser) {
+                loginLogService.record({
+                    username: body.username,
+                    ip: request.headers.get("x-forwarded-for") ?? "127.0.0.1",
+                    status: "1",
+                    msg: "用户名或密码错误",
+                });
                 set.status = 401;
                 return fail(401, "用户名或密码错误");
             }
@@ -26,6 +34,19 @@ export const authRoutes = new Elysia({ prefix: "/api/auth", name: "auth.routes" 
                 username: authUser.username,
                 roles: authUser.roles,
                 permissions: authUser.permissions,
+            });
+
+            onlineService.registerSession({
+                token,
+                userId: authUser.userId,
+                username: authUser.username,
+                ip: request.headers.get("x-forwarded-for") ?? "127.0.0.1",
+            });
+            loginLogService.record({
+                username: authUser.username,
+                ip: request.headers.get("x-forwarded-for") ?? "127.0.0.1",
+                status: "0",
+                msg: "登录成功",
             });
 
             return ok({ token }, "登录成功");
@@ -44,12 +65,15 @@ export const authRoutes = new Elysia({ prefix: "/api/auth", name: "auth.routes" 
     )
     .post(
         "/logout",
-        ({ currentUser, set }) => {
+        ({ bearer, currentUser, set }) => {
             if (!currentUser) {
                 set.status = 401;
                 return fail(401, "未登录或登录已失效");
             }
 
+            if (bearer) {
+                onlineService.removeSession(bearer);
+            }
             return ok(true, "退出成功");
         },
         {
