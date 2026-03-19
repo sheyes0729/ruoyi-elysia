@@ -46,6 +46,12 @@ export class LoginLogService {
       return true;
     });
   }
+
+  clear(): number {
+    const count = monitorStore.loginLogs.length;
+    monitorStore.loginLogs.splice(0, monitorStore.loginLogs.length);
+    return count;
+  }
 }
 
 export const loginLogService = new LoginLogService();

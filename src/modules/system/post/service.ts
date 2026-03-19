@@ -1,3 +1,4 @@
+import { removeBatchByNumericId } from "../../../common/data/array";
 import { accessDataStore } from "../access-data";
 import type { ListPostQuery, PostListItem } from "./model";
 
@@ -33,14 +34,7 @@ export class PostService {
   }
 
   removeBatch(ids: number[]): number {
-    const idSet = new Set(ids);
-    const before = accessDataStore.posts.length;
-    accessDataStore.posts.splice(
-      0,
-      accessDataStore.posts.length,
-      ...accessDataStore.posts.filter((item) => !idSet.has(item.postId))
-    );
-    return before - accessDataStore.posts.length;
+    return removeBatchByNumericId(accessDataStore.posts, ids, (item) => item.postId);
   }
 }
 

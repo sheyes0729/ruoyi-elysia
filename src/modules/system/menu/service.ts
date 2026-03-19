@@ -1,3 +1,4 @@
+import { removeBatchByNumericId } from "../../../common/data/array";
 import { accessDataStore } from "../access-data";
 import type { ListMenuQuery, MenuListItem } from "./model";
 
@@ -31,6 +32,10 @@ export class MenuService {
 
             return true;
         });
+    }
+
+    removeBatch(ids: number[]): number {
+        return removeBatchByNumericId(accessDataStore.menus, ids, (item) => item.menuId);
     }
 }
 

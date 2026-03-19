@@ -7,6 +7,10 @@ export const ListDeptSchema = t.Object({
 
 export type ListDeptQuery = typeof ListDeptSchema.static;
 
+export const RemoveBatchDeptSchema = t.Object({
+  ids: t.Array(t.Numeric({ minimum: 1 }), { minItems: 1 }),
+});
+
 export type DeptTreeItem = {
   deptId: number;
   parentId: number;
@@ -29,6 +33,14 @@ export const ListDeptResponseSchema = t.Object({
   code: t.Number(),
   msg: t.String(),
   data: t.Array(DeptTreeItemSchema),
+});
+
+export const RemoveBatchDeptResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    count: t.Number(),
+  }),
 });
 
 export const DeptFailResponseSchema = t.Object({

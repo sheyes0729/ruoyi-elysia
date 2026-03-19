@@ -50,6 +50,12 @@ export class OperLogService {
       return true;
     });
   }
+
+  clear(): number {
+    const count = monitorStore.operLogs.length;
+    monitorStore.operLogs.splice(0, monitorStore.operLogs.length);
+    return count;
+  }
 }
 
 export const operLogService = new OperLogService();

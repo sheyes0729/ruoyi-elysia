@@ -1,3 +1,4 @@
+import { removeBatchByNumericId } from "../../../common/data/array";
 import { accessDataStore } from "../access-data";
 import type { DictTypeListItem, ListDictTypeQuery } from "./model";
 
@@ -29,6 +30,10 @@ export class DictTypeService {
 
       return true;
     });
+  }
+
+  removeBatch(ids: number[]): number {
+    return removeBatchByNumericId(accessDataStore.dictTypes, ids, (item) => item.dictId);
   }
 }
 

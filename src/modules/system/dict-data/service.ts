@@ -1,3 +1,4 @@
+import { removeBatchByNumericId } from "../../../common/data/array";
 import { accessDataStore } from "../access-data";
 import type { DictDataListItem, ListDictDataQuery } from "./model";
 
@@ -34,14 +35,7 @@ export class DictDataService {
   }
 
   removeBatch(ids: number[]): number {
-    const idSet = new Set(ids);
-    const before = accessDataStore.dictData.length;
-    accessDataStore.dictData.splice(
-      0,
-      accessDataStore.dictData.length,
-      ...accessDataStore.dictData.filter((item) => !idSet.has(item.dictCode))
-    );
-    return before - accessDataStore.dictData.length;
+    return removeBatchByNumericId(accessDataStore.dictData, ids, (item) => item.dictCode);
   }
 }
 

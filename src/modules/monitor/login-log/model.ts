@@ -11,6 +11,14 @@ export const ListLoginLogSchema = t.Object({
 
 export type ListLoginLogQuery = typeof ListLoginLogSchema.static;
 
+export const CleanLoginLogResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    count: t.Number(),
+  }),
+});
+
 export const LoginLogItemSchema = t.Object({
   infoId: t.Number(),
   username: t.String(),

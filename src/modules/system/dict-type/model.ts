@@ -10,6 +10,10 @@ export const ListDictTypeSchema = t.Object({
 
 export type ListDictTypeQuery = typeof ListDictTypeSchema.static;
 
+export const RemoveBatchDictTypeSchema = t.Object({
+  ids: t.Array(t.Numeric({ minimum: 1 }), { minItems: 1 }),
+});
+
 export type DictTypeListItem = {
   dictId: number;
   dictName: string;
@@ -32,6 +36,14 @@ export const ListDictTypeResponseSchema = t.Object({
     total: t.Number(),
     pageNum: t.Number(),
     pageSize: t.Number(),
+  }),
+});
+
+export const RemoveBatchDictTypeResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    count: t.Number(),
   }),
 });
 

@@ -9,6 +9,10 @@ export const ListMenuSchema = t.Object({
 
 export type ListMenuQuery = typeof ListMenuSchema.static;
 
+export const RemoveBatchMenuSchema = t.Object({
+    ids: t.Array(t.Numeric({ minimum: 1 }), { minItems: 1 }),
+});
+
 export type MenuListItem = {
     menuId: number;
     menuName: string;
@@ -43,6 +47,14 @@ export const ListMenuResponseSchema = t.Object({
         total: t.Number(),
         pageNum: t.Number(),
         pageSize: t.Number(),
+    }),
+});
+
+export const RemoveBatchMenuResponseSchema = t.Object({
+    code: t.Number(),
+    msg: t.String(),
+    data: t.Object({
+        count: t.Number(),
     }),
 });
 

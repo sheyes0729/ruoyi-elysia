@@ -1,3 +1,4 @@
+import { removeBatchByNumericId } from "../../../common/data/array";
 import { accessDataStore } from "../access-data";
 import type { ListNoticeQuery, NoticeListItem } from "./model";
 
@@ -30,6 +31,10 @@ export class NoticeService {
 
       return true;
     });
+  }
+
+  removeBatch(ids: number[]): number {
+    return removeBatchByNumericId(accessDataStore.notices, ids, (item) => item.noticeId);
   }
 }
 

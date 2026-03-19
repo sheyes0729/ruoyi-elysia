@@ -1,3 +1,4 @@
+import { removeBatchByNumericId } from "../../../common/data/array";
 import { accessDataStore } from "../access-data";
 import type { ConfigListItem, ListConfigQuery } from "./model";
 
@@ -30,6 +31,10 @@ export class ConfigService {
 
       return true;
     });
+  }
+
+  removeBatch(ids: number[]): number {
+    return removeBatchByNumericId(accessDataStore.configs, ids, (item) => item.configId);
   }
 }
 

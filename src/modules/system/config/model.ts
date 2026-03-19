@@ -10,6 +10,10 @@ export const ListConfigSchema = t.Object({
 
 export type ListConfigQuery = typeof ListConfigSchema.static;
 
+export const RemoveBatchConfigSchema = t.Object({
+  ids: t.Array(t.Numeric({ minimum: 1 }), { minItems: 1 }),
+});
+
 export type ConfigListItem = {
   configId: number;
   configName: string;
@@ -34,6 +38,14 @@ export const ListConfigResponseSchema = t.Object({
     total: t.Number(),
     pageNum: t.Number(),
     pageSize: t.Number(),
+  }),
+});
+
+export const RemoveBatchConfigResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    count: t.Number(),
   }),
 });
 

@@ -10,6 +10,10 @@ export const ListNoticeSchema = t.Object({
 
 export type ListNoticeQuery = typeof ListNoticeSchema.static;
 
+export const RemoveBatchNoticeSchema = t.Object({
+  ids: t.Array(t.Numeric({ minimum: 1 }), { minItems: 1 }),
+});
+
 export type NoticeListItem = {
   noticeId: number;
   noticeTitle: string;
@@ -34,6 +38,14 @@ export const ListNoticeResponseSchema = t.Object({
     total: t.Number(),
     pageNum: t.Number(),
     pageSize: t.Number(),
+  }),
+});
+
+export const RemoveBatchNoticeResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    count: t.Number(),
   }),
 });
 

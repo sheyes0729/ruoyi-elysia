@@ -11,6 +11,14 @@ export const ListOperLogSchema = t.Object({
 
 export type ListOperLogQuery = typeof ListOperLogSchema.static;
 
+export const CleanOperLogResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    count: t.Number(),
+  }),
+});
+
 export const OperLogItemSchema = t.Object({
   operId: t.Number(),
   title: t.String(),
