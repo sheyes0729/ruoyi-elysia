@@ -1,4 +1,5 @@
 import { monitorStore } from "../store";
+import type { ListOnlineQuery } from "./model";
 
 type RegisterOnlineSessionInput = {
   token: string;
@@ -43,8 +44,13 @@ export class OnlineService {
     return true;
   }
 
-  listSessions(): typeof monitorStore.onlineSessions {
-    return [...monitorStore.onlineSessions];
+  listSessions(query?: ListOnlineQuery): typeof monitorStore.onlineSessions {
+    const source = [...monitorStore.onlineSessions];
+    if (!query?.username) {
+      return source;
+    }
+
+    return source.filter((item) => item.username.includes(query.username ?? ""));
   }
 }
 

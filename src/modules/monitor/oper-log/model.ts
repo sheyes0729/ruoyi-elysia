@@ -1,37 +1,39 @@
 import { t } from "elysia";
 
-export const ListLoginLogSchema = t.Object({
+export const ListOperLogSchema = t.Object({
   pageNum: t.Optional(t.Numeric({ minimum: 1 })),
   pageSize: t.Optional(t.Numeric({ minimum: 1, maximum: 200 })),
-  username: t.Optional(t.String()),
+  operName: t.Optional(t.String()),
   status: t.Optional(t.Union([t.Literal("0"), t.Literal("1")])),
   beginTime: t.Optional(t.String()),
   endTime: t.Optional(t.String()),
 });
 
-export type ListLoginLogQuery = typeof ListLoginLogSchema.static;
+export type ListOperLogQuery = typeof ListOperLogSchema.static;
 
-export const LoginLogItemSchema = t.Object({
-  infoId: t.Number(),
-  username: t.String(),
-  ip: t.String(),
+export const OperLogItemSchema = t.Object({
+  operId: t.Number(),
+  title: t.String(),
+  operName: t.String(),
+  method: t.String(),
+  requestMethod: t.String(),
+  operUrl: t.String(),
   status: t.Union([t.Literal("0"), t.Literal("1")]),
-  msg: t.String(),
-  loginTime: t.String(),
+  operTime: t.String(),
 });
 
-export const ListLoginLogResponseSchema = t.Object({
+export const ListOperLogResponseSchema = t.Object({
   code: t.Number(),
   msg: t.String(),
   data: t.Object({
-    rows: t.Array(LoginLogItemSchema),
+    rows: t.Array(OperLogItemSchema),
     total: t.Number(),
     pageNum: t.Number(),
     pageSize: t.Number(),
   }),
 });
 
-export const LoginLogFailResponseSchema = t.Object({
+export const OperLogFailResponseSchema = t.Object({
   code: t.Number(),
   msg: t.String(),
   data: t.Null(),

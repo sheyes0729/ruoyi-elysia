@@ -28,7 +28,13 @@ const roles: SystemRole[] = [
     roleKey: "common",
     roleName: "普通用户",
     status: "0",
-    permissions: ["system:user:list", "system:role:list"],
+    permissions: [
+      "system:user:list",
+      "system:role:list",
+      "monitor:online:list",
+      "monitor:logininfor:list",
+      "monitor:operlog:list",
+    ],
   },
 ];
 

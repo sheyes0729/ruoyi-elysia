@@ -19,7 +19,12 @@ export const UserListItemSchema = t.Object({
 export const ListUserResponseSchema = t.Object({
   code: t.Number(),
   msg: t.String(),
-  data: t.Array(UserListItemSchema),
+  data: t.Object({
+    rows: t.Array(UserListItemSchema),
+    total: t.Number(),
+    pageNum: t.Number(),
+    pageSize: t.Number(),
+  }),
 });
 
 export const UserFailResponseSchema = t.Object({

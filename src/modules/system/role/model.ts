@@ -17,7 +17,12 @@ export const RoleListItemSchema = t.Object({
 export const ListRoleResponseSchema = t.Object({
     code: t.Number(),
     msg: t.String(),
-    data: t.Array(RoleListItemSchema),
+    data: t.Object({
+        rows: t.Array(RoleListItemSchema),
+        total: t.Number(),
+        pageNum: t.Number(),
+        pageSize: t.Number(),
+    }),
 });
 
 export const RoleFailResponseSchema = t.Object({

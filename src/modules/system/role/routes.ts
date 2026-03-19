@@ -1,5 +1,6 @@
 import { Elysia } from "elysia";
 import { hasPermission } from "../../../common/auth/permission";
+import { paginateData, QueryPageSchema } from "../../../common/http/page";
 import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
 import { ListRoleResponseSchema, RoleFailResponseSchema } from "./model";
@@ -12,7 +13,7 @@ export const roleRoutes = new Elysia({
   .use(securityPlugin)
   .get(
     "/list",
-    ({ currentUser, set }) => {
+    ({ currentUser, query, set }) => {
       if (!currentUser) {
         set.status = 401;
         return fail(401, "未登录或登录已失效");
@@ -23,9 +24,10 @@ export const roleRoutes = new Elysia({
         return fail(403, "无权限访问角色列表");
       }
 
-      return ok(roleService.list());
+      return ok(paginateData(roleService.list(), query));
     },
     {
+      query: QueryPageSchema,
       response: {
         200: ListRoleResponseSchema,
         401: RoleFailResponseSchema,

@@ -1,4 +1,5 @@
 import { monitorStore } from "../store";
+import type { ListLoginLogQuery } from "./model";
 
 type RecordLoginLogInput = {
   username: string;
@@ -19,8 +20,31 @@ export class LoginLogService {
     });
   }
 
-  list(): typeof monitorStore.loginLogs {
-    return [...monitorStore.loginLogs];
+  list(query?: ListLoginLogQuery): typeof monitorStore.loginLogs {
+    const source = [...monitorStore.loginLogs];
+    if (!query) {
+      return source;
+    }
+
+    return source.filter((item) => {
+      if (query.username && !item.username.includes(query.username)) {
+        return false;
+      }
+
+      if (query.status && item.status !== query.status) {
+        return false;
+      }
+
+      if (query.beginTime && item.loginTime < query.beginTime) {
+        return false;
+      }
+
+      if (query.endTime && item.loginTime > query.endTime) {
+        return false;
+      }
+
+      return true;
+    });
   }
 }
 
