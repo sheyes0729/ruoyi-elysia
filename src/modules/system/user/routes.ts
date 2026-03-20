@@ -5,10 +5,16 @@ import { paginateData } from "../../../common/http/page";
 import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
 import {
+  CreateUserResponseSchema,
+  CreateUserSchema,
   ListUserResponseSchema,
   ListUserSchema,
+  ResetPasswordResponseSchema,
+  ResetPasswordSchema,
   RemoveBatchUserResponseSchema,
   RemoveBatchUserSchema,
+  UpdateUserResponseSchema,
+  UpdateUserSchema,
   UserFailResponseSchema,
 } from "./model";
 import { userService } from "./service";
@@ -106,6 +112,123 @@ export const userRoutes = new Elysia({
       detail: {
         tags: ["系统管理-用户"],
         summary: "批量删除用户",
+      },
+    }
+  )
+  .post(
+    "/add",
+    ({ body, currentUser, set }) => {
+      if (!currentUser) {
+        set.status = 401;
+        return fail(401, "未登录或登录已失效");
+      }
+
+      if (!hasPermission(currentUser, "system:user:add")) {
+        set.status = 403;
+        return fail(403, "无权限新增用户");
+      }
+
+      const result = userService.create(body);
+      if (!result.success) {
+        if (result.reason === "username_exists") {
+          set.status = 409;
+          return fail(409, "用户名已存在");
+        }
+
+        set.status = 400;
+        return fail(400, "角色不存在");
+      }
+
+      return ok({ userId: result.userId }, "新增成功");
+    },
+    {
+      body: CreateUserSchema,
+      response: {
+        200: CreateUserResponseSchema,
+        400: UserFailResponseSchema,
+        401: UserFailResponseSchema,
+        403: UserFailResponseSchema,
+        409: UserFailResponseSchema,
+      },
+      detail: {
+        tags: ["系统管理-用户"],
+        summary: "新增用户",
+      },
+    }
+  )
+  .put(
+    "/edit",
+    ({ body, currentUser, set }) => {
+      if (!currentUser) {
+        set.status = 401;
+        return fail(401, "未登录或登录已失效");
+      }
+
+      if (!hasPermission(currentUser, "system:user:edit")) {
+        set.status = 403;
+        return fail(403, "无权限编辑用户");
+      }
+
+      const result = userService.update(body);
+      if (!result.success) {
+        if (result.reason === "user_not_found") {
+          set.status = 404;
+          return fail(404, "用户不存在");
+        }
+
+        set.status = 400;
+        return fail(400, "角色不存在");
+      }
+
+      return ok(true, "修改成功");
+    },
+    {
+      body: UpdateUserSchema,
+      response: {
+        200: UpdateUserResponseSchema,
+        400: UserFailResponseSchema,
+        401: UserFailResponseSchema,
+        403: UserFailResponseSchema,
+        404: UserFailResponseSchema,
+      },
+      detail: {
+        tags: ["系统管理-用户"],
+        summary: "编辑用户",
+      },
+    }
+  )
+  .put(
+    "/resetPwd",
+    ({ body, currentUser, set }) => {
+      if (!currentUser) {
+        set.status = 401;
+        return fail(401, "未登录或登录已失效");
+      }
+
+      if (!hasPermission(currentUser, "system:user:resetPwd")) {
+        set.status = 403;
+        return fail(403, "无权限重置密码");
+      }
+
+      const result = userService.resetPassword(body);
+      if (!result.success) {
+        set.status = 404;
+        return fail(404, "用户不存在");
+      }
+
+      return ok(true, "重置成功");
+    },
+    {
+      body: ResetPasswordSchema,
+      response: {
+        200: ResetPasswordResponseSchema,
+        401: UserFailResponseSchema,
+        403: UserFailResponseSchema,
+        404: UserFailResponseSchema,
+      },
+      detail: {
+        tags: ["系统管理-用户"],
+        summary: "重置用户密码",
       },
     }
   );
