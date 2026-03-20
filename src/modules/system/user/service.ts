@@ -1,5 +1,3 @@
-import { removeBatchByNumericId } from "../../../common/data/array";
-import { accessDataStore } from "../access-data";
 import type {
   CreateUserBody,
   ListUserQuery,
@@ -9,6 +7,7 @@ import type {
   UserListItem,
 } from "./model";
 import type { ImportResult } from "../../../common/http/csv";
+import { userRepository, roleRepository } from "../../../repository";
 
 type CreateUserResult =
   | { success: true; userId: number }
@@ -25,8 +24,10 @@ type ResetPasswordResult =
 type ImportUserResult = ImportResult<UserImportRow>;
 
 export class UserService {
-  list(query?: ListUserQuery): UserListItem[] {
-    const source = accessDataStore.users.map((item) => ({
+  async list(query?: ListUserQuery): Promise<UserListItem[]> {
+    const users = await userRepository.findAll();
+
+    const source = users.map((item) => ({
       userId: item.userId,
       username: item.username,
       nickName: item.nickName,
@@ -51,33 +52,25 @@ export class UserService {
     });
   }
 
-  removeBatch(ids: number[]): number {
-    return removeBatchByNumericId(accessDataStore.users, ids, (item) => item.userId);
+  async removeBatch(ids: number[]): Promise<number> {
+    return userRepository.deleteBatch(ids);
   }
 
-  create(payload: CreateUserBody): CreateUserResult {
-    const existed = accessDataStore.users.some(
-      (item) => item.username === payload.username
-    );
+  async create(payload: CreateUserBody): Promise<CreateUserResult> {
+    const existed = await userRepository.findByUsername(payload.username);
     if (existed) {
       return { success: false, reason: "username_exists" };
     }
 
+    const roles = await roleRepository.findAll();
     const roleIdsValid = payload.roleIds.every((roleId) =>
-      accessDataStore.roles.some((role) => role.roleId === roleId)
+      roles.some((role) => role.roleId === roleId),
     );
     if (!roleIdsValid) {
       return { success: false, reason: "role_not_found" };
     }
 
-    const nextId =
-      accessDataStore.users.reduce(
-        (maxUserId, item) => Math.max(maxUserId, item.userId),
-        0
-      ) + 1;
-
-    accessDataStore.users.push({
-      userId: nextId,
+    const userId = await userRepository.create({
       username: payload.username,
       nickName: payload.nickName,
       password: payload.password,
@@ -85,45 +78,59 @@ export class UserService {
       roleIds: payload.roleIds,
     });
 
-    return { success: true, userId: nextId };
+    return { success: true, userId };
   }
 
-  update(payload: UpdateUserBody): UpdateUserResult {
-    const target = accessDataStore.users.find((item) => item.userId === payload.userId);
+  async update(payload: UpdateUserBody): Promise<UpdateUserResult> {
+    const target = await userRepository.findById(payload.userId);
     if (!target) {
       return { success: false, reason: "user_not_found" };
     }
 
+    const roles = await roleRepository.findAll();
     const roleIdsValid = payload.roleIds.every((roleId) =>
-      accessDataStore.roles.some((role) => role.roleId === roleId)
+      roles.some((role) => role.roleId === roleId),
     );
     if (!roleIdsValid) {
       return { success: false, reason: "role_not_found" };
     }
 
-    target.nickName = payload.nickName;
-    target.status = payload.status;
-    target.roleIds = payload.roleIds;
+    await userRepository.update(payload.userId, {
+      nickName: payload.nickName,
+      status: payload.status,
+      roleIds: payload.roleIds,
+    });
 
     return { success: true };
   }
 
-  resetPassword(payload: ResetPasswordBody): ResetPasswordResult {
-    const target = accessDataStore.users.find((item) => item.userId === payload.userId);
+  async resetPassword(
+    payload: ResetPasswordBody,
+  ): Promise<ResetPasswordResult> {
+    const target = await userRepository.findById(payload.userId);
     if (!target) {
       return { success: false, reason: "user_not_found" };
     }
 
-    target.password = payload.password;
+    await userRepository.update(payload.userId, {
+      password: payload.password,
+    });
+
     return { success: true };
   }
 
-  importUsers(rows: Record<string, string>[]): ImportUserResult {
+  async importUsers(rows: Record<string, string>[]): Promise<ImportUserResult> {
     const success: UserImportRow[] = [];
-    const failures: { row: number; data: Record<string, string>; error: string }[] = [];
+    const failures: {
+      row: number;
+      data: Record<string, string>;
+      error: string;
+    }[] = [];
 
-    rows.forEach((row, index) => {
-      const rowNum = index + 2;
+    const roles = await roleRepository.findAll();
+
+    for (const row of rows) {
+      const rowNum = rows.indexOf(row) + 2;
 
       const username = row["用户名"]?.trim();
       const nickName = row["昵称"]?.trim();
@@ -133,62 +140,65 @@ export class UserService {
 
       if (!username) {
         failures.push({ row: rowNum, data: row, error: "用户名为空" });
-        return;
+        continue;
       }
 
       if (username.length < 2 || username.length > 30) {
-        failures.push({ row: rowNum, data: row, error: "用户名长度需在2-30之间" });
-        return;
+        failures.push({
+          row: rowNum,
+          data: row,
+          error: "用户名长度需在2-30之间",
+        });
+        continue;
       }
 
       if (!nickName) {
         failures.push({ row: rowNum, data: row, error: "昵称为空" });
-        return;
+        continue;
       }
 
       if (!password || password.length < 6 || password.length > 64) {
-        failures.push({ row: rowNum, data: row, error: "密码长度需在6-64之间" });
-        return;
+        failures.push({
+          row: rowNum,
+          data: row,
+          error: "密码长度需在6-64之间",
+        });
+        continue;
       }
 
       if (!roleIdsStr) {
         failures.push({ row: rowNum, data: row, error: "角色ID列表为空" });
-        return;
+        continue;
       }
 
-      const roleIds = roleIdsStr.split(",").map((id) => parseInt(id.trim(), 10));
+      const roleIds = roleIdsStr
+        .split(",")
+        .map((id) => parseInt(id.trim(), 10));
       if (roleIds.some(isNaN)) {
         failures.push({ row: rowNum, data: row, error: "角色ID列表格式错误" });
-        return;
+        continue;
       }
 
       const roleIdsValid = roleIds.every((roleId) =>
-        accessDataStore.roles.some((role) => role.roleId === roleId)
+        roles.some((role) => role.roleId === roleId),
       );
       if (!roleIdsValid) {
         failures.push({ row: rowNum, data: row, error: "角色不存在" });
-        return;
+        continue;
       }
 
       if (!status || !["0", "1"].includes(status)) {
         failures.push({ row: rowNum, data: row, error: "状态必须为0或1" });
-        return;
+        continue;
       }
 
-      const existed = accessDataStore.users.some((item) => item.username === username);
+      const existed = await userRepository.findByUsername(username);
       if (existed) {
         failures.push({ row: rowNum, data: row, error: "用户名已存在" });
-        return;
+        continue;
       }
 
-      const nextId =
-        accessDataStore.users.reduce(
-          (maxUserId, item) => Math.max(maxUserId, item.userId),
-          0
-        ) + 1;
-
-      accessDataStore.users.push({
-        userId: nextId,
+      await userRepository.create({
         username,
         nickName,
         password,
@@ -203,7 +213,7 @@ export class UserService {
         角色ID列表: roleIdsStr,
         状态: status,
       });
-    });
+    }
 
     return { success, failures };
   }

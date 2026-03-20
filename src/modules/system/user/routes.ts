@@ -1,6 +1,10 @@
 import { Elysia } from "elysia";
 import { secured } from "../../../common/auth/secured";
-import { buildCsvDownload, buildCsvTemplate, parseCsv } from "../../../common/http/csv";
+import {
+  buildCsvDownload,
+  buildCsvTemplate,
+  parseCsv,
+} from "../../../common/http/csv";
 import { paginateData } from "../../../common/http/page";
 import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
@@ -39,10 +43,10 @@ export const userRoutes = new Elysia({
         permission: "system:user:list",
         denyMessage: "无权限访问用户管理",
       },
-      ({ query }) => {
+      async ({ query }) => {
         const typedQuery = query as ListUserQuery;
-        return ok(paginateData(userService.list(typedQuery), typedQuery));
-      }
+        return ok(paginateData(await userService.list(typedQuery), typedQuery));
+      },
     ),
     {
       query: ListUserSchema,
@@ -55,7 +59,7 @@ export const userRoutes = new Elysia({
         tags: ["系统管理-用户"],
         summary: "查询用户列表",
       },
-    }
+    },
   )
   .post(
     "/export",
@@ -65,9 +69,9 @@ export const userRoutes = new Elysia({
         denyMessage: "无权限导出用户数据",
         operLog: OPER_LOG.EXPORT,
       },
-      ({ query, set }) => {
+      async ({ query, set }) => {
         const typedQuery = query as ListUserQuery;
-        const rows = userService.list(typedQuery);
+        const rows = await userService.list(typedQuery);
         return buildCsvDownload(
           set,
           rows,
@@ -77,9 +81,9 @@ export const userRoutes = new Elysia({
             { header: "昵称", value: (row) => row.nickName },
             { header: "状态", value: (row) => row.status },
           ],
-          "system-user-export.csv"
+          "system-user-export.csv",
         );
-      }
+      },
     ),
     {
       query: ListUserSchema,
@@ -87,7 +91,7 @@ export const userRoutes = new Elysia({
         tags: ["系统管理-用户"],
         summary: "导出用户列表",
       },
-    }
+    },
   )
   .post(
     "/importTemplate",
@@ -104,14 +108,14 @@ export const userRoutes = new Elysia({
           { key: "角色ID列表", title: "角色ID列表" },
           { key: "状态", title: "状态" },
         ]);
-      }
+      },
     ),
     {
       detail: {
         tags: ["系统管理-用户"],
         summary: "下载用户导入模板",
       },
-    }
+    },
   )
   .post(
     "/import",
@@ -141,7 +145,7 @@ export const userRoutes = new Elysia({
           return fail(400, e instanceof Error ? e.message : "CSV解析失败");
         }
 
-        const result = userService.importUsers(rows);
+        const result = await userService.importUsers(rows);
 
         return ok(
           {
@@ -153,9 +157,9 @@ export const userRoutes = new Elysia({
               error: f.error,
             })),
           },
-          result.failures.length > 0 ? "部分数据导入失败" : "导入成功"
+          result.failures.length > 0 ? "部分数据导入失败" : "导入成功",
         );
-      }
+      },
     ),
     {
       body: ImportUserSchema,
@@ -169,7 +173,7 @@ export const userRoutes = new Elysia({
         tags: ["系统管理-用户"],
         summary: "导入用户数据",
       },
-    }
+    },
   )
   .delete(
     "/batch",
@@ -179,11 +183,11 @@ export const userRoutes = new Elysia({
         denyMessage: "无权限删除用户",
         operLog: OPER_LOG.DELETE,
       },
-      ({ body }) => {
+      async ({ body }) => {
         const typedBody = body as typeof RemoveBatchUserSchema.static;
-        const count = userService.removeBatch(typedBody.ids);
+        const count = await userService.removeBatch(typedBody.ids);
         return ok({ count }, "删除成功");
-      }
+      },
     ),
     {
       body: RemoveBatchUserSchema,
@@ -196,7 +200,7 @@ export const userRoutes = new Elysia({
         tags: ["系统管理-用户"],
         summary: "批量删除用户",
       },
-    }
+    },
   )
   .post(
     "/add",
@@ -206,9 +210,9 @@ export const userRoutes = new Elysia({
         denyMessage: "无权限新增用户",
         operLog: OPER_LOG.CREATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as CreateUserBody;
-        const result = userService.create(typedBody);
+        const result = await userService.create(typedBody);
         if (!result.success) {
           if (result.reason === "username_exists") {
             set.status = 409;
@@ -220,7 +224,7 @@ export const userRoutes = new Elysia({
         }
 
         return ok({ userId: result.userId }, "新增成功");
-      }
+      },
     ),
     {
       body: CreateUserSchema,
@@ -235,7 +239,7 @@ export const userRoutes = new Elysia({
         tags: ["系统管理-用户"],
         summary: "新增用户",
       },
-    }
+    },
   )
   .put(
     "/edit",
@@ -245,9 +249,9 @@ export const userRoutes = new Elysia({
         denyMessage: "无权限编辑用户",
         operLog: OPER_LOG.UPDATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as UpdateUserBody;
-        const result = userService.update(typedBody);
+        const result = await userService.update(typedBody);
         if (!result.success) {
           if (result.reason === "user_not_found") {
             set.status = 404;
@@ -259,7 +263,7 @@ export const userRoutes = new Elysia({
         }
 
         return ok(true, "修改成功");
-      }
+      },
     ),
     {
       body: UpdateUserSchema,
@@ -274,7 +278,7 @@ export const userRoutes = new Elysia({
         tags: ["系统管理-用户"],
         summary: "编辑用户",
       },
-    }
+    },
   )
   .put(
     "/resetPwd",
@@ -284,16 +288,16 @@ export const userRoutes = new Elysia({
         denyMessage: "无权限重置用户密码",
         operLog: OPER_LOG.RESET_PASSWORD,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as ResetPasswordBody;
-        const result = userService.resetPassword(typedBody);
+        const result = await userService.resetPassword(typedBody);
         if (!result.success) {
           set.status = 404;
           return fail(404, "用户不存在");
         }
 
         return ok(true, "重置成功");
-      }
+      },
     ),
     {
       body: ResetPasswordSchema,
@@ -307,5 +311,5 @@ export const userRoutes = new Elysia({
         tags: ["系统管理-用户"],
         summary: "重置用户密码",
       },
-    }
+    },
   );

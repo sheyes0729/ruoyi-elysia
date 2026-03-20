@@ -1,72 +1,88 @@
+import { eq } from "drizzle-orm";
 import type { SystemMenu } from "../../modules/system/access-data";
-import { accessDataStore } from "../../modules/system/access-data";
+import { sys_menu } from "../../database/schema";
+import { db } from "../../database";
 import type { Repository } from "../base";
 
 export interface MenuRepository extends Repository<SystemMenu, number> {
-  findByParentId(parentId: number): SystemMenu[];
+  findByParentId(parentId: number): Promise<SystemMenu[]>;
 }
 
-export class InMemoryMenuRepository implements MenuRepository {
-  findAll(): SystemMenu[] {
-    return [...accessDataStore.menus];
-  }
+export class DrizzleMenuRepository implements MenuRepository {
+  private readonly table = sys_menu;
 
-  findById(menuId: number): SystemMenu | null {
-    return accessDataStore.menus.find((m) => m.menuId === menuId) || null;
-  }
-
-  findByParentId(parentId: number): SystemMenu[] {
-    return accessDataStore.menus.filter((m) => m.parentId === parentId);
-  }
-
-  create(data: Partial<SystemMenu>): number {
-    const nextId =
-      accessDataStore.menus.reduce((max, m) => Math.max(max, m.menuId), 0) + 1;
-
-    const newMenu: SystemMenu = {
-      menuId: nextId,
-      menuName: data.menuName || "",
-      parentId: data.parentId ?? 0,
-      orderNum: data.orderNum || 0,
-      path: data.path || "",
-      component: data.component || "",
-      menuType: data.menuType || "M",
-      perms: data.perms || "",
-      visible: data.visible || "0",
-      status: data.status || "0",
+  private toEntity(row: typeof sys_menu.$inferSelect): SystemMenu {
+    return {
+      menuId: row.menuId,
+      menuName: row.menuName,
+      parentId: row.parentId,
+      orderNum: row.orderNum,
+      path: row.path,
+      component: row.component ?? "",
+      menuType: row.menuType as "M" | "C" | "F",
+      perms: row.perms ?? "",
+      visible: row.visible as "0" | "1",
+      status: row.status as "0" | "1",
     };
-
-    accessDataStore.menus.push(newMenu);
-    return nextId;
   }
 
-  update(menuId: number, data: Partial<SystemMenu>): boolean {
-    const menu = accessDataStore.menus.find((m) => m.menuId === menuId);
-    if (!menu) {return false;}
+  private readonly pkColumn = sys_menu.menuId;
 
-    Object.assign(menu, data);
-    return true;
+  async findAll(): Promise<SystemMenu[]> {
+    const result = await db.select().from(sys_menu);
+    return result.map((row) => this.toEntity(row));
   }
 
-  delete(menuId: number): boolean {
-    const index = accessDataStore.menus.findIndex((m) => m.menuId === menuId);
-    if (index === -1) {return false;}
-
-    accessDataStore.menus.splice(index, 1);
-    return true;
+  async findById(menuId: number): Promise<SystemMenu | null> {
+    const result = await db
+      .select()
+      .from(sys_menu)
+      .where(eq(sys_menu.menuId, menuId));
+    return result.length > 0 ? this.toEntity(result[0]) : null;
   }
 
-  deleteBatch(menuIds: number[]): number {
-    let count = 0;
-    for (const menuId of menuIds) {
-      const index = accessDataStore.menus.findIndex((m) => m.menuId === menuId);
-      if (index !== -1) {
-        accessDataStore.menus.splice(index, 1);
-        count++;
-      }
-    }
-    return count;
+  async findByParentId(parentId: number): Promise<SystemMenu[]> {
+    const result = await db
+      .select()
+      .from(sys_menu)
+      .where(eq(sys_menu.parentId, parentId));
+    return result.map((row) => this.toEntity(row));
+  }
+
+  async create(data: Partial<SystemMenu>): Promise<number> {
+    const result = await db.insert(sys_menu).values({
+      menuName: data.menuName,
+      parentId: data.parentId,
+      orderNum: data.orderNum,
+      path: data.path,
+      component: data.component,
+      menuType: data.menuType,
+      perms: data.perms,
+      visible: data.visible,
+      status: data.status,
+    } as typeof sys_menu.$inferInsert);
+    return result[0].insertId;
+  }
+
+  async update(menuId: number, data: Partial<SystemMenu>): Promise<boolean> {
+    const result = await db
+      .update(sys_menu)
+      .set(data as typeof sys_menu.$inferInsert)
+      .where(eq(sys_menu.menuId, menuId));
+    return result.length > 0;
+  }
+
+  async delete(menuId: number): Promise<boolean> {
+    const result = await db.delete(sys_menu).where(eq(sys_menu.menuId, menuId));
+    return result.length > 0;
+  }
+
+  async deleteBatch(menuIds: number[]): Promise<number> {
+    const result = await db
+      .delete(sys_menu)
+      .where(eq(sys_menu.menuId, menuIds[0]));
+    return result.length;
   }
 }
 
-export const menuRepository = new InMemoryMenuRepository();
+export const menuRepository = new DrizzleMenuRepository();

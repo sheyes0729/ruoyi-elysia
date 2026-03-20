@@ -1,5 +1,3 @@
-import { removeBatchByNumericId } from "../../../common/data/array";
-import { accessDataStore } from "../access-data";
 import type {
   CreateDictDataBody,
   DictDataImportRow,
@@ -8,6 +6,7 @@ import type {
   UpdateDictDataBody,
 } from "./model";
 import type { ImportResult } from "../../../common/http/csv";
+import { dictDataRepository, dictTypeRepository } from "../../../repository";
 
 type CreateDictDataResult =
   | { success: true; dictCode: number }
@@ -20,8 +19,10 @@ type UpdateDictDataResult =
 type ImportDictDataResult = ImportResult<DictDataImportRow>;
 
 export class DictDataService {
-  list(query?: ListDictDataQuery): DictDataListItem[] {
-    const source = accessDataStore.dictData.map((item) => ({
+  async list(query?: ListDictDataQuery): Promise<DictDataListItem[]> {
+    const dictDataItems = await dictDataRepository.findAll();
+
+    const source = dictDataItems.map((item) => ({
       dictCode: item.dictCode,
       dictSort: item.dictSort,
       dictLabel: item.dictLabel,
@@ -51,23 +52,16 @@ export class DictDataService {
     });
   }
 
-  removeBatch(ids: number[]): number {
-    return removeBatchByNumericId(accessDataStore.dictData, ids, (item) => item.dictCode);
+  async removeBatch(ids: number[]): Promise<number> {
+    return dictDataRepository.deleteBatch(ids);
   }
 
-  create(payload: CreateDictDataBody): CreateDictDataResult {
-    if (!this.dictTypeExists(payload.dictType)) {
+  async create(payload: CreateDictDataBody): Promise<CreateDictDataResult> {
+    if (!(await this.dictTypeExists(payload.dictType))) {
       return { success: false, reason: "dict_type_not_found" };
     }
 
-    const nextCode =
-      accessDataStore.dictData.reduce(
-        (maxDictCode, item) => Math.max(maxDictCode, item.dictCode),
-        0
-      ) + 1;
-
-    accessDataStore.dictData.push({
-      dictCode: nextCode,
+    const dictCode = await dictDataRepository.create({
       dictSort: payload.dictSort,
       dictLabel: payload.dictLabel,
       dictValue: payload.dictValue,
@@ -75,40 +69,47 @@ export class DictDataService {
       status: payload.status,
     });
 
-    return { success: true, dictCode: nextCode };
+    return { success: true, dictCode };
   }
 
-  update(payload: UpdateDictDataBody): UpdateDictDataResult {
-    const target = accessDataStore.dictData.find(
-      (item) => item.dictCode === payload.dictCode
-    );
+  async update(payload: UpdateDictDataBody): Promise<UpdateDictDataResult> {
+    const target = await dictDataRepository.findById(payload.dictCode);
     if (!target) {
       return { success: false, reason: "dict_data_not_found" };
     }
 
-    if (!this.dictTypeExists(payload.dictType)) {
+    if (!(await this.dictTypeExists(payload.dictType))) {
       return { success: false, reason: "dict_type_not_found" };
     }
 
-    target.dictSort = payload.dictSort;
-    target.dictLabel = payload.dictLabel;
-    target.dictValue = payload.dictValue;
-    target.dictType = payload.dictType;
-    target.status = payload.status;
+    await dictDataRepository.update(payload.dictCode, {
+      dictSort: payload.dictSort,
+      dictLabel: payload.dictLabel,
+      dictValue: payload.dictValue,
+      dictType: payload.dictType,
+      status: payload.status,
+    });
 
     return { success: true };
   }
 
-  private dictTypeExists(dictType: string): boolean {
-    return accessDataStore.dictTypes.some((item) => item.dictType === dictType);
+  private async dictTypeExists(dictType: string): Promise<boolean> {
+    const result = await dictTypeRepository.findByDictType(dictType);
+    return result !== null;
   }
 
-  importDictData(rows: Record<string, string>[]): ImportDictDataResult {
+  async importDictData(
+    rows: Record<string, string>[],
+  ): Promise<ImportDictDataResult> {
     const success: DictDataImportRow[] = [];
-    const failures: { row: number; data: Record<string, string>; error: string }[] = [];
+    const failures: {
+      row: number;
+      data: Record<string, string>;
+      error: string;
+    }[] = [];
 
-    rows.forEach((row, index) => {
-      const rowNum = index + 2;
+    for (const row of rows) {
+      const rowNum = rows.indexOf(row) + 2;
 
       const dictSortStr = row["字典排序"]?.trim();
       const dictLabel = row["字典标签"]?.trim();
@@ -118,58 +119,59 @@ export class DictDataService {
 
       if (!dictSortStr) {
         failures.push({ row: rowNum, data: row, error: "字典排序为空" });
-        return;
+        continue;
       }
 
       const dictSort = parseInt(dictSortStr, 10);
       if (isNaN(dictSort)) {
         failures.push({ row: rowNum, data: row, error: "字典排序必须为数字" });
-        return;
+        continue;
       }
 
       if (!dictLabel) {
         failures.push({ row: rowNum, data: row, error: "字典标签为空" });
-        return;
+        continue;
       }
 
       if (dictLabel.length > 100) {
-        failures.push({ row: rowNum, data: row, error: "字典标签长度不能超过100" });
-        return;
+        failures.push({
+          row: rowNum,
+          data: row,
+          error: "字典标签长度不能超过100",
+        });
+        continue;
       }
 
       if (!dictValue) {
         failures.push({ row: rowNum, data: row, error: "字典键值为空" });
-        return;
+        continue;
       }
 
       if (dictValue.length > 100) {
-        failures.push({ row: rowNum, data: row, error: "字典键值长度不能超过100" });
-        return;
+        failures.push({
+          row: rowNum,
+          data: row,
+          error: "字典键值长度不能超过100",
+        });
+        continue;
       }
 
       if (!dictType) {
         failures.push({ row: rowNum, data: row, error: "字典类型为空" });
-        return;
+        continue;
       }
 
-      if (!this.dictTypeExists(dictType)) {
+      if (!(await this.dictTypeExists(dictType))) {
         failures.push({ row: rowNum, data: row, error: "字典类型不存在" });
-        return;
+        continue;
       }
 
       if (!status || !["0", "1"].includes(status)) {
         failures.push({ row: rowNum, data: row, error: "状态必须为0或1" });
-        return;
+        continue;
       }
 
-      const nextCode =
-        accessDataStore.dictData.reduce(
-          (maxDictCode, item) => Math.max(maxDictCode, item.dictCode),
-          0
-        ) + 1;
-
-      accessDataStore.dictData.push({
-        dictCode: nextCode,
+      await dictDataRepository.create({
         dictSort,
         dictLabel,
         dictValue,
@@ -184,7 +186,7 @@ export class DictDataService {
         字典类型: dictType,
         状态: status,
       });
-    });
+    }
 
     return { success, failures };
   }

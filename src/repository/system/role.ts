@@ -1,68 +1,89 @@
+import { eq } from "drizzle-orm";
 import type { SystemRole } from "../../modules/system/access-data";
-import { accessDataStore } from "../../modules/system/access-data";
+import { sys_role } from "../../database/schema";
+import { db } from "../../database";
 import type { Repository } from "../base";
 
 export interface RoleRepository extends Repository<SystemRole, number> {
-  findByRoleKey(roleKey: string): SystemRole | null;
+  findByRoleKey(roleKey: string): Promise<SystemRole | null>;
 }
 
-export class InMemoryRoleRepository implements RoleRepository {
-  findAll(): SystemRole[] {
-    return [...accessDataStore.roles];
-  }
+export class DrizzleRoleRepository implements RoleRepository {
+  private readonly table = sys_role;
 
-  findById(roleId: number): SystemRole | null {
-    return accessDataStore.roles.find((r) => r.roleId === roleId) || null;
-  }
-
-  findByRoleKey(roleKey: string): SystemRole | null {
-    return accessDataStore.roles.find((r) => r.roleKey === roleKey) || null;
-  }
-
-  create(data: Partial<SystemRole>): number {
-    const nextId =
-      accessDataStore.roles.reduce((max, r) => Math.max(max, r.roleId), 0) + 1;
-
-    const newRole: SystemRole = {
-      roleId: nextId,
-      roleKey: data.roleKey || "",
-      roleName: data.roleName || "",
-      status: data.status || "0",
-      menuIds: data.menuIds || [],
-      permissions: data.permissions || [],
+  private toEntity(row: typeof sys_role.$inferSelect): SystemRole {
+    return {
+      roleId: row.roleId,
+      roleKey: row.roleKey,
+      roleName: row.roleName,
+      status: row.status as "0" | "1",
+      menuIds: row.menuIds ? (JSON.parse(row.menuIds) as number[]) : [],
+      permissions: row.permissions
+        ? (JSON.parse(row.permissions) as string[])
+        : [],
     };
-
-    accessDataStore.roles.push(newRole);
-    return nextId;
   }
 
-  update(roleId: number, data: Partial<SystemRole>): boolean {
-    const role = accessDataStore.roles.find((r) => r.roleId === roleId);
-    if (!role) {return false;}
+  private readonly pkColumn = sys_role.roleId;
 
-    Object.assign(role, data);
-    return true;
+  async findAll(): Promise<SystemRole[]> {
+    const result = await db.select().from(sys_role);
+    return result.map((row) => this.toEntity(row));
   }
 
-  delete(roleId: number): boolean {
-    const index = accessDataStore.roles.findIndex((r) => r.roleId === roleId);
-    if (index === -1) {return false;}
-
-    accessDataStore.roles.splice(index, 1);
-    return true;
+  async findById(roleId: number): Promise<SystemRole | null> {
+    const result = await db
+      .select()
+      .from(sys_role)
+      .where(eq(sys_role.roleId, roleId));
+    return result.length > 0 ? this.toEntity(result[0]) : null;
   }
 
-  deleteBatch(roleIds: number[]): number {
-    let count = 0;
-    for (const roleId of roleIds) {
-      const index = accessDataStore.roles.findIndex((r) => r.roleId === roleId);
-      if (index !== -1) {
-        accessDataStore.roles.splice(index, 1);
-        count++;
-      }
-    }
-    return count;
+  async findByRoleKey(roleKey: string): Promise<SystemRole | null> {
+    const result = await db
+      .select()
+      .from(sys_role)
+      .where(eq(sys_role.roleKey, roleKey));
+    return result.length > 0 ? this.toEntity(result[0]) : null;
+  }
+
+  async create(data: Partial<SystemRole>): Promise<number> {
+    const result = await db.insert(sys_role).values({
+      roleKey: data.roleKey,
+      roleName: data.roleName,
+      status: data.status,
+      menuIds: data.menuIds ? JSON.stringify(data.menuIds) : null,
+      permissions: data.permissions ? JSON.stringify(data.permissions) : null,
+    } as typeof sys_role.$inferInsert);
+    return result[0].insertId;
+  }
+
+  async update(roleId: number, data: Partial<SystemRole>): Promise<boolean> {
+    const result = await db
+      .update(sys_role)
+      .set({
+        roleName: data.roleName,
+        status: data.status,
+        menuIds: data.menuIds ? JSON.stringify(data.menuIds) : undefined,
+        permissions: data.permissions
+          ? JSON.stringify(data.permissions)
+          : undefined,
+      } as typeof sys_role.$inferInsert)
+      .where(eq(sys_role.roleId, roleId));
+    return result.length > 0;
+  }
+
+  async delete(roleId: number): Promise<boolean> {
+    const result = await db.delete(sys_role).where(eq(sys_role.roleId, roleId));
+    return result.length > 0;
+  }
+
+  async deleteBatch(roleIds: number[]): Promise<number> {
+    const result = await db
+      .delete(sys_role)
+      .where(eq(sys_role.roleId, roleIds[0]));
+    return result.length;
   }
 }
 
-export const roleRepository = new InMemoryRoleRepository();
+export const roleRepository = new DrizzleRoleRepository();

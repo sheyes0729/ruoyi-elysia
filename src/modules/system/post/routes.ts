@@ -33,10 +33,10 @@ export const PostRoutes = new Elysia({
         permission: "system:post:list",
         denyMessage: "无权限访问岗位管理",
       },
-      ({ query }) => {
+      async ({ query }) => {
         const typedQuery = query as ListPostQuery;
-        return ok(paginateData(postService.list(typedQuery), typedQuery));
-      }
+        return ok(paginateData(await postService.list(typedQuery), typedQuery));
+      },
     ),
     {
       query: ListPostSchema,
@@ -49,7 +49,7 @@ export const PostRoutes = new Elysia({
         tags: ["系统管理-岗位管理"],
         summary: "查询岗位列表",
       },
-    }
+    },
   )
   .post(
     "/export",
@@ -59,9 +59,9 @@ export const PostRoutes = new Elysia({
         denyMessage: "无权限导出岗位数据",
         operLog: OPER_LOG.EXPORT,
       },
-      ({ query, set }) => {
+      async ({ query, set }) => {
         const typedQuery = query as ListPostQuery;
-        const rows = postService.list(typedQuery);
+        const rows = await postService.list(typedQuery);
         const csv = toCsv(rows, [
           { header: "岗位ID", value: (row) => row.postId },
           { header: "岗位编码", value: (row) => row.postCode },
@@ -75,7 +75,7 @@ export const PostRoutes = new Elysia({
         headers["content-disposition"] =
           "attachment; filename=system-post-export.csv";
         return `\uFEFF${csv}`;
-      }
+      },
     ),
     {
       query: ListPostSchema,
@@ -83,7 +83,7 @@ export const PostRoutes = new Elysia({
         tags: ["系统管理-岗位管理"],
         summary: "导出岗位列表",
       },
-    }
+    },
   )
   .delete(
     "/batch",
@@ -93,11 +93,11 @@ export const PostRoutes = new Elysia({
         denyMessage: "无权限删除岗位",
         operLog: OPER_LOG.DELETE,
       },
-      ({ body }) => {
+      async ({ body }) => {
         const typedBody = body as typeof RemoveBatchPostSchema.static;
-        const count = postService.removeBatch(typedBody.ids);
+        const count = await postService.removeBatch(typedBody.ids);
         return ok({ count }, "删除成功");
-      }
+      },
     ),
     {
       body: RemoveBatchPostSchema,
@@ -110,7 +110,7 @@ export const PostRoutes = new Elysia({
         tags: ["系统管理-岗位管理"],
         summary: "批量删除岗位",
       },
-    }
+    },
   )
   .post(
     "/add",
@@ -120,16 +120,16 @@ export const PostRoutes = new Elysia({
         denyMessage: "无权限新增岗位",
         operLog: OPER_LOG.CREATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as CreatePostBody;
-        const result = postService.create(typedBody);
+        const result = await postService.create(typedBody);
         if (!result.success) {
           set.status = 409;
           return fail(409, "岗位编码已存在");
         }
 
         return ok({ postId: result.postId }, "新增成功");
-      }
+      },
     ),
     {
       body: CreatePostSchema,
@@ -143,7 +143,7 @@ export const PostRoutes = new Elysia({
         tags: ["系统管理-岗位管理"],
         summary: "新增岗位",
       },
-    }
+    },
   )
   .put(
     "/edit",
@@ -153,9 +153,9 @@ export const PostRoutes = new Elysia({
         denyMessage: "无权限编辑岗位",
         operLog: OPER_LOG.UPDATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as UpdatePostBody;
-        const result = postService.update(typedBody);
+        const result = await postService.update(typedBody);
         if (!result.success) {
           if (result.reason === "post_not_found") {
             set.status = 404;
@@ -167,7 +167,7 @@ export const PostRoutes = new Elysia({
         }
 
         return ok(true, "修改成功");
-      }
+      },
     ),
     {
       body: UpdatePostSchema,
@@ -182,5 +182,5 @@ export const PostRoutes = new Elysia({
         tags: ["系统管理-岗位管理"],
         summary: "编辑岗位",
       },
-    }
+    },
   );

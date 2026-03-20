@@ -36,10 +36,10 @@ export const roleRoutes = new Elysia({
         permission: "system:role:list",
         denyMessage: "无权限访问角色管理",
       },
-      ({ query }) => {
+      async ({ query }) => {
         const typedQuery = query as ListRoleQuery;
-        return ok(paginateData(roleService.list(typedQuery), typedQuery));
-      }
+        return ok(paginateData(await roleService.list(typedQuery), typedQuery));
+      },
     ),
     {
       query: ListRoleSchema,
@@ -52,7 +52,7 @@ export const roleRoutes = new Elysia({
         tags: ["系统管理-角色"],
         summary: "查询角色列表",
       },
-    }
+    },
   )
   .post(
     "/export",
@@ -62,9 +62,9 @@ export const roleRoutes = new Elysia({
         denyMessage: "无权限导出角色数据",
         operLog: OPER_LOG.EXPORT,
       },
-      ({ query, set }) => {
+      async ({ query, set }) => {
         const typedQuery = query as ListRoleQuery;
-        const rows = roleService.list(typedQuery);
+        const rows = await roleService.list(typedQuery);
         return buildCsvDownload(
           set,
           rows,
@@ -74,9 +74,9 @@ export const roleRoutes = new Elysia({
             { header: "角色名称", value: (row) => row.roleName },
             { header: "状态", value: (row) => row.status },
           ],
-          "system-role-export.csv"
+          "system-role-export.csv",
         );
-      }
+      },
     ),
     {
       query: ListRoleSchema,
@@ -84,7 +84,7 @@ export const roleRoutes = new Elysia({
         tags: ["系统管理-角色"],
         summary: "导出角色列表",
       },
-    }
+    },
   )
   .delete(
     "/batch",
@@ -94,11 +94,11 @@ export const roleRoutes = new Elysia({
         denyMessage: "无权限删除角色",
         operLog: OPER_LOG.DELETE,
       },
-      ({ body }) => {
+      async ({ body }) => {
         const typedBody = body as typeof RemoveBatchRoleSchema.static;
-        const count = roleService.removeBatch(typedBody.ids);
+        const count = await roleService.removeBatch(typedBody.ids);
         return ok({ count }, "删除成功");
-      }
+      },
     ),
     {
       body: RemoveBatchRoleSchema,
@@ -111,7 +111,7 @@ export const roleRoutes = new Elysia({
         tags: ["系统管理-角色"],
         summary: "批量删除角色",
       },
-    }
+    },
   )
   .post(
     "/add",
@@ -121,9 +121,9 @@ export const roleRoutes = new Elysia({
         denyMessage: "无权限新增角色",
         operLog: OPER_LOG.CREATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as CreateRoleBody;
-        const result = roleService.create(typedBody);
+        const result = await roleService.create(typedBody);
         if (!result.success) {
           if (result.reason === "role_key_exists") {
             set.status = 409;
@@ -135,7 +135,7 @@ export const roleRoutes = new Elysia({
         }
 
         return ok({ roleId: result.roleId }, "新增成功");
-      }
+      },
     ),
     {
       body: CreateRoleSchema,
@@ -150,7 +150,7 @@ export const roleRoutes = new Elysia({
         tags: ["系统管理-角色"],
         summary: "新增角色",
       },
-    }
+    },
   )
   .put(
     "/edit",
@@ -160,9 +160,9 @@ export const roleRoutes = new Elysia({
         denyMessage: "无权限编辑角色",
         operLog: OPER_LOG.UPDATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as UpdateRoleBody;
-        const result = roleService.update(typedBody);
+        const result = await roleService.update(typedBody);
         if (!result.success) {
           if (result.reason === "role_not_found") {
             set.status = 404;
@@ -174,7 +174,7 @@ export const roleRoutes = new Elysia({
         }
 
         return ok(true, "修改成功");
-      }
+      },
     ),
     {
       body: UpdateRoleSchema,
@@ -189,7 +189,7 @@ export const roleRoutes = new Elysia({
         tags: ["系统管理-角色"],
         summary: "编辑角色",
       },
-    }
+    },
   )
   .put(
     "/authMenu",
@@ -199,9 +199,9 @@ export const roleRoutes = new Elysia({
         denyMessage: "无权限分配角色菜单",
         operLog: OPER_LOG.GRANT_MENU,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as AuthRoleMenuBody;
-        const result = roleService.authMenu(typedBody);
+        const result = await roleService.authMenu(typedBody);
         if (!result.success) {
           if (result.reason === "role_not_found") {
             set.status = 404;
@@ -213,7 +213,7 @@ export const roleRoutes = new Elysia({
         }
 
         return ok(true, "授权成功");
-      }
+      },
     ),
     {
       body: AuthRoleMenuSchema,
@@ -228,5 +228,5 @@ export const roleRoutes = new Elysia({
         tags: ["系统管理-角色"],
         summary: "角色菜单授权",
       },
-    }
+    },
   );

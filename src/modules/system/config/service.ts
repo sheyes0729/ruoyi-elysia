@@ -1,11 +1,10 @@
-import { removeBatchByNumericId } from "../../../common/data/array";
-import { accessDataStore } from "../access-data";
 import type {
   ConfigListItem,
   CreateConfigBody,
   ListConfigQuery,
   UpdateConfigBody,
 } from "./model";
+import { configRepository } from "../../../repository";
 
 type CreateConfigResult =
   | { success: true; configId: number }
@@ -16,8 +15,10 @@ type UpdateConfigResult =
   | { success: false; reason: "config_not_found" | "config_key_exists" };
 
 export class ConfigService {
-  list(query?: ListConfigQuery): ConfigListItem[] {
-    const source = accessDataStore.configs.map((item) => ({
+  async list(query?: ListConfigQuery): Promise<ConfigListItem[]> {
+    const configs = await configRepository.findAll();
+
+    const source = configs.map((item) => ({
       configId: item.configId,
       configName: item.configName,
       configKey: item.configKey,
@@ -46,55 +47,43 @@ export class ConfigService {
     });
   }
 
-  removeBatch(ids: number[]): number {
-    return removeBatchByNumericId(accessDataStore.configs, ids, (item) => item.configId);
+  async removeBatch(ids: number[]): Promise<number> {
+    return configRepository.deleteBatch(ids);
   }
 
-  create(payload: CreateConfigBody): CreateConfigResult {
-    const existed = accessDataStore.configs.some(
-      (item) => item.configKey === payload.configKey
-    );
+  async create(payload: CreateConfigBody): Promise<CreateConfigResult> {
+    const existed = await configRepository.findByConfigKey(payload.configKey);
     if (existed) {
       return { success: false, reason: "config_key_exists" };
     }
 
-    const nextId =
-      accessDataStore.configs.reduce(
-        (maxConfigId, item) => Math.max(maxConfigId, item.configId),
-        0
-      ) + 1;
-
-    accessDataStore.configs.push({
-      configId: nextId,
+    const configId = await configRepository.create({
       configName: payload.configName,
       configKey: payload.configKey,
       configValue: payload.configValue,
       configType: payload.configType,
     });
 
-    return { success: true, configId: nextId };
+    return { success: true, configId };
   }
 
-  update(payload: UpdateConfigBody): UpdateConfigResult {
-    const target = accessDataStore.configs.find(
-      (item) => item.configId === payload.configId
-    );
+  async update(payload: UpdateConfigBody): Promise<UpdateConfigResult> {
+    const target = await configRepository.findById(payload.configId);
     if (!target) {
       return { success: false, reason: "config_not_found" };
     }
 
-    const existed = accessDataStore.configs.some(
-      (item) =>
-        item.configKey === payload.configKey && item.configId !== payload.configId
-    );
-    if (existed) {
+    const existed = await configRepository.findByConfigKey(payload.configKey);
+    if (existed && existed.configId !== payload.configId) {
       return { success: false, reason: "config_key_exists" };
     }
 
-    target.configName = payload.configName;
-    target.configKey = payload.configKey;
-    target.configValue = payload.configValue;
-    target.configType = payload.configType;
+    await configRepository.update(payload.configId, {
+      configName: payload.configName,
+      configKey: payload.configKey,
+      configValue: payload.configValue,
+      configType: payload.configType,
+    });
 
     return { success: true };
   }

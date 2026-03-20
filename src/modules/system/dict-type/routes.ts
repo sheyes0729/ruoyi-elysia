@@ -33,10 +33,12 @@ export const DictTypeRoutes = new Elysia({
         permission: "system:dict:type:list",
         denyMessage: "无权限访问字典类型",
       },
-      ({ query }) => {
+      async ({ query }) => {
         const typedQuery = query as ListDictTypeQuery;
-        return ok(paginateData(dictTypeService.list(typedQuery), typedQuery));
-      }
+        return ok(
+          paginateData(await dictTypeService.list(typedQuery), typedQuery),
+        );
+      },
     ),
     {
       query: ListDictTypeSchema,
@@ -49,7 +51,7 @@ export const DictTypeRoutes = new Elysia({
         tags: ["系统管理-字典类型"],
         summary: "查询字典类型列表",
       },
-    }
+    },
   )
   .post(
     "/export",
@@ -59,9 +61,9 @@ export const DictTypeRoutes = new Elysia({
         denyMessage: "无权限导出字典类型",
         operLog: OPER_LOG.EXPORT,
       },
-      ({ query, set }) => {
+      async ({ query, set }) => {
         const typedQuery = query as ListDictTypeQuery;
-        const rows = dictTypeService.list(typedQuery);
+        const rows = await dictTypeService.list(typedQuery);
         const csv = toCsv(rows, [
           { header: "字典ID", value: (row) => row.dictId },
           { header: "字典名称", value: (row) => row.dictName },
@@ -74,7 +76,7 @@ export const DictTypeRoutes = new Elysia({
         headers["content-disposition"] =
           "attachment; filename=system-dict-type-export.csv";
         return `\uFEFF${csv}`;
-      }
+      },
     ),
     {
       query: ListDictTypeSchema,
@@ -82,7 +84,7 @@ export const DictTypeRoutes = new Elysia({
         tags: ["系统管理-字典类型"],
         summary: "导出字典类型列表",
       },
-    }
+    },
   )
   .delete(
     "/batch",
@@ -92,11 +94,11 @@ export const DictTypeRoutes = new Elysia({
         denyMessage: "无权限删除字典类型",
         operLog: OPER_LOG.DELETE,
       },
-      ({ body }) => {
+      async ({ body }) => {
         const typedBody = body as typeof RemoveBatchDictTypeSchema.static;
-        const count = dictTypeService.removeBatch(typedBody.ids);
+        const count = await dictTypeService.removeBatch(typedBody.ids);
         return ok({ count }, "删除成功");
-      }
+      },
     ),
     {
       body: RemoveBatchDictTypeSchema,
@@ -109,7 +111,7 @@ export const DictTypeRoutes = new Elysia({
         tags: ["系统管理-字典类型"],
         summary: "批量删除字典类型",
       },
-    }
+    },
   )
   .post(
     "/add",
@@ -119,16 +121,16 @@ export const DictTypeRoutes = new Elysia({
         denyMessage: "无权限新增字典类型",
         operLog: OPER_LOG.CREATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as CreateDictTypeBody;
-        const result = dictTypeService.create(typedBody);
+        const result = await dictTypeService.create(typedBody);
         if (!result.success) {
           set.status = 409;
           return fail(409, "字典类型已存在");
         }
 
         return ok({ dictId: result.dictId }, "新增成功");
-      }
+      },
     ),
     {
       body: CreateDictTypeSchema,
@@ -142,7 +144,7 @@ export const DictTypeRoutes = new Elysia({
         tags: ["系统管理-字典类型"],
         summary: "新增字典类型",
       },
-    }
+    },
   )
   .put(
     "/edit",
@@ -152,9 +154,9 @@ export const DictTypeRoutes = new Elysia({
         denyMessage: "无权限编辑字典类型",
         operLog: OPER_LOG.UPDATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as UpdateDictTypeBody;
-        const result = dictTypeService.update(typedBody);
+        const result = await dictTypeService.update(typedBody);
         if (!result.success) {
           if (result.reason === "dict_type_not_found") {
             set.status = 404;
@@ -166,7 +168,7 @@ export const DictTypeRoutes = new Elysia({
         }
 
         return ok(true, "修改成功");
-      }
+      },
     ),
     {
       body: UpdateDictTypeSchema,
@@ -181,5 +183,5 @@ export const DictTypeRoutes = new Elysia({
         tags: ["系统管理-字典类型"],
         summary: "编辑字典类型",
       },
-    }
+    },
   );

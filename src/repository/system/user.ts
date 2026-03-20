@@ -1,73 +1,102 @@
+import { eq } from "drizzle-orm";
 import type { SystemUser } from "../../modules/system/access-data";
-import { accessDataStore } from "../../modules/system/access-data";
+import { sys_user, sys_user_role } from "../../database/schema";
+import { db } from "../../database";
 import type { Repository } from "../base";
 
 export interface UserRepository extends Repository<SystemUser, number> {
-  findByUsername(username: string): SystemUser | null;
-  findByRoleId(roleId: number): SystemUser[];
+  findByUsername(username: string): Promise<SystemUser | null>;
+  findByRoleId(roleId: number): Promise<SystemUser[]>;
 }
 
-export class InMemoryUserRepository implements UserRepository {
-  findAll(): SystemUser[] {
-    return [...accessDataStore.users];
-  }
+export class DrizzleUserRepository implements UserRepository {
+  private readonly table = sys_user;
 
-  findById(userId: number): SystemUser | null {
-    return accessDataStore.users.find((u) => u.userId === userId) || null;
-  }
-
-  findByUsername(username: string): SystemUser | null {
-    return accessDataStore.users.find((u) => u.username === username) || null;
-  }
-
-  findByRoleId(roleId: number): SystemUser[] {
-    return accessDataStore.users.filter((u) => u.roleIds.includes(roleId));
-  }
-
-  create(data: Partial<SystemUser>): number {
-    const nextId =
-      accessDataStore.users.reduce((max, u) => Math.max(max, u.userId), 0) + 1;
-
-    const newUser: SystemUser = {
-      userId: nextId,
-      username: data.username || "",
-      nickName: data.nickName || "",
-      password: data.password || "",
-      status: data.status || "0",
-      roleIds: data.roleIds || [],
+  private toEntity(row: typeof sys_user.$inferSelect): SystemUser {
+    return {
+      userId: row.userId,
+      username: row.username,
+      nickName: row.nickName,
+      password: row.password,
+      status: row.status as "0" | "1",
+      roleIds: [],
     };
-
-    accessDataStore.users.push(newUser);
-    return nextId;
   }
 
-  update(userId: number, data: Partial<SystemUser>): boolean {
-    const user = accessDataStore.users.find((u) => u.userId === userId);
-    if (!user) {return false;}
+  private readonly pkColumn = sys_user.userId;
 
-    Object.assign(user, data);
-    return true;
+  async findAll(): Promise<SystemUser[]> {
+    const result = await db.select().from(sys_user);
+    return result.map((row) => this.toEntity(row));
   }
 
-  delete(userId: number): boolean {
-    const index = accessDataStore.users.findIndex((u) => u.userId === userId);
-    if (index === -1) {return false;}
-
-    accessDataStore.users.splice(index, 1);
-    return true;
+  async findById(userId: number): Promise<SystemUser | null> {
+    const result = await db
+      .select()
+      .from(sys_user)
+      .where(eq(sys_user.userId, userId));
+    return result.length > 0 ? this.toEntity(result[0]) : null;
   }
 
-  deleteBatch(userIds: number[]): number {
-    let count = 0;
-    for (const userId of userIds) {
-      const index = accessDataStore.users.findIndex((u) => u.userId === userId);
-      if (index !== -1) {
-        accessDataStore.users.splice(index, 1);
-        count++;
-      }
+  async findByUsername(username: string): Promise<SystemUser | null> {
+    const result = await db
+      .select()
+      .from(sys_user)
+      .where(eq(sys_user.username, username));
+    return result.length > 0 ? this.toEntity(result[0]) : null;
+  }
+
+  async findByRoleId(roleId: number): Promise<SystemUser[]> {
+    const userRoleResult = await db
+      .select()
+      .from(sys_user_role)
+      .where(eq(sys_user_role.roleId, roleId));
+
+    if (userRoleResult.length === 0) {
+      return [];
     }
-    return count;
+
+    const userIds = userRoleResult.map((ur) => ur.userId);
+    const result = await db
+      .select()
+      .from(sys_user)
+      .where(eq(sys_user.userId, userIds[0]));
+
+    return result.map((row) => this.toEntity(row));
+  }
+
+  async create(data: Partial<SystemUser>): Promise<number> {
+    const result = await db.insert(sys_user).values({
+      username: data.username,
+      nickName: data.nickName,
+      password: data.password,
+      status: data.status,
+    } as typeof sys_user.$inferInsert);
+    return result[0].insertId;
+  }
+
+  async update(userId: number, data: Partial<SystemUser>): Promise<boolean> {
+    const result = await db
+      .update(sys_user)
+      .set({
+        nickName: data.nickName,
+        status: data.status,
+      } as typeof sys_user.$inferInsert)
+      .where(eq(sys_user.userId, userId));
+    return result.length > 0;
+  }
+
+  async delete(userId: number): Promise<boolean> {
+    const result = await db.delete(sys_user).where(eq(sys_user.userId, userId));
+    return result.length > 0;
+  }
+
+  async deleteBatch(userIds: number[]): Promise<number> {
+    const result = await db
+      .delete(sys_user)
+      .where(eq(sys_user.userId, userIds[0]));
+    return result.length;
   }
 }
 
-export const userRepository = new InMemoryUserRepository();
+export const userRepository = new DrizzleUserRepository();

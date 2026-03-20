@@ -71,7 +71,7 @@ const markOperLogged = (set: SecuredSet): void => {
 
 const getOperLogMeta = (
   meta: SecuredMeta,
-  request: Request
+  request: Request,
 ): OperLogMeta | null => {
   if (meta.operLog) {
     return meta.operLog;
@@ -89,7 +89,9 @@ const getOperLogMeta = (
 
 export const secured = <TContext extends SecuredContext, TResult>(
   meta: SecuredMeta,
-  handler: (context: TContext & { currentUser: JwtUserPayload }) => TResult | Promise<TResult>
+  handler: (
+    context: TContext & { currentUser: JwtUserPayload },
+  ) => TResult | Promise<TResult>,
 ) => {
   return async (context: TContext): Promise<TResult | ApiResponse<null>> => {
     const operLogMeta = getOperLogMeta(meta, context.request);
@@ -98,7 +100,7 @@ export const secured = <TContext extends SecuredContext, TResult>(
           context.currentUser,
           context.set,
           meta.permission,
-          meta.denyMessage ?? "无权限访问"
+          meta.denyMessage ?? "无权限访问",
         )
       : requireLogin(context.currentUser, context.set, meta.loginMessage);
 
@@ -108,7 +110,8 @@ export const secured = <TContext extends SecuredContext, TResult>(
           title: operLogMeta.title,
           operName: context.currentUser?.username ?? "anonymous",
           method: operLogMeta.method ?? "secured",
-          businessType: operLogMeta.businessType ?? toBusinessType(context.request.method),
+          businessType:
+            operLogMeta.businessType ?? toBusinessType(context.request.method),
           requestMethod: context.request.method,
           operUrl: toPathname(context.request),
           status: "1",
@@ -122,7 +125,9 @@ export const secured = <TContext extends SecuredContext, TResult>(
     let failed = false;
 
     try {
-      response = await handler(context as TContext & { currentUser: JwtUserPayload });
+      response = await handler(
+        context as TContext & { currentUser: JwtUserPayload },
+      );
       return response;
     } catch (error) {
       failed = true;
@@ -136,7 +141,9 @@ export const secured = <TContext extends SecuredContext, TResult>(
             title: operLogMeta.title,
             operName: context.currentUser?.username ?? "anonymous",
             method: operLogMeta.method ?? "secured",
-            businessType: operLogMeta.businessType ?? toBusinessType(context.request.method),
+            businessType:
+              operLogMeta.businessType ??
+              toBusinessType(context.request.method),
             requestMethod: context.request.method,
             operUrl: toPathname(context.request),
             status: isFailure ? "1" : "0",

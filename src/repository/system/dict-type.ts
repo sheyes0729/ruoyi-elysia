@@ -1,69 +1,81 @@
+import { eq } from "drizzle-orm";
 import type { SystemDictType } from "../../modules/system/access-data";
-import { accessDataStore } from "../../modules/system/access-data";
+import { sys_dict_type } from "../../database/schema";
+import { db } from "../../database";
 import type { Repository } from "../base";
 
 export interface DictTypeRepository extends Repository<SystemDictType, number> {
-  findByDictType(dictType: string): SystemDictType | null;
+  findByDictType(dictType: string): Promise<SystemDictType | null>;
 }
 
-export class InMemoryDictTypeRepository implements DictTypeRepository {
-  findAll(): SystemDictType[] {
-    return [...accessDataStore.dictTypes];
-  }
+export class DrizzleDictTypeRepository implements DictTypeRepository {
+  private readonly table = sys_dict_type;
 
-  findById(dictId: number): SystemDictType | null {
-    return accessDataStore.dictTypes.find((d) => d.dictId === dictId) || null;
-  }
-
-  findByDictType(dictType: string): SystemDictType | null {
-    return (
-      accessDataStore.dictTypes.find((d) => d.dictType === dictType) || null
-    );
-  }
-
-  create(data: Partial<SystemDictType>): number {
-    const nextId =
-      accessDataStore.dictTypes.reduce((max, d) => Math.max(max, d.dictId), 0) +
-      1;
-
-    const newDictType: SystemDictType = {
-      dictId: nextId,
-      dictName: data.dictName || "",
-      dictType: data.dictType || "",
-      status: data.status || "0",
+  private toEntity(row: typeof sys_dict_type.$inferSelect): SystemDictType {
+    return {
+      dictId: row.dictId,
+      dictName: row.dictName,
+      dictType: row.dictType,
+      status: row.status as "0" | "1",
     };
-
-    accessDataStore.dictTypes.push(newDictType);
-    return nextId;
   }
 
-  update(dictId: number, data: Partial<SystemDictType>): boolean {
-    const dictType = accessDataStore.dictTypes.find((d) => d.dictId === dictId);
-    if (!dictType) {return false;}
+  private readonly pkColumn = sys_dict_type.dictId;
 
-    Object.assign(dictType, data);
-    return true;
+  async findAll(): Promise<SystemDictType[]> {
+    const result = await db.select().from(sys_dict_type);
+    return result.map((row) => this.toEntity(row));
   }
 
-  delete(dictId: number): boolean {
-    const index = accessDataStore.dictTypes.findIndex((d) => d.dictId === dictId);
-    if (index === -1) {return false;}
-
-    accessDataStore.dictTypes.splice(index, 1);
-    return true;
+  async findById(dictId: number): Promise<SystemDictType | null> {
+    const result = await db
+      .select()
+      .from(sys_dict_type)
+      .where(eq(sys_dict_type.dictId, dictId));
+    return result.length > 0 ? this.toEntity(result[0]) : null;
   }
 
-  deleteBatch(dictIds: number[]): number {
-    let count = 0;
-    for (const dictId of dictIds) {
-      const index = accessDataStore.dictTypes.findIndex((d) => d.dictId === dictId);
-      if (index !== -1) {
-        accessDataStore.dictTypes.splice(index, 1);
-        count++;
-      }
-    }
-    return count;
+  async findByDictType(dictType: string): Promise<SystemDictType | null> {
+    const result = await db
+      .select()
+      .from(sys_dict_type)
+      .where(eq(sys_dict_type.dictType, dictType));
+    return result.length > 0 ? this.toEntity(result[0]) : null;
+  }
+
+  async create(data: Partial<SystemDictType>): Promise<number> {
+    const result = await db.insert(sys_dict_type).values({
+      dictName: data.dictName,
+      dictType: data.dictType,
+      status: data.status,
+    } as typeof sys_dict_type.$inferInsert);
+    return result[0].insertId;
+  }
+
+  async update(
+    dictId: number,
+    data: Partial<SystemDictType>,
+  ): Promise<boolean> {
+    const result = await db
+      .update(sys_dict_type)
+      .set(data as typeof sys_dict_type.$inferInsert)
+      .where(eq(sys_dict_type.dictId, dictId));
+    return result.length > 0;
+  }
+
+  async delete(dictId: number): Promise<boolean> {
+    const result = await db
+      .delete(sys_dict_type)
+      .where(eq(sys_dict_type.dictId, dictId));
+    return result.length > 0;
+  }
+
+  async deleteBatch(dictIds: number[]): Promise<number> {
+    const result = await db
+      .delete(sys_dict_type)
+      .where(eq(sys_dict_type.dictId, dictIds[0]));
+    return result.length;
   }
 }
 
-export const dictTypeRepository = new InMemoryDictTypeRepository();
+export const dictTypeRepository = new DrizzleDictTypeRepository();

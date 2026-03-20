@@ -1,11 +1,10 @@
-import { removeBatchByNumericId } from "../../../common/data/array";
-import { accessDataStore } from "../access-data";
 import type {
   CreatePostBody,
   ListPostQuery,
   PostListItem,
   UpdatePostBody,
 } from "./model";
+import { postRepository } from "../../../repository";
 
 type CreatePostResult =
   | { success: true; postId: number }
@@ -16,8 +15,10 @@ type UpdatePostResult =
   | { success: false; reason: "post_not_found" | "post_code_exists" };
 
 export class PostService {
-  list(query?: ListPostQuery): PostListItem[] {
-    const source = accessDataStore.posts.map((item) => ({
+  async list(query?: ListPostQuery): Promise<PostListItem[]> {
+    const posts = await postRepository.findAll();
+
+    const source = posts.map((item) => ({
       postId: item.postId,
       postCode: item.postCode,
       postName: item.postName,
@@ -46,52 +47,43 @@ export class PostService {
     });
   }
 
-  removeBatch(ids: number[]): number {
-    return removeBatchByNumericId(accessDataStore.posts, ids, (item) => item.postId);
+  async removeBatch(ids: number[]): Promise<number> {
+    return postRepository.deleteBatch(ids);
   }
 
-  create(payload: CreatePostBody): CreatePostResult {
-    const existed = accessDataStore.posts.some(
-      (item) => item.postCode === payload.postCode
-    );
+  async create(payload: CreatePostBody): Promise<CreatePostResult> {
+    const existed = await postRepository.findByPostCode(payload.postCode);
     if (existed) {
       return { success: false, reason: "post_code_exists" };
     }
 
-    const nextId =
-      accessDataStore.posts.reduce(
-        (maxPostId, item) => Math.max(maxPostId, item.postId),
-        0
-      ) + 1;
-
-    accessDataStore.posts.push({
-      postId: nextId,
+    const postId = await postRepository.create({
       postCode: payload.postCode,
       postName: payload.postName,
       postSort: payload.postSort,
       status: payload.status,
     });
 
-    return { success: true, postId: nextId };
+    return { success: true, postId };
   }
 
-  update(payload: UpdatePostBody): UpdatePostResult {
-    const target = accessDataStore.posts.find((item) => item.postId === payload.postId);
+  async update(payload: UpdatePostBody): Promise<UpdatePostResult> {
+    const target = await postRepository.findById(payload.postId);
     if (!target) {
       return { success: false, reason: "post_not_found" };
     }
 
-    const existed = accessDataStore.posts.some(
-      (item) => item.postCode === payload.postCode && item.postId !== payload.postId
-    );
-    if (existed) {
+    const existed = await postRepository.findByPostCode(payload.postCode);
+    if (existed && existed.postId !== payload.postId) {
       return { success: false, reason: "post_code_exists" };
     }
 
-    target.postCode = payload.postCode;
-    target.postName = payload.postName;
-    target.postSort = payload.postSort;
-    target.status = payload.status;
+    await postRepository.update(payload.postId, {
+      postCode: payload.postCode,
+      postName: payload.postName,
+      postSort: payload.postSort,
+      status: payload.status,
+    });
 
     return { success: true };
   }

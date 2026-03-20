@@ -1,67 +1,78 @@
+import { eq } from "drizzle-orm";
 import type { SystemDept } from "../../modules/system/access-data";
-import { accessDataStore } from "../../modules/system/access-data";
+import { sys_dept } from "../../database/schema";
+import { db } from "../../database";
 import type { Repository } from "../base";
 
 export interface DeptRepository extends Repository<SystemDept, number> {
-  findByParentId(parentId: number): SystemDept[];
+  findByParentId(parentId: number): Promise<SystemDept[]>;
 }
 
-export class InMemoryDeptRepository implements DeptRepository {
-  findAll(): SystemDept[] {
-    return [...accessDataStore.depts];
-  }
+export class DrizzleDeptRepository implements DeptRepository {
+  private readonly table = sys_dept;
 
-  findById(deptId: number): SystemDept | null {
-    return accessDataStore.depts.find((d) => d.deptId === deptId) || null;
-  }
-
-  findByParentId(parentId: number): SystemDept[] {
-    return accessDataStore.depts.filter((d) => d.parentId === parentId);
-  }
-
-  create(data: Partial<SystemDept>): number {
-    const nextId =
-      accessDataStore.depts.reduce((max, d) => Math.max(max, d.deptId), 0) + 1;
-
-    const newDept: SystemDept = {
-      deptId: nextId,
-      deptName: data.deptName || "",
-      parentId: data.parentId ?? 0,
-      orderNum: data.orderNum || 0,
-      status: data.status || "0",
+  private toEntity(row: typeof sys_dept.$inferSelect): SystemDept {
+    return {
+      deptId: row.deptId,
+      deptName: row.deptName,
+      parentId: row.parentId,
+      orderNum: row.orderNum,
+      status: row.status as "0" | "1",
     };
-
-    accessDataStore.depts.push(newDept);
-    return nextId;
   }
 
-  update(deptId: number, data: Partial<SystemDept>): boolean {
-    const dept = accessDataStore.depts.find((d) => d.deptId === deptId);
-    if (!dept) {return false;}
+  private readonly pkColumn = sys_dept.deptId;
 
-    Object.assign(dept, data);
-    return true;
+  async findAll(): Promise<SystemDept[]> {
+    const result = await db.select().from(sys_dept);
+    return result.map((row) => this.toEntity(row));
   }
 
-  delete(deptId: number): boolean {
-    const index = accessDataStore.depts.findIndex((d) => d.deptId === deptId);
-    if (index === -1) {return false;}
-
-    accessDataStore.depts.splice(index, 1);
-    return true;
+  async findById(deptId: number): Promise<SystemDept | null> {
+    const result = await db
+      .select()
+      .from(sys_dept)
+      .where(eq(sys_dept.deptId, deptId));
+    return result.length > 0 ? this.toEntity(result[0]) : null;
   }
 
-  deleteBatch(deptIds: number[]): number {
-    let count = 0;
-    for (const deptId of deptIds) {
-      const index = accessDataStore.depts.findIndex((d) => d.deptId === deptId);
-      if (index !== -1) {
-        accessDataStore.depts.splice(index, 1);
-        count++;
-      }
-    }
-    return count;
+  async findByParentId(parentId: number): Promise<SystemDept[]> {
+    const result = await db
+      .select()
+      .from(sys_dept)
+      .where(eq(sys_dept.parentId, parentId));
+    return result.map((row) => this.toEntity(row));
+  }
+
+  async create(data: Partial<SystemDept>): Promise<number> {
+    const result = await db.insert(sys_dept).values({
+      deptName: data.deptName,
+      parentId: data.parentId,
+      orderNum: data.orderNum,
+      status: data.status,
+    } as typeof sys_dept.$inferInsert);
+    return result[0].insertId;
+  }
+
+  async update(deptId: number, data: Partial<SystemDept>): Promise<boolean> {
+    const result = await db
+      .update(sys_dept)
+      .set(data as typeof sys_dept.$inferInsert)
+      .where(eq(sys_dept.deptId, deptId));
+    return result.length > 0;
+  }
+
+  async delete(deptId: number): Promise<boolean> {
+    const result = await db.delete(sys_dept).where(eq(sys_dept.deptId, deptId));
+    return result.length > 0;
+  }
+
+  async deleteBatch(deptIds: number[]): Promise<number> {
+    const result = await db
+      .delete(sys_dept)
+      .where(eq(sys_dept.deptId, deptIds[0]));
+    return result.length;
   }
 }
 
-export const deptRepository = new InMemoryDeptRepository();
+export const deptRepository = new DrizzleDeptRepository();

@@ -30,7 +30,7 @@ export const OperLogRoutes = new Elysia({
         const typedQuery = query as ListOperLogQuery;
         const records = operLogService.list(typedQuery);
         return ok(paginateData(records, typedQuery));
-      }
+      },
     ),
     {
       query: ListOperLogSchema,
@@ -43,7 +43,7 @@ export const OperLogRoutes = new Elysia({
         tags: ["监控管理-操作日志"],
         summary: "查询操作日志列表",
       },
-    }
+    },
   )
   .post(
     "/export",
@@ -70,9 +70,9 @@ export const OperLogRoutes = new Elysia({
             { header: "状态", value: (row) => row.status },
             { header: "时间", value: (row) => row.operTime },
           ],
-          "monitor-oper-log-export.csv"
+          "monitor-oper-log-export.csv",
         );
-      }
+      },
     ),
     {
       query: ListOperLogSchema,
@@ -80,7 +80,7 @@ export const OperLogRoutes = new Elysia({
         tags: ["监控管理-操作日志"],
         summary: "导出操作日志",
       },
-    }
+    },
   )
   .delete(
     "/clean",
@@ -93,7 +93,7 @@ export const OperLogRoutes = new Elysia({
       () => {
         const count = operLogService.clear();
         return ok({ count }, "清空成功");
-      }
+      },
     ),
     {
       response: {
@@ -105,5 +105,5 @@ export const OperLogRoutes = new Elysia({
         tags: ["监控管理-操作日志"],
         summary: "清空操作日志",
       },
-    }
+    },
   );

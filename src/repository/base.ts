@@ -1,8 +1,8 @@
 export interface Repository<T, ID = number> {
-  findAll(): T[];
-  findById(id: ID): T | null;
-  create(data: Partial<T>): ID;
-  update(id: ID, data: Partial<T>): boolean;
-  delete(id: ID): boolean;
-  deleteBatch(ids: ID[]): number;
+  findAll(): Promise<T[]>;
+  findById(id: ID): Promise<T | null>;
+  create(data: Partial<T>): Promise<ID>;
+  update(id: ID, data: Partial<T>): Promise<boolean>;
+  delete(id: ID): Promise<boolean>;
+  deleteBatch(ids: ID[]): Promise<number>;
 }

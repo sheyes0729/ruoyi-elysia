@@ -1,4 +1,4 @@
-const portValue = Number(process.env.PORT ?? "3000");
+const portValue = Number(process.env.PORT ?? "4000");
 
 if (Number.isNaN(portValue) || portValue <= 0 || portValue > 65535) {
   throw new Error("Invalid PORT value");

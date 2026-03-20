@@ -33,10 +33,12 @@ export const NoticeRoutes = new Elysia({
         permission: "system:notice:list",
         denyMessage: "无权限访问通知公告",
       },
-      ({ query }) => {
+      async ({ query }) => {
         const typedQuery = query as ListNoticeQuery;
-        return ok(paginateData(noticeService.list(typedQuery), typedQuery));
-      }
+        return ok(
+          paginateData(await noticeService.list(typedQuery), typedQuery),
+        );
+      },
     ),
     {
       query: ListNoticeSchema,
@@ -49,7 +51,7 @@ export const NoticeRoutes = new Elysia({
         tags: ["系统管理-通知公告"],
         summary: "查询通知公告列表",
       },
-    }
+    },
   )
   .post(
     "/export",
@@ -59,9 +61,9 @@ export const NoticeRoutes = new Elysia({
         denyMessage: "无权限导出通知公告",
         operLog: OPER_LOG.EXPORT,
       },
-      ({ query, set }) => {
+      async ({ query, set }) => {
         const typedQuery = query as ListNoticeQuery;
-        const rows = noticeService.list(typedQuery);
+        const rows = await noticeService.list(typedQuery);
         const csv = toCsv(rows, [
           { header: "公告ID", value: (row) => row.noticeId },
           { header: "公告标题", value: (row) => row.noticeTitle },
@@ -75,7 +77,7 @@ export const NoticeRoutes = new Elysia({
         headers["content-disposition"] =
           "attachment; filename=system-notice-export.csv";
         return `\uFEFF${csv}`;
-      }
+      },
     ),
     {
       query: ListNoticeSchema,
@@ -83,7 +85,7 @@ export const NoticeRoutes = new Elysia({
         tags: ["系统管理-通知公告"],
         summary: "导出通知公告列表",
       },
-    }
+    },
   )
   .delete(
     "/batch",
@@ -93,11 +95,11 @@ export const NoticeRoutes = new Elysia({
         denyMessage: "无权限删除通知公告",
         operLog: OPER_LOG.DELETE,
       },
-      ({ body }) => {
+      async ({ body }) => {
         const typedBody = body as typeof RemoveBatchNoticeSchema.static;
-        const count = noticeService.removeBatch(typedBody.ids);
+        const count = await noticeService.removeBatch(typedBody.ids);
         return ok({ count }, "删除成功");
-      }
+      },
     ),
     {
       body: RemoveBatchNoticeSchema,
@@ -110,7 +112,7 @@ export const NoticeRoutes = new Elysia({
         tags: ["系统管理-通知公告"],
         summary: "批量删除通知公告",
       },
-    }
+    },
   )
   .post(
     "/add",
@@ -120,11 +122,11 @@ export const NoticeRoutes = new Elysia({
         denyMessage: "无权限新增通知公告",
         operLog: OPER_LOG.CREATE,
       },
-      ({ body }) => {
+      async ({ body }) => {
         const typedBody = body as CreateNoticeBody;
-        const result = noticeService.create(typedBody);
+        const result = await noticeService.create(typedBody);
         return ok({ noticeId: result.noticeId }, "新增成功");
-      }
+      },
     ),
     {
       body: CreateNoticeSchema,
@@ -137,7 +139,7 @@ export const NoticeRoutes = new Elysia({
         tags: ["系统管理-通知公告"],
         summary: "新增通知公告",
       },
-    }
+    },
   )
   .put(
     "/edit",
@@ -147,16 +149,16 @@ export const NoticeRoutes = new Elysia({
         denyMessage: "无权限编辑通知公告",
         operLog: OPER_LOG.UPDATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as UpdateNoticeBody;
-        const result = noticeService.update(typedBody);
+        const result = await noticeService.update(typedBody);
         if (!result.success) {
           set.status = 404;
           return fail(404, "通知公告不存在");
         }
 
         return ok(true, "修改成功");
-      }
+      },
     ),
     {
       body: UpdateNoticeSchema,
@@ -170,5 +172,5 @@ export const NoticeRoutes = new Elysia({
         tags: ["系统管理-通知公告"],
         summary: "编辑通知公告",
       },
-    }
+    },
   );

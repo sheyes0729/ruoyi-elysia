@@ -37,16 +37,24 @@
 - 完成关键管理动作：用户重置密码、角色菜单授权
 - 完成导入能力：用户导入、字典数据导入（含模板下载）
 
+### 2026-03-20（P2 数据库持久化）
+
+- 完成 Repository 接口改造为 async 方法
+- 完成 DrizzleRepository 基类实现（9 个模块：用户、角色、菜单、部门、岗位、字典类型、字典数据、参数配置、通知公告）
+- 完成 Service 层改造为使用 async repository（全部 9 个系统管理模块）
+- 完成 Routes 层 async/await 改造（全部 9 个系统管理模块）
+- 完成数据库 schema 设计与迁移脚本
+
 ## 下个里程碑目标
 
 ### P2（数据库与生产化）
 
 - [x] Drizzle 配置与数据库 schema 设计（用户、角色、菜单、部门、岗位、字典类型、字典数据、参数配置、通知公告、操作日志、登录日志）
-- [x] Repository 层基础架构（base repository 接口 + 各模块内存实现）
+- [x] Repository 层基础架构（base repository 接口 + Drizzle 实现）
 - [x] Drizzle 迁移脚本生成（12 张表）
 - [x] 数据库种子数据脚本
+- [x] 将 service 层改造为使用 repository，实现数据库持久化（用户、角色、菜单、部门、岗位、字典类型、字典数据、参数配置、通知公告）
 - [ ] 接入真实 MySQL 数据库，完成数据迁移
-- [ ] 将 service 层改造为使用 repository，实现数据库持久化
 - [ ] 建立测试体系（鉴权、权限、系统管理关键路径）
 
 ### P3（部署与生产化）
@@ -100,8 +108,9 @@
 
 ### 5. 工程化与质量保障
 
-- [x] 分层架构（router/service/repository/domain）- Repository 接口与内存实现已完成
+- [x] 分层架构（router/service/repository/domain）- Repository 接口与 Drizzle ORM 实现已完成
 - [x] 数据库迁移与种子数据能力 - Drizzle 迁移脚本已生成，种子数据脚本已完成
+- [x] Service 层数据库持久化 - 全部 9 个系统管理模块已改造为 async repository 模式
 - [ ] 单元测试与集成测试
 - [x] Lint、Type Check、格式化规范
 - [ ] CI/CD 流水线
@@ -226,10 +235,11 @@ bun add -d supertest @faker-js/faker husky lint-staged
 ### P0（先打通主流程）
 
 - [x] 设计目录结构与模块边界
-- [ ] 接入数据库与 ORM，建立用户/角色/菜单/部门核心表
 - [x] 完成登录、鉴权中间件、权限校验最小闭环
 - [x] 完成用户管理与角色管理基础接口
 - [x] 统一错误处理、统一响应结构、参数校验
+- [x] 完成 Repository 层架构与 Drizzle ORM 实现
+- [ ] 接入数据库与 ORM，建立用户/角色/菜单/部门核心表
 
 ### P1（补齐若依系统管理能力）
 
@@ -240,6 +250,8 @@ bun add -d supertest @faker-js/faker husky lint-staged
 
 ### P2（工程化与生产化）
 
+- [x] 完成 Service 层数据库持久化改造（async repository 模式）
+- [ ] 接入真实 MySQL 数据库，完成数据迁移
 - [ ] 增加测试体系（核心鉴权、权限、系统管理模块）
 - [ ] 完成接口文档与变更规范
 - [ ] 增加限流、审计追踪、告警能力

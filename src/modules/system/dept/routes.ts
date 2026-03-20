@@ -32,10 +32,10 @@ export const DeptRoutes = new Elysia({
         permission: "system:dept:list",
         denyMessage: "无权限访问部门管理",
       },
-      ({ query }) => {
+      async ({ query }) => {
         const typedQuery = query as ListDeptQuery;
-        return ok(deptService.list(typedQuery));
-      }
+        return ok(await deptService.list(typedQuery));
+      },
     ),
     {
       query: ListDeptSchema,
@@ -48,7 +48,7 @@ export const DeptRoutes = new Elysia({
         tags: ["系统管理-部门管理"],
         summary: "查询部门树列表",
       },
-    }
+    },
   )
   .post(
     "/export",
@@ -58,9 +58,9 @@ export const DeptRoutes = new Elysia({
         denyMessage: "无权限导出部门数据",
         operLog: OPER_LOG.EXPORT,
       },
-      ({ query, set }) => {
+      async ({ query, set }) => {
         const typedQuery = query as ListDeptQuery;
-        const rows = deptService.listFlat(typedQuery);
+        const rows = await deptService.listFlat(typedQuery);
         const csv = toCsv(rows, [
           { header: "部门ID", value: (row) => row.deptId },
           { header: "父部门ID", value: (row) => row.parentId },
@@ -74,7 +74,7 @@ export const DeptRoutes = new Elysia({
         headers["content-disposition"] =
           "attachment; filename=system-dept-export.csv";
         return `\uFEFF${csv}`;
-      }
+      },
     ),
     {
       query: ListDeptSchema,
@@ -82,7 +82,7 @@ export const DeptRoutes = new Elysia({
         tags: ["系统管理-部门管理"],
         summary: "导出部门列表",
       },
-    }
+    },
   )
   .delete(
     "/batch",
@@ -92,11 +92,11 @@ export const DeptRoutes = new Elysia({
         denyMessage: "无权限删除部门",
         operLog: OPER_LOG.DELETE,
       },
-      ({ body }) => {
+      async ({ body }) => {
         const typedBody = body as typeof RemoveBatchDeptSchema.static;
-        const count = deptService.removeBatch(typedBody.ids);
+        const count = await deptService.removeBatch(typedBody.ids);
         return ok({ count }, "删除成功");
-      }
+      },
     ),
     {
       body: RemoveBatchDeptSchema,
@@ -109,7 +109,7 @@ export const DeptRoutes = new Elysia({
         tags: ["系统管理-部门管理"],
         summary: "批量删除部门（含子节点）",
       },
-    }
+    },
   )
   .post(
     "/add",
@@ -119,16 +119,16 @@ export const DeptRoutes = new Elysia({
         denyMessage: "无权限新增部门",
         operLog: OPER_LOG.CREATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as CreateDeptBody;
-        const result = deptService.create(typedBody);
+        const result = await deptService.create(typedBody);
         if (!result.success) {
           set.status = 400;
           return fail(400, "父部门不存在");
         }
 
         return ok({ deptId: result.deptId }, "新增成功");
-      }
+      },
     ),
     {
       body: CreateDeptSchema,
@@ -142,7 +142,7 @@ export const DeptRoutes = new Elysia({
         tags: ["系统管理-部门管理"],
         summary: "新增部门",
       },
-    }
+    },
   )
   .put(
     "/edit",
@@ -152,9 +152,9 @@ export const DeptRoutes = new Elysia({
         denyMessage: "无权限编辑部门",
         operLog: OPER_LOG.UPDATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as UpdateDeptBody;
-        const result = deptService.update(typedBody);
+        const result = await deptService.update(typedBody);
         if (!result.success) {
           if (result.reason === "dept_not_found") {
             set.status = 404;
@@ -171,7 +171,7 @@ export const DeptRoutes = new Elysia({
         }
 
         return ok(true, "修改成功");
-      }
+      },
     ),
     {
       body: UpdateDeptSchema,
@@ -186,5 +186,5 @@ export const DeptRoutes = new Elysia({
         tags: ["系统管理-部门管理"],
         summary: "编辑部门",
       },
-    }
+    },
   );

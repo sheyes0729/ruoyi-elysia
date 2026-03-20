@@ -1,67 +1,78 @@
+import { eq } from "drizzle-orm";
 import type { SystemPost } from "../../modules/system/access-data";
-import { accessDataStore } from "../../modules/system/access-data";
+import { sys_post } from "../../database/schema";
+import { db } from "../../database";
 import type { Repository } from "../base";
 
 export interface PostRepository extends Repository<SystemPost, number> {
-  findByPostCode(postCode: string): SystemPost | null;
+  findByPostCode(postCode: string): Promise<SystemPost | null>;
 }
 
-export class InMemoryPostRepository implements PostRepository {
-  findAll(): SystemPost[] {
-    return [...accessDataStore.posts];
-  }
+export class DrizzlePostRepository implements PostRepository {
+  private readonly table = sys_post;
 
-  findById(postId: number): SystemPost | null {
-    return accessDataStore.posts.find((p) => p.postId === postId) || null;
-  }
-
-  findByPostCode(postCode: string): SystemPost | null {
-    return accessDataStore.posts.find((p) => p.postCode === postCode) || null;
-  }
-
-  create(data: Partial<SystemPost>): number {
-    const nextId =
-      accessDataStore.posts.reduce((max, p) => Math.max(max, p.postId), 0) + 1;
-
-    const newPost: SystemPost = {
-      postId: nextId,
-      postCode: data.postCode || "",
-      postName: data.postName || "",
-      postSort: data.postSort || 0,
-      status: data.status || "0",
+  private toEntity(row: typeof sys_post.$inferSelect): SystemPost {
+    return {
+      postId: row.postId,
+      postCode: row.postCode,
+      postName: row.postName,
+      postSort: row.postSort,
+      status: row.status as "0" | "1",
     };
-
-    accessDataStore.posts.push(newPost);
-    return nextId;
   }
 
-  update(postId: number, data: Partial<SystemPost>): boolean {
-    const post = accessDataStore.posts.find((p) => p.postId === postId);
-    if (!post) {return false;}
+  private readonly pkColumn = sys_post.postId;
 
-    Object.assign(post, data);
-    return true;
+  async findAll(): Promise<SystemPost[]> {
+    const result = await db.select().from(sys_post);
+    return result.map((row) => this.toEntity(row));
   }
 
-  delete(postId: number): boolean {
-    const index = accessDataStore.posts.findIndex((p) => p.postId === postId);
-    if (index === -1) {return false;}
-
-    accessDataStore.posts.splice(index, 1);
-    return true;
+  async findById(postId: number): Promise<SystemPost | null> {
+    const result = await db
+      .select()
+      .from(sys_post)
+      .where(eq(sys_post.postId, postId));
+    return result.length > 0 ? this.toEntity(result[0]) : null;
   }
 
-  deleteBatch(postIds: number[]): number {
-    let count = 0;
-    for (const postId of postIds) {
-      const index = accessDataStore.posts.findIndex((p) => p.postId === postId);
-      if (index !== -1) {
-        accessDataStore.posts.splice(index, 1);
-        count++;
-      }
-    }
-    return count;
+  async findByPostCode(postCode: string): Promise<SystemPost | null> {
+    const result = await db
+      .select()
+      .from(sys_post)
+      .where(eq(sys_post.postCode, postCode));
+    return result.length > 0 ? this.toEntity(result[0]) : null;
+  }
+
+  async create(data: Partial<SystemPost>): Promise<number> {
+    const result = await db.insert(sys_post).values({
+      postCode: data.postCode,
+      postName: data.postName,
+      postSort: data.postSort,
+      status: data.status,
+    } as typeof sys_post.$inferInsert);
+    return result[0].insertId;
+  }
+
+  async update(postId: number, data: Partial<SystemPost>): Promise<boolean> {
+    const result = await db
+      .update(sys_post)
+      .set(data as typeof sys_post.$inferInsert)
+      .where(eq(sys_post.postId, postId));
+    return result.length > 0;
+  }
+
+  async delete(postId: number): Promise<boolean> {
+    const result = await db.delete(sys_post).where(eq(sys_post.postId, postId));
+    return result.length > 0;
+  }
+
+  async deleteBatch(postIds: number[]): Promise<number> {
+    const result = await db
+      .delete(sys_post)
+      .where(eq(sys_post.postId, postIds[0]));
+    return result.length;
   }
 }
 
-export const postRepository = new InMemoryPostRepository();
+export const postRepository = new DrizzlePostRepository();

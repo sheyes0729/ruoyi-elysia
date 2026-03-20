@@ -1,11 +1,10 @@
-import { removeBatchByNumericId } from "../../../common/data/array";
-import { accessDataStore } from "../access-data";
 import type {
   CreateDictTypeBody,
   DictTypeListItem,
   ListDictTypeQuery,
   UpdateDictTypeBody,
 } from "./model";
+import { dictTypeRepository, dictDataRepository } from "../../../repository";
 
 type CreateDictTypeResult =
   | { success: true; dictId: number }
@@ -16,8 +15,10 @@ type UpdateDictTypeResult =
   | { success: false; reason: "dict_type_not_found" | "dict_type_exists" };
 
 export class DictTypeService {
-  list(query?: ListDictTypeQuery): DictTypeListItem[] {
-    const source = accessDataStore.dictTypes.map((item) => ({
+  async list(query?: ListDictTypeQuery): Promise<DictTypeListItem[]> {
+    const dictTypes = await dictTypeRepository.findAll();
+
+    const source = dictTypes.map((item) => ({
       dictId: item.dictId,
       dictName: item.dictName,
       dictType: item.dictType,
@@ -45,58 +46,51 @@ export class DictTypeService {
     });
   }
 
-  removeBatch(ids: number[]): number {
-    return removeBatchByNumericId(accessDataStore.dictTypes, ids, (item) => item.dictId);
+  async removeBatch(ids: number[]): Promise<number> {
+    return dictTypeRepository.deleteBatch(ids);
   }
 
-  create(payload: CreateDictTypeBody): CreateDictTypeResult {
-    const existed = accessDataStore.dictTypes.some(
-      (item) => item.dictType === payload.dictType
-    );
+  async create(payload: CreateDictTypeBody): Promise<CreateDictTypeResult> {
+    const existed = await dictTypeRepository.findByDictType(payload.dictType);
     if (existed) {
       return { success: false, reason: "dict_type_exists" };
     }
 
-    const nextId =
-      accessDataStore.dictTypes.reduce(
-        (maxDictId, item) => Math.max(maxDictId, item.dictId),
-        0
-      ) + 1;
-
-    accessDataStore.dictTypes.push({
-      dictId: nextId,
+    const dictId = await dictTypeRepository.create({
       dictName: payload.dictName,
       dictType: payload.dictType,
       status: payload.status,
     });
 
-    return { success: true, dictId: nextId };
+    return { success: true, dictId };
   }
 
-  update(payload: UpdateDictTypeBody): UpdateDictTypeResult {
-    const target = accessDataStore.dictTypes.find((item) => item.dictId === payload.dictId);
+  async update(payload: UpdateDictTypeBody): Promise<UpdateDictTypeResult> {
+    const target = await dictTypeRepository.findById(payload.dictId);
     if (!target) {
       return { success: false, reason: "dict_type_not_found" };
     }
 
     const previousDictType = target.dictType;
 
-    const existed = accessDataStore.dictTypes.some(
-      (item) => item.dictType === payload.dictType && item.dictId !== payload.dictId
-    );
-    if (existed) {
+    const existed = await dictTypeRepository.findByDictType(payload.dictType);
+    if (existed && existed.dictId !== payload.dictId) {
       return { success: false, reason: "dict_type_exists" };
     }
 
-    target.dictName = payload.dictName;
-    target.dictType = payload.dictType;
-    target.status = payload.status;
+    await dictTypeRepository.update(payload.dictId, {
+      dictName: payload.dictName,
+      dictType: payload.dictType,
+      status: payload.status,
+    });
 
-    accessDataStore.dictData
-      .filter((item) => item.dictType === previousDictType)
-      .forEach((item) => {
-        item.dictType = payload.dictType;
+    const dictDataItems =
+      await dictDataRepository.findByDictType(previousDictType);
+    for (const item of dictDataItems) {
+      await dictDataRepository.update(item.dictCode, {
+        dictType: payload.dictType,
       });
+    }
 
     return { success: true };
   }

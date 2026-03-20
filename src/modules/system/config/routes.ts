@@ -33,10 +33,12 @@ export const ConfigRoutes = new Elysia({
         permission: "system:config:list",
         denyMessage: "无权限访问参数配置",
       },
-      ({ query }) => {
+      async ({ query }) => {
         const typedQuery = query as ListConfigQuery;
-        return ok(paginateData(configService.list(typedQuery), typedQuery));
-      }
+        return ok(
+          paginateData(await configService.list(typedQuery), typedQuery),
+        );
+      },
     ),
     {
       query: ListConfigSchema,
@@ -49,7 +51,7 @@ export const ConfigRoutes = new Elysia({
         tags: ["系统管理-参数配置"],
         summary: "查询参数配置列表",
       },
-    }
+    },
   )
   .post(
     "/export",
@@ -59,9 +61,9 @@ export const ConfigRoutes = new Elysia({
         denyMessage: "无权限导出参数配置",
         operLog: OPER_LOG.EXPORT,
       },
-      ({ query, set }) => {
+      async ({ query, set }) => {
         const typedQuery = query as ListConfigQuery;
-        const rows = configService.list(typedQuery);
+        const rows = await configService.list(typedQuery);
         const csv = toCsv(rows, [
           { header: "参数ID", value: (row) => row.configId },
           { header: "参数名称", value: (row) => row.configName },
@@ -75,7 +77,7 @@ export const ConfigRoutes = new Elysia({
         headers["content-disposition"] =
           "attachment; filename=system-config-export.csv";
         return `\uFEFF${csv}`;
-      }
+      },
     ),
     {
       query: ListConfigSchema,
@@ -83,7 +85,7 @@ export const ConfigRoutes = new Elysia({
         tags: ["系统管理-参数配置"],
         summary: "导出参数配置列表",
       },
-    }
+    },
   )
   .delete(
     "/batch",
@@ -93,11 +95,11 @@ export const ConfigRoutes = new Elysia({
         denyMessage: "无权限删除参数配置",
         operLog: OPER_LOG.DELETE,
       },
-      ({ body }) => {
+      async ({ body }) => {
         const typedBody = body as typeof RemoveBatchConfigSchema.static;
-        const count = configService.removeBatch(typedBody.ids);
+        const count = await configService.removeBatch(typedBody.ids);
         return ok({ count }, "删除成功");
-      }
+      },
     ),
     {
       body: RemoveBatchConfigSchema,
@@ -110,7 +112,7 @@ export const ConfigRoutes = new Elysia({
         tags: ["系统管理-参数配置"],
         summary: "批量删除参数配置",
       },
-    }
+    },
   )
   .post(
     "/add",
@@ -120,16 +122,16 @@ export const ConfigRoutes = new Elysia({
         denyMessage: "无权限新增参数配置",
         operLog: OPER_LOG.CREATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as CreateConfigBody;
-        const result = configService.create(typedBody);
+        const result = await configService.create(typedBody);
         if (!result.success) {
           set.status = 409;
           return fail(409, "参数键名已存在");
         }
 
         return ok({ configId: result.configId }, "新增成功");
-      }
+      },
     ),
     {
       body: CreateConfigSchema,
@@ -143,7 +145,7 @@ export const ConfigRoutes = new Elysia({
         tags: ["系统管理-参数配置"],
         summary: "新增参数配置",
       },
-    }
+    },
   )
   .put(
     "/edit",
@@ -153,9 +155,9 @@ export const ConfigRoutes = new Elysia({
         denyMessage: "无权限编辑参数配置",
         operLog: OPER_LOG.UPDATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as UpdateConfigBody;
-        const result = configService.update(typedBody);
+        const result = await configService.update(typedBody);
         if (!result.success) {
           if (result.reason === "config_not_found") {
             set.status = 404;
@@ -167,7 +169,7 @@ export const ConfigRoutes = new Elysia({
         }
 
         return ok(true, "修改成功");
-      }
+      },
     ),
     {
       body: UpdateConfigSchema,
@@ -182,5 +184,5 @@ export const ConfigRoutes = new Elysia({
         tags: ["系统管理-参数配置"],
         summary: "编辑参数配置",
       },
-    }
+    },
   );

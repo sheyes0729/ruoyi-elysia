@@ -1,11 +1,10 @@
-import { removeBatchByNumericId } from "../../../common/data/array";
-import { accessDataStore } from "../access-data";
 import type {
   CreateDeptBody,
   DeptTreeItem,
   ListDeptQuery,
   UpdateDeptBody,
 } from "./model";
+import { deptRepository } from "../../../repository";
 
 type CreateDeptResult =
   | { success: true; deptId: number }
@@ -44,8 +43,10 @@ const filterByQuery = (source: DeptListItem[], query?: ListDeptQuery) =>
   });
 
 export class DeptService {
-  listFlat(query?: ListDeptQuery): DeptListItem[] {
-    const source = accessDataStore.depts.map((item) => ({
+  async listFlat(query?: ListDeptQuery): Promise<DeptListItem[]> {
+    const depts = await deptRepository.findAll();
+
+    const source = depts.map((item) => ({
       deptId: item.deptId,
       parentId: item.parentId,
       deptName: item.deptName,
@@ -55,11 +56,11 @@ export class DeptService {
     return filterByQuery(source, query).sort((a, b) => a.orderNum - b.orderNum);
   }
 
-  list(query?: ListDeptQuery): DeptTreeItem[] {
-    const source = this.listFlat(query);
+  async list(query?: ListDeptQuery): Promise<DeptTreeItem[]> {
+    const source = await this.listFlat(query);
 
     const map = new Map<number, DeptTreeItem>(
-      source.map((item) => [item.deptId, { ...item, children: [] }])
+      source.map((item) => [item.deptId, { ...item, children: [] }]),
     );
 
     const roots: DeptTreeItem[] = [];
@@ -82,72 +83,75 @@ export class DeptService {
     return roots;
   }
 
-  removeBatch(ids: number[]): number {
+  async removeBatch(ids: number[]): Promise<number> {
+    const allDepts = await deptRepository.findAll();
     const idSet = new Set(ids);
     let changed = true;
 
     while (changed) {
       changed = false;
-      accessDataStore.depts.forEach((item) => {
+      for (const item of allDepts) {
         if (idSet.has(item.parentId) && !idSet.has(item.deptId)) {
           idSet.add(item.deptId);
           changed = true;
         }
-      });
+      }
     }
 
-    return removeBatchByNumericId(accessDataStore.depts, [...idSet], (item) => item.deptId);
+    return deptRepository.deleteBatch([...idSet]);
   }
 
-  create(payload: CreateDeptBody): CreateDeptResult {
-    if (payload.parentId !== 0 && !this.deptExists(payload.parentId)) {
+  async create(payload: CreateDeptBody): Promise<CreateDeptResult> {
+    if (payload.parentId !== 0 && !(await this.deptExists(payload.parentId))) {
       return { success: false, reason: "parent_not_found" };
     }
 
-    const nextId =
-      accessDataStore.depts.reduce(
-        (maxDeptId, item) => Math.max(maxDeptId, item.deptId),
-        0
-      ) + 1;
-
-    accessDataStore.depts.push({
-      deptId: nextId,
+    const deptId = await deptRepository.create({
       parentId: payload.parentId,
       deptName: payload.deptName,
       orderNum: payload.orderNum,
       status: payload.status,
     });
 
-    return { success: true, deptId: nextId };
+    return { success: true, deptId };
   }
 
-  update(payload: UpdateDeptBody): UpdateDeptResult {
-    const target = accessDataStore.depts.find((item) => item.deptId === payload.deptId);
+  async update(payload: UpdateDeptBody): Promise<UpdateDeptResult> {
+    const target = await deptRepository.findById(payload.deptId);
     if (!target) {
       return { success: false, reason: "dept_not_found" };
     }
 
-    if (payload.parentId !== 0 && !this.deptExists(payload.parentId)) {
+    if (payload.parentId !== 0 && !(await this.deptExists(payload.parentId))) {
       return { success: false, reason: "parent_not_found" };
     }
 
-    if (payload.parentId === payload.deptId || this.isDescendant(payload.parentId, payload.deptId)) {
+    if (
+      payload.parentId === payload.deptId ||
+      (await this.isDescendant(payload.parentId, payload.deptId))
+    ) {
       return { success: false, reason: "invalid_parent" };
     }
 
-    target.parentId = payload.parentId;
-    target.deptName = payload.deptName;
-    target.orderNum = payload.orderNum;
-    target.status = payload.status;
+    await deptRepository.update(payload.deptId, {
+      parentId: payload.parentId,
+      deptName: payload.deptName,
+      orderNum: payload.orderNum,
+      status: payload.status,
+    });
 
     return { success: true };
   }
 
-  private deptExists(deptId: number): boolean {
-    return accessDataStore.depts.some((item) => item.deptId === deptId);
+  private async deptExists(deptId: number): Promise<boolean> {
+    const dept = await deptRepository.findById(deptId);
+    return dept !== null;
   }
 
-  private isDescendant(parentId: number, deptId: number): boolean {
+  private async isDescendant(
+    parentId: number,
+    deptId: number,
+  ): Promise<boolean> {
     if (parentId === 0) {
       return false;
     }
@@ -158,7 +162,7 @@ export class DeptService {
         return true;
       }
 
-      const currentDept = accessDataStore.depts.find((item) => item.deptId === currentId);
+      const currentDept = await deptRepository.findById(currentId);
       if (!currentDept) {
         break;
       }

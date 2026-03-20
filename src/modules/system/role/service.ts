@@ -1,142 +1,142 @@
-import { removeBatchByNumericId } from "../../../common/data/array";
-import { accessDataStore } from "../access-data";
 import type {
-    AuthRoleMenuBody,
-    CreateRoleBody,
-    ListRoleQuery,
-    RoleListItem,
-    UpdateRoleBody,
+  AuthRoleMenuBody,
+  CreateRoleBody,
+  ListRoleQuery,
+  RoleListItem,
+  UpdateRoleBody,
 } from "./model";
+import { roleRepository, menuRepository } from "../../../repository";
 
 type CreateRoleResult =
-    | { success: true; roleId: number }
-    | { success: false; reason: "role_key_exists" | "menu_not_found" };
+  | { success: true; roleId: number }
+  | { success: false; reason: "role_key_exists" | "menu_not_found" };
 
 type UpdateRoleResult =
-    | { success: true }
-    | { success: false; reason: "role_not_found" | "menu_not_found" };
+  | { success: true }
+  | { success: false; reason: "role_not_found" | "menu_not_found" };
 
 type AuthRoleMenuResult =
-    | { success: true }
-    | { success: false; reason: "role_not_found" | "menu_not_found" };
+  | { success: true }
+  | { success: false; reason: "role_not_found" | "menu_not_found" };
 
 const toUniqueIds = (ids: number[]): number[] => [...new Set(ids)];
 
 export class RoleService {
-    list(query?: ListRoleQuery): RoleListItem[] {
-        const source = accessDataStore.roles.map((item) => ({
-            roleId: item.roleId,
-            roleKey: item.roleKey,
-            roleName: item.roleName,
-            status: item.status,
-        }));
+  async list(query?: ListRoleQuery): Promise<RoleListItem[]> {
+    const roles = await roleRepository.findAll();
 
-        if (!query) {
-            return source;
-        }
+    const source = roles.map((item) => ({
+      roleId: item.roleId,
+      roleKey: item.roleKey,
+      roleName: item.roleName,
+      status: item.status,
+    }));
 
-        return source.filter((item) => {
-            if (query.roleName && !item.roleName.includes(query.roleName)) {
-                return false;
-            }
-
-            if (query.roleKey && !item.roleKey.includes(query.roleKey)) {
-                return false;
-            }
-
-            if (query.status && item.status !== query.status) {
-                return false;
-            }
-
-            return true;
-        });
+    if (!query) {
+      return source;
     }
 
-    removeBatch(ids: number[]): number {
-        return removeBatchByNumericId(accessDataStore.roles, ids, (item) => item.roleId);
+    return source.filter((item) => {
+      if (query.roleName && !item.roleName.includes(query.roleName)) {
+        return false;
+      }
+
+      if (query.roleKey && !item.roleKey.includes(query.roleKey)) {
+        return false;
+      }
+
+      if (query.status && item.status !== query.status) {
+        return false;
+      }
+
+      return true;
+    });
+  }
+
+  async removeBatch(ids: number[]): Promise<number> {
+    return roleRepository.deleteBatch(ids);
+  }
+
+  async create(payload: CreateRoleBody): Promise<CreateRoleResult> {
+    const existed = await roleRepository.findByRoleKey(payload.roleKey);
+    if (existed) {
+      return { success: false, reason: "role_key_exists" };
     }
 
-    create(payload: CreateRoleBody): CreateRoleResult {
-        const existed = accessDataStore.roles.some(
-            (item) => item.roleKey === payload.roleKey
-        );
-        if (existed) {
-            return { success: false, reason: "role_key_exists" };
-        }
-
-        const menuIds = toUniqueIds(payload.menuIds ?? []);
-        if (!this.checkMenusExist(menuIds)) {
-            return { success: false, reason: "menu_not_found" };
-        }
-
-        const nextId =
-            accessDataStore.roles.reduce(
-                (maxRoleId, item) => Math.max(maxRoleId, item.roleId),
-                0
-            ) + 1;
-
-        accessDataStore.roles.push({
-            roleId: nextId,
-            roleKey: payload.roleKey,
-            roleName: payload.roleName,
-            status: payload.status,
-            menuIds,
-            permissions: this.resolvePermissionsByMenuIds(menuIds),
-        });
-
-        return { success: true, roleId: nextId };
+    const menuIds = toUniqueIds(payload.menuIds ?? []);
+    if (!(await this.checkMenusExist(menuIds))) {
+      return { success: false, reason: "menu_not_found" };
     }
 
-    update(payload: UpdateRoleBody): UpdateRoleResult {
-        const target = accessDataStore.roles.find((item) => item.roleId === payload.roleId);
-        if (!target) {
-            return { success: false, reason: "role_not_found" };
-        }
+    const roleId = await roleRepository.create({
+      roleKey: payload.roleKey,
+      roleName: payload.roleName,
+      status: payload.status,
+      menuIds,
+      permissions: await this.resolvePermissionsByMenuIds(menuIds),
+    });
 
-        const menuIds = toUniqueIds(payload.menuIds ?? target.menuIds ?? []);
-        if (!this.checkMenusExist(menuIds)) {
-            return { success: false, reason: "menu_not_found" };
-        }
+    return { success: true, roleId };
+  }
 
-        target.roleName = payload.roleName;
-        target.status = payload.status;
-        target.menuIds = menuIds;
-        target.permissions = this.resolvePermissionsByMenuIds(menuIds);
-
-        return { success: true };
+  async update(payload: UpdateRoleBody): Promise<UpdateRoleResult> {
+    const target = await roleRepository.findById(payload.roleId);
+    if (!target) {
+      return { success: false, reason: "role_not_found" };
     }
 
-    authMenu(payload: AuthRoleMenuBody): AuthRoleMenuResult {
-        const target = accessDataStore.roles.find((item) => item.roleId === payload.roleId);
-        if (!target) {
-            return { success: false, reason: "role_not_found" };
-        }
-
-        const menuIds = toUniqueIds(payload.menuIds);
-        if (!this.checkMenusExist(menuIds)) {
-            return { success: false, reason: "menu_not_found" };
-        }
-
-        target.menuIds = menuIds;
-        target.permissions = this.resolvePermissionsByMenuIds(menuIds);
-
-        return { success: true };
+    const menuIds = toUniqueIds(payload.menuIds ?? target.menuIds ?? []);
+    if (!(await this.checkMenusExist(menuIds))) {
+      return { success: false, reason: "menu_not_found" };
     }
 
-    private checkMenusExist(menuIds: number[]): boolean {
-        return menuIds.every((menuId) =>
-            accessDataStore.menus.some((menu) => menu.menuId === menuId)
-        );
+    await roleRepository.update(payload.roleId, {
+      roleName: payload.roleName,
+      status: payload.status,
+      menuIds,
+      permissions: await this.resolvePermissionsByMenuIds(menuIds),
+    });
+
+    return { success: true };
+  }
+
+  async authMenu(payload: AuthRoleMenuBody): Promise<AuthRoleMenuResult> {
+    const target = await roleRepository.findById(payload.roleId);
+    if (!target) {
+      return { success: false, reason: "role_not_found" };
     }
 
-    private resolvePermissionsByMenuIds(menuIds: number[]): string[] {
-        const permissions = accessDataStore.menus
-            .filter((menu) => menuIds.includes(menu.menuId))
-            .map((menu) => menu.perms)
-            .filter((permission) => permission.trim().length > 0);
-
-        return [...new Set(permissions)];
+    const menuIds = toUniqueIds(payload.menuIds);
+    if (!(await this.checkMenusExist(menuIds))) {
+      return { success: false, reason: "menu_not_found" };
     }
+
+    await roleRepository.update(payload.roleId, {
+      menuIds,
+      permissions: await this.resolvePermissionsByMenuIds(menuIds),
+    });
+
+    return { success: true };
+  }
+
+  private async checkMenusExist(menuIds: number[]): Promise<boolean> {
+    const menus = await menuRepository.findAll();
+    return menuIds.every((menuId) =>
+      menus.some((menu) => menu.menuId === menuId),
+    );
+  }
+
+  private async resolvePermissionsByMenuIds(
+    menuIds: number[],
+  ): Promise<string[]> {
+    const menus = await menuRepository.findAll();
+    const permissions = menus
+      .filter((menu) => menuIds.includes(menu.menuId))
+      .map((menu) => menu.perms)
+      .filter((permission) => permission.trim().length > 0);
+
+    return [...new Set(permissions)];
+  }
 }
 
 export const roleService = new RoleService();

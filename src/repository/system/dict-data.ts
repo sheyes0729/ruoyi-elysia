@@ -1,71 +1,85 @@
+import { eq } from "drizzle-orm";
 import type { SystemDictData } from "../../modules/system/access-data";
-import { accessDataStore } from "../../modules/system/access-data";
+import { sys_dict_data } from "../../database/schema";
+import { db } from "../../database";
 import type { Repository } from "../base";
 
 export interface DictDataRepository extends Repository<SystemDictData, number> {
-  findByDictType(dictType: string): SystemDictData[];
+  findByDictType(dictType: string): Promise<SystemDictData[]>;
 }
 
-export class InMemoryDictDataRepository implements DictDataRepository {
-  findAll(): SystemDictData[] {
-    return [...accessDataStore.dictData];
-  }
+export class DrizzleDictDataRepository implements DictDataRepository {
+  private readonly table = sys_dict_data;
 
-  findById(dictCode: number): SystemDictData | null {
-    return (
-      accessDataStore.dictData.find((d) => d.dictCode === dictCode) || null
-    );
-  }
-
-  findByDictType(dictType: string): SystemDictData[] {
-    return accessDataStore.dictData.filter((d) => d.dictType === dictType);
-  }
-
-  create(data: Partial<SystemDictData>): number {
-    const nextCode =
-      accessDataStore.dictData.reduce((max, d) => Math.max(max, d.dictCode), 0) +
-      1;
-
-    const newDictData: SystemDictData = {
-      dictCode: nextCode,
-      dictSort: data.dictSort || 0,
-      dictLabel: data.dictLabel || "",
-      dictValue: data.dictValue || "",
-      dictType: data.dictType || "",
-      status: data.status || "0",
+  private toEntity(row: typeof sys_dict_data.$inferSelect): SystemDictData {
+    return {
+      dictCode: row.dictCode,
+      dictSort: row.dictSort,
+      dictLabel: row.dictLabel,
+      dictValue: row.dictValue,
+      dictType: row.dictType,
+      status: row.status as "0" | "1",
     };
-
-    accessDataStore.dictData.push(newDictData);
-    return nextCode;
   }
 
-  update(dictCode: number, data: Partial<SystemDictData>): boolean {
-    const dictData = accessDataStore.dictData.find((d) => d.dictCode === dictCode);
-    if (!dictData) {return false;}
+  private readonly pkColumn = sys_dict_data.dictCode;
 
-    Object.assign(dictData, data);
-    return true;
+  async findAll(): Promise<SystemDictData[]> {
+    const result = await db.select().from(sys_dict_data);
+    return result.map((row) => this.toEntity(row));
   }
 
-  delete(dictCode: number): boolean {
-    const index = accessDataStore.dictData.findIndex((d) => d.dictCode === dictCode);
-    if (index === -1) {return false;}
-
-    accessDataStore.dictData.splice(index, 1);
-    return true;
+  async findById(dictCode: number): Promise<SystemDictData | null> {
+    const result = await db
+      .select()
+      .from(sys_dict_data)
+      .where(eq(sys_dict_data.dictCode, dictCode));
+    return result.length > 0 ? this.toEntity(result[0]) : null;
   }
 
-  deleteBatch(dictCodes: number[]): number {
-    let count = 0;
-    for (const dictCode of dictCodes) {
-      const index = accessDataStore.dictData.findIndex((d) => d.dictCode === dictCode);
-      if (index !== -1) {
-        accessDataStore.dictData.splice(index, 1);
-        count++;
-      }
-    }
-    return count;
+  async findByDictType(dictType: string): Promise<SystemDictData[]> {
+    const result = await db
+      .select()
+      .from(sys_dict_data)
+      .where(eq(sys_dict_data.dictType, dictType));
+    return result.map((row) => this.toEntity(row));
+  }
+
+  async create(data: Partial<SystemDictData>): Promise<number> {
+    const result = await db.insert(sys_dict_data).values({
+      dictSort: data.dictSort,
+      dictLabel: data.dictLabel,
+      dictValue: data.dictValue,
+      dictType: data.dictType,
+      status: data.status,
+    } as typeof sys_dict_data.$inferInsert);
+    return result[0].insertId;
+  }
+
+  async update(
+    dictCode: number,
+    data: Partial<SystemDictData>,
+  ): Promise<boolean> {
+    const result = await db
+      .update(sys_dict_data)
+      .set(data as typeof sys_dict_data.$inferInsert)
+      .where(eq(sys_dict_data.dictCode, dictCode));
+    return result.length > 0;
+  }
+
+  async delete(dictCode: number): Promise<boolean> {
+    const result = await db
+      .delete(sys_dict_data)
+      .where(eq(sys_dict_data.dictCode, dictCode));
+    return result.length > 0;
+  }
+
+  async deleteBatch(dictCodes: number[]): Promise<number> {
+    const result = await db
+      .delete(sys_dict_data)
+      .where(eq(sys_dict_data.dictCode, dictCodes[0]));
+    return result.length;
   }
 }
 
-export const dictDataRepository = new InMemoryDictDataRepository();
+export const dictDataRepository = new DrizzleDictDataRepository();

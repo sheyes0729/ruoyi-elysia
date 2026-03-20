@@ -1,62 +1,73 @@
+import { eq } from "drizzle-orm";
 import type { SystemNotice } from "../../modules/system/access-data";
-import { accessDataStore } from "../../modules/system/access-data";
+import { sys_notice } from "../../database/schema";
+import { db } from "../../database";
 import type { Repository } from "../base";
 
-export class InMemoryNoticeRepository implements Repository<SystemNotice, number> {
-  findAll(): SystemNotice[] {
-    return [...accessDataStore.notices];
-  }
+export class DrizzleNoticeRepository implements Repository<
+  SystemNotice,
+  number
+> {
+  private readonly table = sys_notice;
 
-  findById(noticeId: number): SystemNotice | null {
-    return (
-      accessDataStore.notices.find((n) => n.noticeId === noticeId) || null
-    );
-  }
-
-  create(data: Partial<SystemNotice>): number {
-    const nextId =
-      accessDataStore.notices.reduce((max, n) => Math.max(max, n.noticeId), 0) +
-      1;
-
-    const newNotice: SystemNotice = {
-      noticeId: nextId,
-      noticeTitle: data.noticeTitle || "",
-      noticeType: data.noticeType || "1",
-      status: data.status || "0",
-      createTime: new Date().toISOString(),
+  private toEntity(row: typeof sys_notice.$inferSelect): SystemNotice {
+    return {
+      noticeId: row.noticeId,
+      noticeTitle: row.noticeTitle,
+      noticeType: row.noticeType as "1" | "2",
+      status: row.status as "0" | "1",
+      createTime: row.createTime?.toISOString() ?? new Date().toISOString(),
     };
-
-    accessDataStore.notices.push(newNotice);
-    return nextId;
   }
 
-  update(noticeId: number, data: Partial<SystemNotice>): boolean {
-    const notice = accessDataStore.notices.find((n) => n.noticeId === noticeId);
-    if (!notice) {return false;}
+  private readonly pkColumn = sys_notice.noticeId;
 
-    Object.assign(notice, data);
-    return true;
+  async findAll(): Promise<SystemNotice[]> {
+    const result = await db.select().from(sys_notice);
+    return result.map((row) => this.toEntity(row));
   }
 
-  delete(noticeId: number): boolean {
-    const index = accessDataStore.notices.findIndex((n) => n.noticeId === noticeId);
-    if (index === -1) {return false;}
-
-    accessDataStore.notices.splice(index, 1);
-    return true;
+  async findById(noticeId: number): Promise<SystemNotice | null> {
+    const result = await db
+      .select()
+      .from(sys_notice)
+      .where(eq(sys_notice.noticeId, noticeId));
+    return result.length > 0 ? this.toEntity(result[0]) : null;
   }
 
-  deleteBatch(noticeIds: number[]): number {
-    let count = 0;
-    for (const noticeId of noticeIds) {
-      const index = accessDataStore.notices.findIndex((n) => n.noticeId === noticeId);
-      if (index !== -1) {
-        accessDataStore.notices.splice(index, 1);
-        count++;
-      }
-    }
-    return count;
+  async create(data: Partial<SystemNotice>): Promise<number> {
+    const result = await db.insert(sys_notice).values({
+      noticeTitle: data.noticeTitle,
+      noticeType: data.noticeType,
+      status: data.status,
+    } as typeof sys_notice.$inferInsert);
+    return result[0].insertId;
+  }
+
+  async update(
+    noticeId: number,
+    data: Partial<SystemNotice>,
+  ): Promise<boolean> {
+    const result = await db
+      .update(sys_notice)
+      .set(data as typeof sys_notice.$inferInsert)
+      .where(eq(sys_notice.noticeId, noticeId));
+    return result.length > 0;
+  }
+
+  async delete(noticeId: number): Promise<boolean> {
+    const result = await db
+      .delete(sys_notice)
+      .where(eq(sys_notice.noticeId, noticeId));
+    return result.length > 0;
+  }
+
+  async deleteBatch(noticeIds: number[]): Promise<number> {
+    const result = await db
+      .delete(sys_notice)
+      .where(eq(sys_notice.noticeId, noticeIds[0]));
+    return result.length;
   }
 }
 
-export const noticeRepository = new InMemoryNoticeRepository();
+export const noticeRepository = new DrizzleNoticeRepository();

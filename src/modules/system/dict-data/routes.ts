@@ -1,6 +1,10 @@
 import { Elysia } from "elysia";
 import { secured } from "../../../common/auth/secured";
-import { buildCsvDownload, buildCsvTemplate, parseCsv } from "../../../common/http/csv";
+import {
+  buildCsvDownload,
+  buildCsvTemplate,
+  parseCsv,
+} from "../../../common/http/csv";
 import { paginateData } from "../../../common/http/page";
 import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
@@ -36,10 +40,12 @@ export const DictDataRoutes = new Elysia({
         permission: "system:dict:data:list",
         denyMessage: "无权限访问字典数据",
       },
-      ({ query }) => {
+      async ({ query }) => {
         const typedQuery = query as ListDictDataQuery;
-        return ok(paginateData(dictDataService.list(typedQuery), typedQuery));
-      }
+        return ok(
+          paginateData(await dictDataService.list(typedQuery), typedQuery),
+        );
+      },
     ),
     {
       query: ListDictDataSchema,
@@ -52,7 +58,7 @@ export const DictDataRoutes = new Elysia({
         tags: ["系统管理-字典数据"],
         summary: "查询字典数据列表",
       },
-    }
+    },
   )
   .post(
     "/export",
@@ -62,9 +68,9 @@ export const DictDataRoutes = new Elysia({
         denyMessage: "无权限导出字典数据",
         operLog: OPER_LOG.EXPORT,
       },
-      ({ query, set }) => {
+      async ({ query, set }) => {
         const typedQuery = query as ListDictDataQuery;
-        const rows = dictDataService.list(typedQuery);
+        const rows = await dictDataService.list(typedQuery);
         return buildCsvDownload(
           set,
           rows,
@@ -76,9 +82,9 @@ export const DictDataRoutes = new Elysia({
             { header: "字典类型", value: (row) => row.dictType },
             { header: "状态", value: (row) => row.status },
           ],
-          "system-dict-data-export.csv"
+          "system-dict-data-export.csv",
         );
-      }
+      },
     ),
     {
       query: ListDictDataSchema,
@@ -86,7 +92,7 @@ export const DictDataRoutes = new Elysia({
         tags: ["系统管理-字典数据"],
         summary: "导出字典数据列表",
       },
-    }
+    },
   )
   .post(
     "/importTemplate",
@@ -103,14 +109,14 @@ export const DictDataRoutes = new Elysia({
           { key: "字典类型", title: "字典类型" },
           { key: "状态", title: "状态" },
         ]);
-      }
+      },
     ),
     {
       detail: {
         tags: ["系统管理-字典数据"],
         summary: "下载字典数据导入模板",
       },
-    }
+    },
   )
   .post(
     "/import",
@@ -140,7 +146,7 @@ export const DictDataRoutes = new Elysia({
           return fail(400, e instanceof Error ? e.message : "CSV解析失败");
         }
 
-        const result = dictDataService.importDictData(rows);
+        const result = await dictDataService.importDictData(rows);
 
         return ok(
           {
@@ -152,9 +158,9 @@ export const DictDataRoutes = new Elysia({
               error: f.error,
             })),
           },
-          result.failures.length > 0 ? "部分数据导入失败" : "导入成功"
+          result.failures.length > 0 ? "部分数据导入失败" : "导入成功",
         );
-      }
+      },
     ),
     {
       body: ImportDictDataSchema,
@@ -168,7 +174,7 @@ export const DictDataRoutes = new Elysia({
         tags: ["系统管理-字典数据"],
         summary: "导入字典数据",
       },
-    }
+    },
   )
   .delete(
     "/batch",
@@ -178,11 +184,11 @@ export const DictDataRoutes = new Elysia({
         denyMessage: "无权限删除字典数据",
         operLog: OPER_LOG.DELETE,
       },
-      ({ body }) => {
+      async ({ body }) => {
         const typedBody = body as typeof RemoveBatchDictDataSchema.static;
-        const count = dictDataService.removeBatch(typedBody.ids);
+        const count = await dictDataService.removeBatch(typedBody.ids);
         return ok({ count }, "删除成功");
-      }
+      },
     ),
     {
       body: RemoveBatchDictDataSchema,
@@ -195,7 +201,7 @@ export const DictDataRoutes = new Elysia({
         tags: ["系统管理-字典数据"],
         summary: "批量删除字典数据",
       },
-    }
+    },
   )
   .post(
     "/add",
@@ -205,16 +211,16 @@ export const DictDataRoutes = new Elysia({
         denyMessage: "无权限新增字典数据",
         operLog: OPER_LOG.CREATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as CreateDictDataBody;
-        const result = dictDataService.create(typedBody);
+        const result = await dictDataService.create(typedBody);
         if (!result.success) {
           set.status = 400;
           return fail(400, "字典类型不存在");
         }
 
         return ok({ dictCode: result.dictCode }, "新增成功");
-      }
+      },
     ),
     {
       body: CreateDictDataSchema,
@@ -228,7 +234,7 @@ export const DictDataRoutes = new Elysia({
         tags: ["系统管理-字典数据"],
         summary: "新增字典数据",
       },
-    }
+    },
   )
   .put(
     "/edit",
@@ -238,9 +244,9 @@ export const DictDataRoutes = new Elysia({
         denyMessage: "无权限编辑字典数据",
         operLog: OPER_LOG.UPDATE,
       },
-      ({ body, set }) => {
+      async ({ body, set }) => {
         const typedBody = body as UpdateDictDataBody;
-        const result = dictDataService.update(typedBody);
+        const result = await dictDataService.update(typedBody);
         if (!result.success) {
           if (result.reason === "dict_data_not_found") {
             set.status = 404;
@@ -252,7 +258,7 @@ export const DictDataRoutes = new Elysia({
         }
 
         return ok(true, "修改成功");
-      }
+      },
     ),
     {
       body: UpdateDictDataSchema,
@@ -267,5 +273,5 @@ export const DictDataRoutes = new Elysia({
         tags: ["系统管理-字典数据"],
         summary: "编辑字典数据",
       },
-    }
+    },
   );
