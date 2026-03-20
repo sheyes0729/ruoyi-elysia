@@ -4,115 +4,117 @@ import { fail, ok } from "../../common/http/response";
 import { securityPlugin } from "../../plugins/security";
 import { OPER_LOG } from "./oper-log";
 import {
-    AuthFailResponseSchema,
-    GetInfoAuthResponseSchema,
-    LoginAuthResponseSchema,
-    LoginAuthSchema,
-    LogoutAuthResponseSchema,
+  AuthFailResponseSchema,
+  GetInfoAuthResponseSchema,
+  LoginAuthResponseSchema,
+  LoginAuthSchema,
+  LogoutAuthResponseSchema,
 } from "./model";
 import { authService } from "./service";
 import { loginLogService } from "../monitor/login-log/service";
 import { onlineService } from "../monitor/online/service";
 
+export const authRoutes = new Elysia({
+  prefix: "/api/auth",
+  name: "auth.routes",
+})
+  .use(securityPlugin)
+  .post(
+    "/login",
+    async ({ body, jwt, request, set }) => {
+      const authUser = await authService.login(body);
+      if (!authUser) {
+        loginLogService.record({
+          username: body.username,
+          ip: request.headers.get("x-forwarded-for") ?? "127.0.0.1",
+          status: "1",
+          msg: "用户名或密码错误",
+        });
+        set.status = 401;
+        return fail(401, "用户名或密码错误");
+      }
 
-export const authRoutes = new Elysia({ prefix: "/api/auth", name: "auth.routes" })
-    .use(securityPlugin)
-    .post(
-        "/login",
-        async ({ body, jwt, request, set }) => {
-            const authUser = authService.login(body);
-            if (!authUser) {
-                loginLogService.record({
-                    username: body.username,
-                    ip: request.headers.get("x-forwarded-for") ?? "127.0.0.1",
-                    status: "1",
-                    msg: "用户名或密码错误",
-                });
-                set.status = 401;
-                return fail(401, "用户名或密码错误");
-            }
+      const token: string = await jwt.sign({
+        userId: authUser.userId,
+        username: authUser.username,
+        roles: authUser.roles,
+        permissions: authUser.permissions,
+      });
 
-            const token: string = await jwt.sign({
-                userId: authUser.userId,
-                username: authUser.username,
-                roles: authUser.roles,
-                permissions: authUser.permissions,
-            });
+      onlineService.registerSession({
+        token,
+        userId: authUser.userId,
+        username: authUser.username,
+        ip: request.headers.get("x-forwarded-for") ?? "127.0.0.1",
+      });
+      loginLogService.record({
+        username: authUser.username,
+        ip: request.headers.get("x-forwarded-for") ?? "127.0.0.1",
+        status: "0",
+        msg: "登录成功",
+      });
 
-            onlineService.registerSession({
-                token,
-                userId: authUser.userId,
-                username: authUser.username,
-                ip: request.headers.get("x-forwarded-for") ?? "127.0.0.1",
-            });
-            loginLogService.record({
-                username: authUser.username,
-                ip: request.headers.get("x-forwarded-for") ?? "127.0.0.1",
-                status: "0",
-                msg: "登录成功",
-            });
+      return ok({ token }, "登录成功");
+    },
+    {
+      body: LoginAuthSchema,
+      response: {
+        200: LoginAuthResponseSchema,
+        401: AuthFailResponseSchema,
+      },
+      detail: {
+        tags: ["认证授权"],
+        summary: "账号密码登录",
+      },
+    },
+  )
+  .post(
+    "/logout",
+    secured({ operLog: OPER_LOG.LOGOUT }, ({ bearer }) => {
+      if (typeof bearer === "string") {
+        onlineService.removeSession(bearer);
+      }
 
-            return ok({ token }, "登录成功");
+      return ok(true, "退出成功");
+    }),
+    {
+      response: {
+        200: LogoutAuthResponseSchema,
+        401: AuthFailResponseSchema,
+      },
+      detail: {
+        tags: ["认证授权"],
+        summary: "退出登录",
+      },
+    },
+  )
+  .get(
+    "/getInfo",
+    secured({}, async ({ currentUser, set }) => {
+      const profile = await authService.getProfile(currentUser.userId);
+      if (!profile) {
+        set.status = 401;
+        return fail(401, "用户不存在或已被禁用");
+      }
+
+      return ok({
+        user: {
+          userId: profile.userId,
+          userName: profile.username,
+          nickName: profile.nickName,
         },
-        {
-            body: LoginAuthSchema,
-            response: {
-                200: LoginAuthResponseSchema,
-                401: AuthFailResponseSchema,
-            },
-            detail: {
-                tags: ["认证授权"],
-                summary: "账号密码登录",
-            },
-        }
-    )
-    .post(
-        "/logout",
-        secured({ operLog: OPER_LOG.LOGOUT }, ({ bearer }) => {
-            if (typeof bearer === "string") {
-                onlineService.removeSession(bearer);
-            }
-
-            return ok(true, "退出成功");
-        }),
-        {
-            response: {
-                200: LogoutAuthResponseSchema,
-                401: AuthFailResponseSchema,
-            },
-            detail: {
-                tags: ["认证授权"],
-                summary: "退出登录",
-            },
-        }
-    )
-    .get(
-        "/getInfo",
-        secured({}, ({ currentUser, set }) => {
-            const profile = authService.getProfile(currentUser.userId);
-            if (!profile) {
-                set.status = 401;
-                return fail(401, "用户不存在或已被禁用");
-            }
-
-            return ok({
-                user: {
-                    userId: profile.userId,
-                    userName: profile.username,
-                    nickName: profile.nickName,
-                },
-                roles: profile.roles,
-                permissions: profile.permissions,
-            });
-        }),
-        {
-            response: {
-                200: GetInfoAuthResponseSchema,
-                401: AuthFailResponseSchema,
-            },
-            detail: {
-                tags: ["认证授权"],
-                summary: "获取当前登录用户信息",
-            },
-        }
-    );
+        roles: profile.roles,
+        permissions: profile.permissions,
+      });
+    }),
+    {
+      response: {
+        200: GetInfoAuthResponseSchema,
+        401: AuthFailResponseSchema,
+      },
+      detail: {
+        tags: ["认证授权"],
+        summary: "获取当前登录用户信息",
+      },
+    },
+  );
