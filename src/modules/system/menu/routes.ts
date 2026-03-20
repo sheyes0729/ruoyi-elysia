@@ -6,16 +6,16 @@ import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
 import { OPER_LOG } from "./oper-log";
 import {
-    CreateMenuBody,
+    type CreateMenuBody,
     CreateMenuResponseSchema,
     CreateMenuSchema,
-    ListMenuQuery,
+    type ListMenuQuery,
     ListMenuResponseSchema,
     ListMenuSchema,
     MenuFailResponseSchema,
     RemoveBatchMenuResponseSchema,
     RemoveBatchMenuSchema,
-    UpdateMenuBody,
+    type UpdateMenuBody,
     UpdateMenuResponseSchema,
     UpdateMenuSchema,
 } from "./model";

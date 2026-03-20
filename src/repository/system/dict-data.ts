@@ -41,7 +41,7 @@ export class InMemoryDictDataRepository implements DictDataRepository {
 
   update(dictCode: number, data: Partial<SystemDictData>): boolean {
     const dictData = accessDataStore.dictData.find((d) => d.dictCode === dictCode);
-    if (!dictData) return false;
+    if (!dictData) {return false;}
 
     Object.assign(dictData, data);
     return true;
@@ -49,7 +49,7 @@ export class InMemoryDictDataRepository implements DictDataRepository {
 
   delete(dictCode: number): boolean {
     const index = accessDataStore.dictData.findIndex((d) => d.dictCode === dictCode);
-    if (index === -1) return false;
+    if (index === -1) {return false;}
 
     accessDataStore.dictData.splice(index, 1);
     return true;

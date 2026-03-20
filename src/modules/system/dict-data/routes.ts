@@ -6,19 +6,19 @@ import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
 import { OPER_LOG } from "./oper-log";
 import {
-  CreateDictDataBody,
+  type CreateDictDataBody,
   CreateDictDataResponseSchema,
   CreateDictDataSchema,
   DICT_DATA_IMPORT_HEADERS,
   DictDataFailResponseSchema,
   ImportDictDataResponseSchema,
   ImportDictDataSchema,
-  ListDictDataQuery,
+  type ListDictDataQuery,
   ListDictDataResponseSchema,
   ListDictDataSchema,
   RemoveBatchDictDataResponseSchema,
   RemoveBatchDictDataSchema,
-  UpdateDictDataBody,
+  type UpdateDictDataBody,
   UpdateDictDataResponseSchema,
   UpdateDictDataSchema,
 } from "./model";

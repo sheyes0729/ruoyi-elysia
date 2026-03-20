@@ -38,7 +38,7 @@ export class InMemoryRoleRepository implements RoleRepository {
 
   update(roleId: number, data: Partial<SystemRole>): boolean {
     const role = accessDataStore.roles.find((r) => r.roleId === roleId);
-    if (!role) return false;
+    if (!role) {return false;}
 
     Object.assign(role, data);
     return true;
@@ -46,7 +46,7 @@ export class InMemoryRoleRepository implements RoleRepository {
 
   delete(roleId: number): boolean {
     const index = accessDataStore.roles.findIndex((r) => r.roleId === roleId);
-    if (index === -1) return false;
+    if (index === -1) {return false;}
 
     accessDataStore.roles.splice(index, 1);
     return true;

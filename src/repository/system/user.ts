@@ -43,7 +43,7 @@ export class InMemoryUserRepository implements UserRepository {
 
   update(userId: number, data: Partial<SystemUser>): boolean {
     const user = accessDataStore.users.find((u) => u.userId === userId);
-    if (!user) return false;
+    if (!user) {return false;}
 
     Object.assign(user, data);
     return true;
@@ -51,7 +51,7 @@ export class InMemoryUserRepository implements UserRepository {
 
   delete(userId: number): boolean {
     const index = accessDataStore.users.findIndex((u) => u.userId === userId);
-    if (index === -1) return false;
+    if (index === -1) {return false;}
 
     accessDataStore.users.splice(index, 1);
     return true;

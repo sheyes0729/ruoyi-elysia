@@ -6,16 +6,16 @@ import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
 import { OPER_LOG } from "./oper-log";
 import {
-  CreateNoticeBody,
+  type CreateNoticeBody,
   CreateNoticeResponseSchema,
   CreateNoticeSchema,
-  ListNoticeQuery,
+  type ListNoticeQuery,
   ListNoticeResponseSchema,
   ListNoticeSchema,
   NoticeFailResponseSchema,
   RemoveBatchNoticeResponseSchema,
   RemoveBatchNoticeSchema,
-  UpdateNoticeBody,
+  type UpdateNoticeBody,
   UpdateNoticeResponseSchema,
   UpdateNoticeSchema,
 } from "./model";

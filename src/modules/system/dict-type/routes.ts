@@ -6,16 +6,16 @@ import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
 import { OPER_LOG } from "./oper-log";
 import {
-  CreateDictTypeBody,
+  type CreateDictTypeBody,
   CreateDictTypeResponseSchema,
   CreateDictTypeSchema,
   DictTypeFailResponseSchema,
-  ListDictTypeQuery,
+  type ListDictTypeQuery,
   ListDictTypeResponseSchema,
   ListDictTypeSchema,
   RemoveBatchDictTypeResponseSchema,
   RemoveBatchDictTypeSchema,
-  UpdateDictTypeBody,
+  type UpdateDictTypeBody,
   UpdateDictTypeResponseSchema,
   UpdateDictTypeSchema,
 } from "./model";

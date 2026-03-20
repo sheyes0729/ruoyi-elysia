@@ -37,7 +37,7 @@ export class InMemoryDeptRepository implements DeptRepository {
 
   update(deptId: number, data: Partial<SystemDept>): boolean {
     const dept = accessDataStore.depts.find((d) => d.deptId === deptId);
-    if (!dept) return false;
+    if (!dept) {return false;}
 
     Object.assign(dept, data);
     return true;
@@ -45,7 +45,7 @@ export class InMemoryDeptRepository implements DeptRepository {
 
   delete(deptId: number): boolean {
     const index = accessDataStore.depts.findIndex((d) => d.deptId === deptId);
-    if (index === -1) return false;
+    if (index === -1) {return false;}
 
     accessDataStore.depts.splice(index, 1);
     return true;

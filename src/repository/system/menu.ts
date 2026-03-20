@@ -42,7 +42,7 @@ export class InMemoryMenuRepository implements MenuRepository {
 
   update(menuId: number, data: Partial<SystemMenu>): boolean {
     const menu = accessDataStore.menus.find((m) => m.menuId === menuId);
-    if (!menu) return false;
+    if (!menu) {return false;}
 
     Object.assign(menu, data);
     return true;
@@ -50,7 +50,7 @@ export class InMemoryMenuRepository implements MenuRepository {
 
   delete(menuId: number): boolean {
     const index = accessDataStore.menus.findIndex((m) => m.menuId === menuId);
-    if (index === -1) return false;
+    if (index === -1) {return false;}
 
     accessDataStore.menus.splice(index, 1);
     return true;

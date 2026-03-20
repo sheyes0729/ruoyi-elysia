@@ -6,16 +6,16 @@ import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
 import { OPER_LOG } from "./oper-log";
 import {
-  CreatePostBody,
+  type CreatePostBody,
   CreatePostResponseSchema,
   CreatePostSchema,
-  ListPostQuery,
+  type ListPostQuery,
   ListPostResponseSchema,
   ListPostSchema,
   PostFailResponseSchema,
   RemoveBatchPostResponseSchema,
   RemoveBatchPostSchema,
-  UpdatePostBody,
+  type UpdatePostBody,
   UpdatePostResponseSchema,
   UpdatePostSchema,
 } from "./model";

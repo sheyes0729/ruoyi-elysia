@@ -6,19 +6,19 @@ import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
 import { OPER_LOG } from "./oper-log";
 import {
-  AuthRoleMenuBody,
+  type AuthRoleMenuBody,
   AuthRoleMenuResponseSchema,
   AuthRoleMenuSchema,
-  CreateRoleBody,
+  type CreateRoleBody,
   CreateRoleResponseSchema,
   CreateRoleSchema,
-  ListRoleQuery,
+  type ListRoleQuery,
   ListRoleResponseSchema,
   ListRoleSchema,
   RemoveBatchRoleResponseSchema,
   RemoveBatchRoleSchema,
   RoleFailResponseSchema,
-  UpdateRoleBody,
+  type UpdateRoleBody,
   UpdateRoleResponseSchema,
   UpdateRoleSchema,
 } from "./model";

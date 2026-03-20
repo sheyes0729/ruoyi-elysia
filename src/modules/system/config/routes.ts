@@ -7,15 +7,15 @@ import { securityPlugin } from "../../../plugins/security";
 import { OPER_LOG } from "./oper-log";
 import {
   ConfigFailResponseSchema,
-  CreateConfigBody,
+  type CreateConfigBody,
   CreateConfigResponseSchema,
   CreateConfigSchema,
-  ListConfigQuery,
+  type ListConfigQuery,
   ListConfigResponseSchema,
   ListConfigSchema,
   RemoveBatchConfigResponseSchema,
   RemoveBatchConfigSchema,
-  UpdateConfigBody,
+  type UpdateConfigBody,
   UpdateConfigResponseSchema,
   UpdateConfigSchema,
 } from "./model";

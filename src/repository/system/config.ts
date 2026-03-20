@@ -40,7 +40,7 @@ export class InMemoryConfigRepository implements ConfigRepository {
 
   update(configId: number, data: Partial<SystemConfig>): boolean {
     const config = accessDataStore.configs.find((c) => c.configId === configId);
-    if (!config) return false;
+    if (!config) {return false;}
 
     Object.assign(config, data);
     return true;
@@ -48,7 +48,7 @@ export class InMemoryConfigRepository implements ConfigRepository {
 
   delete(configId: number): boolean {
     const index = accessDataStore.configs.findIndex((c) => c.configId === configId);
-    if (index === -1) return false;
+    if (index === -1) {return false;}
 
     accessDataStore.configs.splice(index, 1);
     return true;

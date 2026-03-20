@@ -6,7 +6,7 @@ import { securityPlugin } from "../../../plugins/security";
 import { OPER_LOG } from "./oper-log";
 import {
   ForceLogoutOnlineResponseSchema,
-  ListOnlineQuery,
+  type ListOnlineQuery,
   ListOnlineSchema,
   ListOnlineResponseSchema,
   OnlineFailResponseSchema,

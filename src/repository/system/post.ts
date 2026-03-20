@@ -37,7 +37,7 @@ export class InMemoryPostRepository implements PostRepository {
 
   update(postId: number, data: Partial<SystemPost>): boolean {
     const post = accessDataStore.posts.find((p) => p.postId === postId);
-    if (!post) return false;
+    if (!post) {return false;}
 
     Object.assign(post, data);
     return true;
@@ -45,7 +45,7 @@ export class InMemoryPostRepository implements PostRepository {
 
   delete(postId: number): boolean {
     const index = accessDataStore.posts.findIndex((p) => p.postId === postId);
-    if (index === -1) return false;
+    if (index === -1) {return false;}
 
     accessDataStore.posts.splice(index, 1);
     return true;

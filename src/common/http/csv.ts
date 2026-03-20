@@ -74,7 +74,7 @@ export const parseCsv = (content: string, options: CsvParseOptions): Record<stri
 
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
-    if (!line) continue;
+    if (!line) {continue;}
 
     const values = parseRow(line);
     const row: Record<string, string> = {};

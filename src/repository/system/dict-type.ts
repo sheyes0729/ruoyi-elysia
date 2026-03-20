@@ -39,7 +39,7 @@ export class InMemoryDictTypeRepository implements DictTypeRepository {
 
   update(dictId: number, data: Partial<SystemDictType>): boolean {
     const dictType = accessDataStore.dictTypes.find((d) => d.dictId === dictId);
-    if (!dictType) return false;
+    if (!dictType) {return false;}
 
     Object.assign(dictType, data);
     return true;
@@ -47,7 +47,7 @@ export class InMemoryDictTypeRepository implements DictTypeRepository {
 
   delete(dictId: number): boolean {
     const index = accessDataStore.dictTypes.findIndex((d) => d.dictId === dictId);
-    if (index === -1) return false;
+    if (index === -1) {return false;}
 
     accessDataStore.dictTypes.splice(index, 1);
     return true;

@@ -7,7 +7,7 @@ import { securityPlugin } from "../../../plugins/security";
 import { OPER_LOG } from "./oper-log";
 import {
   CleanOperLogResponseSchema,
-  ListOperLogQuery,
+  type ListOperLogQuery,
   ListOperLogResponseSchema,
   ListOperLogSchema,
   OperLogFailResponseSchema,

@@ -32,7 +32,7 @@ export class InMemoryNoticeRepository implements Repository<SystemNotice, number
 
   update(noticeId: number, data: Partial<SystemNotice>): boolean {
     const notice = accessDataStore.notices.find((n) => n.noticeId === noticeId);
-    if (!notice) return false;
+    if (!notice) {return false;}
 
     Object.assign(notice, data);
     return true;
@@ -40,7 +40,7 @@ export class InMemoryNoticeRepository implements Repository<SystemNotice, number
 
   delete(noticeId: number): boolean {
     const index = accessDataStore.notices.findIndex((n) => n.noticeId === noticeId);
-    if (index === -1) return false;
+    if (index === -1) {return false;}
 
     accessDataStore.notices.splice(index, 1);
     return true;
