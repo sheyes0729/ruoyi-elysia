@@ -1,15 +1,23 @@
 import { Elysia } from "elysia";
-import { hasPermission } from "../../../common/auth/permission";
+import { secured } from "../../../common/auth/secured";
 import { toCsv } from "../../../common/http/csv";
 import { paginateData } from "../../../common/http/page";
 import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
+import { OPER_LOG } from "./oper-log";
 import {
   ConfigFailResponseSchema,
+  CreateConfigBody,
+  CreateConfigResponseSchema,
+  CreateConfigSchema,
+  ListConfigQuery,
   ListConfigResponseSchema,
   ListConfigSchema,
   RemoveBatchConfigResponseSchema,
   RemoveBatchConfigSchema,
+  UpdateConfigBody,
+  UpdateConfigResponseSchema,
+  UpdateConfigSchema,
 } from "./model";
 import { configService } from "./service";
 
@@ -20,19 +28,16 @@ export const ConfigRoutes = new Elysia({
   .use(securityPlugin)
   .get(
     "/list",
-    ({ currentUser, query, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
+    secured(
+      {
+        permission: "system:config:list",
+        denyMessage: "无权限访问参数配置",
+      },
+      ({ query }) => {
+        const typedQuery = query as ListConfigQuery;
+        return ok(paginateData(configService.list(typedQuery), typedQuery));
       }
-
-      if (!hasPermission(currentUser, "system:config:list")) {
-        set.status = 403;
-        return fail(403, "无权限访问参数配置");
-      }
-
-      return ok(paginateData(configService.list(query), query));
-    },
+    ),
     {
       query: ListConfigSchema,
       response: {
@@ -48,31 +53,30 @@ export const ConfigRoutes = new Elysia({
   )
   .post(
     "/export",
-    ({ currentUser, query, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
+    secured(
+      {
+        permission: "system:config:export",
+        denyMessage: "无权限导出参数配置",
+        operLog: OPER_LOG.EXPORT,
+      },
+      ({ query, set }) => {
+        const typedQuery = query as ListConfigQuery;
+        const rows = configService.list(typedQuery);
+        const csv = toCsv(rows, [
+          { header: "参数ID", value: (row) => row.configId },
+          { header: "参数名称", value: (row) => row.configName },
+          { header: "参数键名", value: (row) => row.configKey },
+          { header: "参数键值", value: (row) => row.configValue },
+          { header: "系统内置", value: (row) => row.configType },
+        ]);
+
+        const headers = set.headers as Record<string, string>;
+        headers["content-type"] = "text/csv; charset=utf-8";
+        headers["content-disposition"] =
+          "attachment; filename=system-config-export.csv";
+        return `\uFEFF${csv}`;
       }
-
-      if (!hasPermission(currentUser, "system:config:export")) {
-        set.status = 403;
-        return fail(403, "无权限导出参数配置");
-      }
-
-      const rows = configService.list(query);
-      const csv = toCsv(rows, [
-        { header: "参数ID", value: (row) => row.configId },
-        { header: "参数名称", value: (row) => row.configName },
-        { header: "参数键名", value: (row) => row.configKey },
-        { header: "参数键值", value: (row) => row.configValue },
-        { header: "系统内置", value: (row) => row.configType },
-      ]);
-
-      set.headers["content-type"] = "text/csv; charset=utf-8";
-      set.headers["content-disposition"] =
-        "attachment; filename=system-config-export.csv";
-      return `\uFEFF${csv}`;
-    },
+    ),
     {
       query: ListConfigSchema,
       detail: {
@@ -83,20 +87,18 @@ export const ConfigRoutes = new Elysia({
   )
   .delete(
     "/batch",
-    ({ body, currentUser, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
+    secured(
+      {
+        permission: "system:config:remove",
+        denyMessage: "无权限删除参数配置",
+        operLog: OPER_LOG.DELETE,
+      },
+      ({ body }) => {
+        const typedBody = body as typeof RemoveBatchConfigSchema.static;
+        const count = configService.removeBatch(typedBody.ids);
+        return ok({ count }, "删除成功");
       }
-
-      if (!hasPermission(currentUser, "system:config:remove")) {
-        set.status = 403;
-        return fail(403, "无权限删除参数配置");
-      }
-
-      const count = configService.removeBatch(body.ids);
-      return ok({ count }, "删除成功");
-    },
+    ),
     {
       body: RemoveBatchConfigSchema,
       response: {
@@ -107,6 +109,78 @@ export const ConfigRoutes = new Elysia({
       detail: {
         tags: ["系统管理-参数配置"],
         summary: "批量删除参数配置",
+      },
+    }
+  )
+  .post(
+    "/add",
+    secured(
+      {
+        permission: "system:config:add",
+        denyMessage: "无权限新增参数配置",
+        operLog: OPER_LOG.CREATE,
+      },
+      ({ body, set }) => {
+        const typedBody = body as CreateConfigBody;
+        const result = configService.create(typedBody);
+        if (!result.success) {
+          set.status = 409;
+          return fail(409, "参数键名已存在");
+        }
+
+        return ok({ configId: result.configId }, "新增成功");
+      }
+    ),
+    {
+      body: CreateConfigSchema,
+      response: {
+        200: CreateConfigResponseSchema,
+        401: ConfigFailResponseSchema,
+        403: ConfigFailResponseSchema,
+        409: ConfigFailResponseSchema,
+      },
+      detail: {
+        tags: ["系统管理-参数配置"],
+        summary: "新增参数配置",
+      },
+    }
+  )
+  .put(
+    "/edit",
+    secured(
+      {
+        permission: "system:config:edit",
+        denyMessage: "无权限编辑参数配置",
+        operLog: OPER_LOG.UPDATE,
+      },
+      ({ body, set }) => {
+        const typedBody = body as UpdateConfigBody;
+        const result = configService.update(typedBody);
+        if (!result.success) {
+          if (result.reason === "config_not_found") {
+            set.status = 404;
+            return fail(404, "参数配置不存在");
+          }
+
+          set.status = 409;
+          return fail(409, "参数键名已存在");
+        }
+
+        return ok(true, "修改成功");
+      }
+    ),
+    {
+      body: UpdateConfigSchema,
+      response: {
+        200: UpdateConfigResponseSchema,
+        401: ConfigFailResponseSchema,
+        403: ConfigFailResponseSchema,
+        404: ConfigFailResponseSchema,
+        409: ConfigFailResponseSchema,
+      },
+      detail: {
+        tags: ["系统管理-参数配置"],
+        summary: "编辑参数配置",
       },
     }
   );

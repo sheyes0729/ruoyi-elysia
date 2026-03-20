@@ -1,6 +1,8 @@
 import { Elysia } from "elysia";
+import { secured } from "../../common/auth/secured";
 import { fail, ok } from "../../common/http/response";
 import { securityPlugin } from "../../plugins/security";
+import { OPER_LOG } from "./oper-log";
 import {
     AuthFailResponseSchema,
     GetInfoAuthResponseSchema,
@@ -11,6 +13,7 @@ import {
 import { authService } from "./service";
 import { loginLogService } from "../monitor/login-log/service";
 import { onlineService } from "../monitor/online/service";
+
 
 export const authRoutes = new Elysia({ prefix: "/api/auth", name: "auth.routes" })
     .use(securityPlugin)
@@ -65,17 +68,13 @@ export const authRoutes = new Elysia({ prefix: "/api/auth", name: "auth.routes" 
     )
     .post(
         "/logout",
-        ({ bearer, currentUser, set }) => {
-            if (!currentUser) {
-                set.status = 401;
-                return fail(401, "未登录或登录已失效");
-            }
-
-            if (bearer) {
+        secured({ operLog: OPER_LOG.LOGOUT }, ({ bearer }) => {
+            if (typeof bearer === "string") {
                 onlineService.removeSession(bearer);
             }
+
             return ok(true, "退出成功");
-        },
+        }),
         {
             response: {
                 200: LogoutAuthResponseSchema,
@@ -89,12 +88,7 @@ export const authRoutes = new Elysia({ prefix: "/api/auth", name: "auth.routes" 
     )
     .get(
         "/getInfo",
-        ({ currentUser, set }) => {
-            if (!currentUser) {
-                set.status = 401;
-                return fail(401, "未登录或登录已失效");
-            }
-
+        secured({}, ({ currentUser, set }) => {
             const profile = authService.getProfile(currentUser.userId);
             if (!profile) {
                 set.status = 401;
@@ -110,7 +104,7 @@ export const authRoutes = new Elysia({ prefix: "/api/auth", name: "auth.routes" 
                 roles: profile.roles,
                 permissions: profile.permissions,
             });
-        },
+        }),
         {
             response: {
                 200: GetInfoAuthResponseSchema,

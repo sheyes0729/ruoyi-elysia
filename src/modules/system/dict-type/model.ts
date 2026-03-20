@@ -14,6 +14,23 @@ export const RemoveBatchDictTypeSchema = t.Object({
   ids: t.Array(t.Numeric({ minimum: 1 }), { minItems: 1 }),
 });
 
+export const CreateDictTypeSchema = t.Object({
+  dictName: t.String({ minLength: 1, maxLength: 100 }),
+  dictType: t.String({ minLength: 1, maxLength: 100 }),
+  status: t.Union([t.Literal("0"), t.Literal("1")]),
+});
+
+export type CreateDictTypeBody = typeof CreateDictTypeSchema.static;
+
+export const UpdateDictTypeSchema = t.Object({
+  dictId: t.Numeric({ minimum: 1 }),
+  dictName: t.String({ minLength: 1, maxLength: 100 }),
+  dictType: t.String({ minLength: 1, maxLength: 100 }),
+  status: t.Union([t.Literal("0"), t.Literal("1")]),
+});
+
+export type UpdateDictTypeBody = typeof UpdateDictTypeSchema.static;
+
 export type DictTypeListItem = {
   dictId: number;
   dictName: string;
@@ -45,6 +62,20 @@ export const RemoveBatchDictTypeResponseSchema = t.Object({
   data: t.Object({
     count: t.Number(),
   }),
+});
+
+export const CreateDictTypeResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    dictId: t.Number(),
+  }),
+});
+
+export const UpdateDictTypeResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Boolean(),
 });
 
 export const DictTypeFailResponseSchema = t.Object({

@@ -1,10 +1,12 @@
 import { Elysia, t } from "elysia";
-import { hasPermission } from "../../../common/auth/permission";
+import { secured } from "../../../common/auth/secured";
 import { paginateData } from "../../../common/http/page";
 import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
+import { OPER_LOG } from "./oper-log";
 import {
   ForceLogoutOnlineResponseSchema,
+  ListOnlineQuery,
   ListOnlineSchema,
   ListOnlineResponseSchema,
   OnlineFailResponseSchema,
@@ -18,20 +20,17 @@ export const OnlineRoutes = new Elysia({
   .use(securityPlugin)
   .get(
     "/list",
-    ({ currentUser, query, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
+    secured(
+      {
+        permission: "monitor:online:list",
+        denyMessage: "无权限访问在线用户",
+      },
+      ({ query }) => {
+        const typedQuery = query as ListOnlineQuery;
+        const sessions = onlineService.listSessions(typedQuery);
+        return ok(paginateData(sessions, typedQuery));
       }
-
-      if (!hasPermission(currentUser, "monitor:online:list")) {
-        set.status = 403;
-        return fail(403, "无权限访问在线用户");
-      }
-
-      const sessions = onlineService.listSessions(query);
-      return ok(paginateData(sessions, query));
-    },
+    ),
     {
       query: ListOnlineSchema,
       response: {
@@ -47,25 +46,23 @@ export const OnlineRoutes = new Elysia({
   )
   .delete(
     "/:token",
-    ({ params, currentUser, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
-      }
+    secured(
+      {
+        permission: "monitor:online:forceLogout",
+        denyMessage: "无权限强制下线",
+        operLog: OPER_LOG.FORCE_LOGOUT,
+      },
+      ({ params, set }) => {
+        const typedParams = params as { token: string };
+        const removed = onlineService.removeSession(typedParams.token);
+        if (!removed) {
+          set.status = 404;
+          return fail(404, "会话不存在或已下线");
+        }
 
-      if (!hasPermission(currentUser, "monitor:online:forceLogout")) {
-        set.status = 403;
-        return fail(403, "无权限强制下线");
+        return ok(true, "下线成功");
       }
-
-      const removed = onlineService.removeSession(params.token);
-      if (!removed) {
-        set.status = 404;
-        return fail(404, "会话不存在或已下线");
-      }
-
-      return ok(true, "下线成功");
-    },
+    ),
     {
       params: t.Object({
         token: t.String({ minLength: 10 }),

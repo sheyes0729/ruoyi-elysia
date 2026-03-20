@@ -1,8 +1,10 @@
 import { monitorStore } from "../store";
+import type { OperBusinessType } from "./business-type";
 import type { ListOperLogQuery } from "./model";
 
 type RecordOperLogInput = {
   title: string;
+  businessType?: OperBusinessType;
   operName: string;
   method: string;
   requestMethod: string;
@@ -15,6 +17,7 @@ export class OperLogService {
     monitorStore.operLogs.unshift({
       operId: monitorStore.nextOperLogId(),
       title: input.title,
+      businessType: input.businessType ?? "OTHER",
       operName: input.operName,
       method: input.method,
       requestMethod: input.requestMethod,
@@ -36,6 +39,10 @@ export class OperLogService {
       }
 
       if (query.status && item.status !== query.status) {
+        return false;
+      }
+
+      if (query.businessType && item.businessType !== query.businessType) {
         return false;
       }
 

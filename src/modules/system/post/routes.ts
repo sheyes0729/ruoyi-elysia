@@ -1,15 +1,23 @@
 import { Elysia } from "elysia";
-import { hasPermission } from "../../../common/auth/permission";
+import { secured } from "../../../common/auth/secured";
 import { toCsv } from "../../../common/http/csv";
 import { paginateData } from "../../../common/http/page";
 import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
+import { OPER_LOG } from "./oper-log";
 import {
+  CreatePostBody,
+  CreatePostResponseSchema,
+  CreatePostSchema,
+  ListPostQuery,
   ListPostResponseSchema,
   ListPostSchema,
   PostFailResponseSchema,
   RemoveBatchPostResponseSchema,
   RemoveBatchPostSchema,
+  UpdatePostBody,
+  UpdatePostResponseSchema,
+  UpdatePostSchema,
 } from "./model";
 import { postService } from "./service";
 
@@ -20,19 +28,16 @@ export const PostRoutes = new Elysia({
   .use(securityPlugin)
   .get(
     "/list",
-    ({ currentUser, query, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
+    secured(
+      {
+        permission: "system:post:list",
+        denyMessage: "无权限访问岗位管理",
+      },
+      ({ query }) => {
+        const typedQuery = query as ListPostQuery;
+        return ok(paginateData(postService.list(typedQuery), typedQuery));
       }
-
-      if (!hasPermission(currentUser, "system:post:list")) {
-        set.status = 403;
-        return fail(403, "无权限访问岗位管理");
-      }
-
-      return ok(paginateData(postService.list(query), query));
-    },
+    ),
     {
       query: ListPostSchema,
       response: {
@@ -48,31 +53,30 @@ export const PostRoutes = new Elysia({
   )
   .post(
     "/export",
-    ({ currentUser, query, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
+    secured(
+      {
+        permission: "system:post:export",
+        denyMessage: "无权限导出岗位数据",
+        operLog: OPER_LOG.EXPORT,
+      },
+      ({ query, set }) => {
+        const typedQuery = query as ListPostQuery;
+        const rows = postService.list(typedQuery);
+        const csv = toCsv(rows, [
+          { header: "岗位ID", value: (row) => row.postId },
+          { header: "岗位编码", value: (row) => row.postCode },
+          { header: "岗位名称", value: (row) => row.postName },
+          { header: "显示顺序", value: (row) => row.postSort },
+          { header: "状态", value: (row) => row.status },
+        ]);
+
+        const headers = set.headers as Record<string, string>;
+        headers["content-type"] = "text/csv; charset=utf-8";
+        headers["content-disposition"] =
+          "attachment; filename=system-post-export.csv";
+        return `\uFEFF${csv}`;
       }
-
-      if (!hasPermission(currentUser, "system:post:export")) {
-        set.status = 403;
-        return fail(403, "无权限导出岗位数据");
-      }
-
-      const rows = postService.list(query);
-      const csv = toCsv(rows, [
-        { header: "岗位ID", value: (row) => row.postId },
-        { header: "岗位编码", value: (row) => row.postCode },
-        { header: "岗位名称", value: (row) => row.postName },
-        { header: "显示顺序", value: (row) => row.postSort },
-        { header: "状态", value: (row) => row.status },
-      ]);
-
-      set.headers["content-type"] = "text/csv; charset=utf-8";
-      set.headers["content-disposition"] =
-        "attachment; filename=system-post-export.csv";
-      return `\uFEFF${csv}`;
-    },
+    ),
     {
       query: ListPostSchema,
       detail: {
@@ -83,20 +87,18 @@ export const PostRoutes = new Elysia({
   )
   .delete(
     "/batch",
-    ({ body, currentUser, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
+    secured(
+      {
+        permission: "system:post:remove",
+        denyMessage: "无权限删除岗位",
+        operLog: OPER_LOG.DELETE,
+      },
+      ({ body }) => {
+        const typedBody = body as typeof RemoveBatchPostSchema.static;
+        const count = postService.removeBatch(typedBody.ids);
+        return ok({ count }, "删除成功");
       }
-
-      if (!hasPermission(currentUser, "system:post:remove")) {
-        set.status = 403;
-        return fail(403, "无权限删除岗位");
-      }
-
-      const count = postService.removeBatch(body.ids);
-      return ok({ count }, "删除成功");
-    },
+    ),
     {
       body: RemoveBatchPostSchema,
       response: {
@@ -107,6 +109,78 @@ export const PostRoutes = new Elysia({
       detail: {
         tags: ["系统管理-岗位管理"],
         summary: "批量删除岗位",
+      },
+    }
+  )
+  .post(
+    "/add",
+    secured(
+      {
+        permission: "system:post:add",
+        denyMessage: "无权限新增岗位",
+        operLog: OPER_LOG.CREATE,
+      },
+      ({ body, set }) => {
+        const typedBody = body as CreatePostBody;
+        const result = postService.create(typedBody);
+        if (!result.success) {
+          set.status = 409;
+          return fail(409, "岗位编码已存在");
+        }
+
+        return ok({ postId: result.postId }, "新增成功");
+      }
+    ),
+    {
+      body: CreatePostSchema,
+      response: {
+        200: CreatePostResponseSchema,
+        401: PostFailResponseSchema,
+        403: PostFailResponseSchema,
+        409: PostFailResponseSchema,
+      },
+      detail: {
+        tags: ["系统管理-岗位管理"],
+        summary: "新增岗位",
+      },
+    }
+  )
+  .put(
+    "/edit",
+    secured(
+      {
+        permission: "system:post:edit",
+        denyMessage: "无权限编辑岗位",
+        operLog: OPER_LOG.UPDATE,
+      },
+      ({ body, set }) => {
+        const typedBody = body as UpdatePostBody;
+        const result = postService.update(typedBody);
+        if (!result.success) {
+          if (result.reason === "post_not_found") {
+            set.status = 404;
+            return fail(404, "岗位不存在");
+          }
+
+          set.status = 409;
+          return fail(409, "岗位编码已存在");
+        }
+
+        return ok(true, "修改成功");
+      }
+    ),
+    {
+      body: UpdatePostSchema,
+      response: {
+        200: UpdatePostResponseSchema,
+        401: PostFailResponseSchema,
+        403: PostFailResponseSchema,
+        404: PostFailResponseSchema,
+        409: PostFailResponseSchema,
+      },
+      detail: {
+        tags: ["系统管理-岗位管理"],
+        summary: "编辑岗位",
       },
     }
   );

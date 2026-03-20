@@ -14,6 +14,25 @@ export const RemoveBatchPostSchema = t.Object({
   ids: t.Array(t.Numeric({ minimum: 1 }), { minItems: 1 }),
 });
 
+export const CreatePostSchema = t.Object({
+  postCode: t.String({ minLength: 1, maxLength: 64 }),
+  postName: t.String({ minLength: 1, maxLength: 50 }),
+  postSort: t.Numeric({ minimum: 0 }),
+  status: t.Union([t.Literal("0"), t.Literal("1")]),
+});
+
+export type CreatePostBody = typeof CreatePostSchema.static;
+
+export const UpdatePostSchema = t.Object({
+  postId: t.Numeric({ minimum: 1 }),
+  postCode: t.String({ minLength: 1, maxLength: 64 }),
+  postName: t.String({ minLength: 1, maxLength: 50 }),
+  postSort: t.Numeric({ minimum: 0 }),
+  status: t.Union([t.Literal("0"), t.Literal("1")]),
+});
+
+export type UpdatePostBody = typeof UpdatePostSchema.static;
+
 export type PostListItem = {
   postId: number;
   postCode: string;
@@ -47,6 +66,20 @@ export const RemoveBatchPostResponseSchema = t.Object({
   data: t.Object({
     count: t.Number(),
   }),
+});
+
+export const CreatePostResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    postId: t.Number(),
+  }),
+});
+
+export const UpdatePostResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Boolean(),
 });
 
 export const PostFailResponseSchema = t.Object({

@@ -14,6 +14,31 @@ export const RemoveBatchRoleSchema = t.Object({
     ids: t.Array(t.Numeric({ minimum: 1 }), { minItems: 1 }),
 });
 
+export const CreateRoleSchema = t.Object({
+    roleKey: t.String({ minLength: 2, maxLength: 50 }),
+    roleName: t.String({ minLength: 1, maxLength: 50 }),
+    status: t.Union([t.Literal("0"), t.Literal("1")]),
+    menuIds: t.Optional(t.Array(t.Numeric({ minimum: 1 }))),
+});
+
+export type CreateRoleBody = typeof CreateRoleSchema.static;
+
+export const UpdateRoleSchema = t.Object({
+    roleId: t.Numeric({ minimum: 1 }),
+    roleName: t.String({ minLength: 1, maxLength: 50 }),
+    status: t.Union([t.Literal("0"), t.Literal("1")]),
+    menuIds: t.Optional(t.Array(t.Numeric({ minimum: 1 }))),
+});
+
+export type UpdateRoleBody = typeof UpdateRoleSchema.static;
+
+export const AuthRoleMenuSchema = t.Object({
+    roleId: t.Numeric({ minimum: 1 }),
+    menuIds: t.Array(t.Numeric({ minimum: 1 })),
+});
+
+export type AuthRoleMenuBody = typeof AuthRoleMenuSchema.static;
+
 export type RoleListItem = {
     roleId: number;
     roleKey: string;
@@ -45,6 +70,26 @@ export const RemoveBatchRoleResponseSchema = t.Object({
     data: t.Object({
         count: t.Number(),
     }),
+});
+
+export const CreateRoleResponseSchema = t.Object({
+    code: t.Number(),
+    msg: t.String(),
+    data: t.Object({
+        roleId: t.Number(),
+    }),
+});
+
+export const UpdateRoleResponseSchema = t.Object({
+    code: t.Number(),
+    msg: t.String(),
+    data: t.Boolean(),
+});
+
+export const AuthRoleMenuResponseSchema = t.Object({
+    code: t.Number(),
+    msg: t.String(),
+    data: t.Boolean(),
 });
 
 export const RoleFailResponseSchema = t.Object({

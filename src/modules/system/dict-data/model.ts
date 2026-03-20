@@ -14,6 +14,27 @@ export const RemoveBatchDictDataSchema = t.Object({
   ids: t.Array(t.Numeric({ minimum: 1 }), { minItems: 1 }),
 });
 
+export const CreateDictDataSchema = t.Object({
+  dictSort: t.Numeric({ minimum: 0 }),
+  dictLabel: t.String({ minLength: 1, maxLength: 100 }),
+  dictValue: t.String({ minLength: 1, maxLength: 100 }),
+  dictType: t.String({ minLength: 1, maxLength: 100 }),
+  status: t.Union([t.Literal("0"), t.Literal("1")]),
+});
+
+export type CreateDictDataBody = typeof CreateDictDataSchema.static;
+
+export const UpdateDictDataSchema = t.Object({
+  dictCode: t.Numeric({ minimum: 1 }),
+  dictSort: t.Numeric({ minimum: 0 }),
+  dictLabel: t.String({ minLength: 1, maxLength: 100 }),
+  dictValue: t.String({ minLength: 1, maxLength: 100 }),
+  dictType: t.String({ minLength: 1, maxLength: 100 }),
+  status: t.Union([t.Literal("0"), t.Literal("1")]),
+});
+
+export type UpdateDictDataBody = typeof UpdateDictDataSchema.static;
+
 export type DictDataListItem = {
   dictCode: number;
   dictSort: number;
@@ -49,6 +70,20 @@ export const RemoveBatchDictDataResponseSchema = t.Object({
   data: t.Object({
     count: t.Number(),
   }),
+});
+
+export const CreateDictDataResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    dictCode: t.Number(),
+  }),
+});
+
+export const UpdateDictDataResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Boolean(),
 });
 
 export const DictDataFailResponseSchema = t.Object({

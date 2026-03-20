@@ -1,6 +1,17 @@
 import { removeBatchByNumericId } from "../../../common/data/array";
 import { accessDataStore } from "../access-data";
-import type { ListNoticeQuery, NoticeListItem } from "./model";
+import type {
+  CreateNoticeBody,
+  ListNoticeQuery,
+  NoticeListItem,
+  UpdateNoticeBody,
+} from "./model";
+
+type CreateNoticeResult = { success: true; noticeId: number };
+
+type UpdateNoticeResult =
+  | { success: true }
+  | { success: false; reason: "notice_not_found" };
 
 export class NoticeService {
   list(query?: ListNoticeQuery): NoticeListItem[] {
@@ -35,6 +46,39 @@ export class NoticeService {
 
   removeBatch(ids: number[]): number {
     return removeBatchByNumericId(accessDataStore.notices, ids, (item) => item.noticeId);
+  }
+
+  create(payload: CreateNoticeBody): CreateNoticeResult {
+    const nextId =
+      accessDataStore.notices.reduce(
+        (maxNoticeId, item) => Math.max(maxNoticeId, item.noticeId),
+        0
+      ) + 1;
+
+    accessDataStore.notices.push({
+      noticeId: nextId,
+      noticeTitle: payload.noticeTitle,
+      noticeType: payload.noticeType,
+      status: payload.status,
+      createTime: new Date().toISOString(),
+    });
+
+    return { success: true, noticeId: nextId };
+  }
+
+  update(payload: UpdateNoticeBody): UpdateNoticeResult {
+    const target = accessDataStore.notices.find(
+      (item) => item.noticeId === payload.noticeId
+    );
+    if (!target) {
+      return { success: false, reason: "notice_not_found" };
+    }
+
+    target.noticeTitle = payload.noticeTitle;
+    target.noticeType = payload.noticeType;
+    target.status = payload.status;
+
+    return { success: true };
   }
 }
 

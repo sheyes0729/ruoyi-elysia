@@ -14,6 +14,25 @@ export const RemoveBatchConfigSchema = t.Object({
   ids: t.Array(t.Numeric({ minimum: 1 }), { minItems: 1 }),
 });
 
+export const CreateConfigSchema = t.Object({
+  configName: t.String({ minLength: 1, maxLength: 100 }),
+  configKey: t.String({ minLength: 1, maxLength: 100 }),
+  configValue: t.String({ maxLength: 500 }),
+  configType: t.Union([t.Literal("Y"), t.Literal("N")]),
+});
+
+export type CreateConfigBody = typeof CreateConfigSchema.static;
+
+export const UpdateConfigSchema = t.Object({
+  configId: t.Numeric({ minimum: 1 }),
+  configName: t.String({ minLength: 1, maxLength: 100 }),
+  configKey: t.String({ minLength: 1, maxLength: 100 }),
+  configValue: t.String({ maxLength: 500 }),
+  configType: t.Union([t.Literal("Y"), t.Literal("N")]),
+});
+
+export type UpdateConfigBody = typeof UpdateConfigSchema.static;
+
 export type ConfigListItem = {
   configId: number;
   configName: string;
@@ -47,6 +66,20 @@ export const RemoveBatchConfigResponseSchema = t.Object({
   data: t.Object({
     count: t.Number(),
   }),
+});
+
+export const CreateConfigResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    configId: t.Number(),
+  }),
+});
+
+export const UpdateConfigResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Boolean(),
 });
 
 export const ConfigFailResponseSchema = t.Object({

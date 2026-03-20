@@ -1,6 +1,19 @@
 import { removeBatchByNumericId } from "../../../common/data/array";
 import { accessDataStore } from "../access-data";
-import type { DictDataListItem, ListDictDataQuery } from "./model";
+import type {
+  CreateDictDataBody,
+  DictDataListItem,
+  ListDictDataQuery,
+  UpdateDictDataBody,
+} from "./model";
+
+type CreateDictDataResult =
+  | { success: true; dictCode: number }
+  | { success: false; reason: "dict_type_not_found" };
+
+type UpdateDictDataResult =
+  | { success: true }
+  | { success: false; reason: "dict_data_not_found" | "dict_type_not_found" };
 
 export class DictDataService {
   list(query?: ListDictDataQuery): DictDataListItem[] {
@@ -36,6 +49,54 @@ export class DictDataService {
 
   removeBatch(ids: number[]): number {
     return removeBatchByNumericId(accessDataStore.dictData, ids, (item) => item.dictCode);
+  }
+
+  create(payload: CreateDictDataBody): CreateDictDataResult {
+    if (!this.dictTypeExists(payload.dictType)) {
+      return { success: false, reason: "dict_type_not_found" };
+    }
+
+    const nextCode =
+      accessDataStore.dictData.reduce(
+        (maxDictCode, item) => Math.max(maxDictCode, item.dictCode),
+        0
+      ) + 1;
+
+    accessDataStore.dictData.push({
+      dictCode: nextCode,
+      dictSort: payload.dictSort,
+      dictLabel: payload.dictLabel,
+      dictValue: payload.dictValue,
+      dictType: payload.dictType,
+      status: payload.status,
+    });
+
+    return { success: true, dictCode: nextCode };
+  }
+
+  update(payload: UpdateDictDataBody): UpdateDictDataResult {
+    const target = accessDataStore.dictData.find(
+      (item) => item.dictCode === payload.dictCode
+    );
+    if (!target) {
+      return { success: false, reason: "dict_data_not_found" };
+    }
+
+    if (!this.dictTypeExists(payload.dictType)) {
+      return { success: false, reason: "dict_type_not_found" };
+    }
+
+    target.dictSort = payload.dictSort;
+    target.dictLabel = payload.dictLabel;
+    target.dictValue = payload.dictValue;
+    target.dictType = payload.dictType;
+    target.status = payload.status;
+
+    return { success: true };
+  }
+
+  private dictTypeExists(dictType: string): boolean {
+    return accessDataStore.dictTypes.some((item) => item.dictType === dictType);
   }
 }
 

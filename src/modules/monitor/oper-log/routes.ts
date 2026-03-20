@@ -1,11 +1,13 @@
 import { Elysia } from "elysia";
-import { hasPermission } from "../../../common/auth/permission";
+import { secured } from "../../../common/auth/secured";
 import { buildCsvDownload } from "../../../common/http/csv";
 import { paginateData } from "../../../common/http/page";
-import { fail, ok } from "../../../common/http/response";
+import { ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
+import { OPER_LOG } from "./oper-log";
 import {
   CleanOperLogResponseSchema,
+  ListOperLogQuery,
   ListOperLogResponseSchema,
   ListOperLogSchema,
   OperLogFailResponseSchema,
@@ -19,20 +21,17 @@ export const OperLogRoutes = new Elysia({
   .use(securityPlugin)
   .get(
     "/list",
-    ({ currentUser, query, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
+    secured(
+      {
+        permission: "monitor:operlog:list",
+        denyMessage: "无权限访问操作日志",
+      },
+      ({ query }) => {
+        const typedQuery = query as ListOperLogQuery;
+        const records = operLogService.list(typedQuery);
+        return ok(paginateData(records, typedQuery));
       }
-
-      if (!hasPermission(currentUser, "monitor:operlog:list")) {
-        set.status = 403;
-        return fail(403, "无权限访问操作日志");
-      }
-
-      const records = operLogService.list(query);
-      return ok(paginateData(records, query));
-    },
+    ),
     {
       query: ListOperLogSchema,
       response: {
@@ -48,34 +47,33 @@ export const OperLogRoutes = new Elysia({
   )
   .post(
     "/export",
-    ({ currentUser, query, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
+    secured(
+      {
+        permission: "monitor:operlog:export",
+        denyMessage: "无权限导出操作日志",
+        operLog: OPER_LOG.EXPORT,
+      },
+      ({ query, set }) => {
+        const typedQuery = query as ListOperLogQuery;
+        const rows = operLogService.list(typedQuery);
+        return buildCsvDownload(
+          set,
+          rows,
+          [
+            { header: "日志ID", value: (row) => row.operId },
+            { header: "标题", value: (row) => row.title },
+            { header: "业务类型", value: (row) => row.businessType },
+            { header: "操作人", value: (row) => row.operName },
+            { header: "方法", value: (row) => row.method },
+            { header: "请求方式", value: (row) => row.requestMethod },
+            { header: "地址", value: (row) => row.operUrl },
+            { header: "状态", value: (row) => row.status },
+            { header: "时间", value: (row) => row.operTime },
+          ],
+          "monitor-oper-log-export.csv"
+        );
       }
-
-      if (!hasPermission(currentUser, "monitor:operlog:export")) {
-        set.status = 403;
-        return fail(403, "无权限导出操作日志");
-      }
-
-      const rows = operLogService.list(query);
-      return buildCsvDownload(
-        set,
-        rows,
-        [
-          { header: "日志ID", value: (row) => row.operId },
-          { header: "标题", value: (row) => row.title },
-          { header: "操作人", value: (row) => row.operName },
-          { header: "方法", value: (row) => row.method },
-          { header: "请求方式", value: (row) => row.requestMethod },
-          { header: "地址", value: (row) => row.operUrl },
-          { header: "状态", value: (row) => row.status },
-          { header: "时间", value: (row) => row.operTime },
-        ],
-        "monitor-oper-log-export.csv"
-      );
-    },
+    ),
     {
       query: ListOperLogSchema,
       detail: {
@@ -86,20 +84,17 @@ export const OperLogRoutes = new Elysia({
   )
   .delete(
     "/clean",
-    ({ currentUser, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
+    secured(
+      {
+        permission: "monitor:operlog:remove",
+        denyMessage: "无权限清空操作日志",
+        operLog: OPER_LOG.CLEAN,
+      },
+      () => {
+        const count = operLogService.clear();
+        return ok({ count }, "清空成功");
       }
-
-      if (!hasPermission(currentUser, "monitor:operlog:remove")) {
-        set.status = 403;
-        return fail(403, "无权限清空操作日志");
-      }
-
-      const count = operLogService.clear();
-      return ok({ count }, "清空成功");
-    },
+    ),
     {
       response: {
         200: CleanOperLogResponseSchema,

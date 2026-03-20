@@ -14,6 +14,23 @@ export const RemoveBatchNoticeSchema = t.Object({
   ids: t.Array(t.Numeric({ minimum: 1 }), { minItems: 1 }),
 });
 
+export const CreateNoticeSchema = t.Object({
+  noticeTitle: t.String({ minLength: 1, maxLength: 100 }),
+  noticeType: t.Union([t.Literal("1"), t.Literal("2")]),
+  status: t.Union([t.Literal("0"), t.Literal("1")]),
+});
+
+export type CreateNoticeBody = typeof CreateNoticeSchema.static;
+
+export const UpdateNoticeSchema = t.Object({
+  noticeId: t.Numeric({ minimum: 1 }),
+  noticeTitle: t.String({ minLength: 1, maxLength: 100 }),
+  noticeType: t.Union([t.Literal("1"), t.Literal("2")]),
+  status: t.Union([t.Literal("0"), t.Literal("1")]),
+});
+
+export type UpdateNoticeBody = typeof UpdateNoticeSchema.static;
+
 export type NoticeListItem = {
   noticeId: number;
   noticeTitle: string;
@@ -47,6 +64,20 @@ export const RemoveBatchNoticeResponseSchema = t.Object({
   data: t.Object({
     count: t.Number(),
   }),
+});
+
+export const CreateNoticeResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    noticeId: t.Number(),
+  }),
+});
+
+export const UpdateNoticeResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Boolean(),
 });
 
 export const NoticeFailResponseSchema = t.Object({

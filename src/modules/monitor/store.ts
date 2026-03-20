@@ -1,3 +1,5 @@
+import type { OperBusinessType } from "./oper-log/business-type";
+
 export type OnlineSession = {
   token: string;
   userId: number;
@@ -19,6 +21,7 @@ export type LoginLogRecord = {
 export type OperLogRecord = {
   operId: number;
   title: string;
+  businessType: OperBusinessType;
   operName: string;
   method: string;
   requestMethod: string;

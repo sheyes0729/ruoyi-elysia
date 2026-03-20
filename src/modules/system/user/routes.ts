@@ -1,18 +1,23 @@
 import { Elysia } from "elysia";
-import { hasPermission } from "../../../common/auth/permission";
+import { secured } from "../../../common/auth/secured";
 import { toCsv } from "../../../common/http/csv";
 import { paginateData } from "../../../common/http/page";
 import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
+import { OPER_LOG } from "./oper-log";
 import {
+  CreateUserBody,
   CreateUserResponseSchema,
   CreateUserSchema,
+  ListUserQuery,
   ListUserResponseSchema,
   ListUserSchema,
+  ResetPasswordBody,
   ResetPasswordResponseSchema,
   ResetPasswordSchema,
   RemoveBatchUserResponseSchema,
   RemoveBatchUserSchema,
+  UpdateUserBody,
   UpdateUserResponseSchema,
   UpdateUserSchema,
   UserFailResponseSchema,
@@ -26,19 +31,16 @@ export const userRoutes = new Elysia({
   .use(securityPlugin)
   .get(
     "/list",
-    ({ currentUser, query, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
+    secured(
+      {
+        permission: "system:user:list",
+        denyMessage: "无权限访问用户管理",
+      },
+      ({ query }) => {
+        const typedQuery = query as ListUserQuery;
+        return ok(paginateData(userService.list(typedQuery), typedQuery));
       }
-
-      if (!hasPermission(currentUser, "system:user:list")) {
-        set.status = 403;
-        return fail(403, "无权限访问用户列表");
-      }
-
-      return ok(paginateData(userService.list(query), query));
-    },
+    ),
     {
       query: ListUserSchema,
       response: {
@@ -54,30 +56,29 @@ export const userRoutes = new Elysia({
   )
   .post(
     "/export",
-    ({ currentUser, query, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
+    secured(
+      {
+        permission: "system:user:export",
+        denyMessage: "无权限导出用户数据",
+        operLog: OPER_LOG.EXPORT,
+      },
+      ({ query, set }) => {
+        const typedQuery = query as ListUserQuery;
+        const rows = userService.list(typedQuery);
+        const csv = toCsv(rows, [
+          { header: "用户ID", value: (row) => row.userId },
+          { header: "用户名", value: (row) => row.username },
+          { header: "昵称", value: (row) => row.nickName },
+          { header: "状态", value: (row) => row.status },
+        ]);
+
+        const headers = set.headers as Record<string, string>;
+        headers["content-type"] = "text/csv; charset=utf-8";
+        headers["content-disposition"] =
+          "attachment; filename=system-user-export.csv";
+        return `\uFEFF${csv}`;
       }
-
-      if (!hasPermission(currentUser, "system:user:export")) {
-        set.status = 403;
-        return fail(403, "无权限导出用户数据");
-      }
-
-      const rows = userService.list(query);
-      const csv = toCsv(rows, [
-        { header: "用户ID", value: (row) => row.userId },
-        { header: "用户名", value: (row) => row.username },
-        { header: "昵称", value: (row) => row.nickName },
-        { header: "状态", value: (row) => row.status },
-      ]);
-
-      set.headers["content-type"] = "text/csv; charset=utf-8";
-      set.headers["content-disposition"] =
-        "attachment; filename=system-user-export.csv";
-      return `\uFEFF${csv}`;
-    },
+    ),
     {
       query: ListUserSchema,
       detail: {
@@ -88,20 +89,18 @@ export const userRoutes = new Elysia({
   )
   .delete(
     "/batch",
-    ({ body, currentUser, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
+    secured(
+      {
+        permission: "system:user:remove",
+        denyMessage: "无权限删除用户",
+        operLog: OPER_LOG.DELETE,
+      },
+      ({ body }) => {
+        const typedBody = body as typeof RemoveBatchUserSchema.static;
+        const count = userService.removeBatch(typedBody.ids);
+        return ok({ count }, "删除成功");
       }
-
-      if (!hasPermission(currentUser, "system:user:remove")) {
-        set.status = 403;
-        return fail(403, "无权限删除用户");
-      }
-
-      const count = userService.removeBatch(body.ids);
-      return ok({ count }, "删除成功");
-    },
+    ),
     {
       body: RemoveBatchUserSchema,
       response: {
@@ -117,30 +116,28 @@ export const userRoutes = new Elysia({
   )
   .post(
     "/add",
-    ({ body, currentUser, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
-      }
+    secured(
+      {
+        permission: "system:user:add",
+        denyMessage: "无权限新增用户",
+        operLog: OPER_LOG.CREATE,
+      },
+      ({ body, set }) => {
+        const typedBody = body as CreateUserBody;
+        const result = userService.create(typedBody);
+        if (!result.success) {
+          if (result.reason === "username_exists") {
+            set.status = 409;
+            return fail(409, "用户名已存在");
+          }
 
-      if (!hasPermission(currentUser, "system:user:add")) {
-        set.status = 403;
-        return fail(403, "无权限新增用户");
-      }
-
-      const result = userService.create(body);
-      if (!result.success) {
-        if (result.reason === "username_exists") {
-          set.status = 409;
-          return fail(409, "用户名已存在");
+          set.status = 400;
+          return fail(400, "角色不存在");
         }
 
-        set.status = 400;
-        return fail(400, "角色不存在");
+        return ok({ userId: result.userId }, "新增成功");
       }
-
-      return ok({ userId: result.userId }, "新增成功");
-    },
+    ),
     {
       body: CreateUserSchema,
       response: {
@@ -158,30 +155,28 @@ export const userRoutes = new Elysia({
   )
   .put(
     "/edit",
-    ({ body, currentUser, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
-      }
+    secured(
+      {
+        permission: "system:user:edit",
+        denyMessage: "无权限编辑用户",
+        operLog: OPER_LOG.UPDATE,
+      },
+      ({ body, set }) => {
+        const typedBody = body as UpdateUserBody;
+        const result = userService.update(typedBody);
+        if (!result.success) {
+          if (result.reason === "user_not_found") {
+            set.status = 404;
+            return fail(404, "用户不存在");
+          }
 
-      if (!hasPermission(currentUser, "system:user:edit")) {
-        set.status = 403;
-        return fail(403, "无权限编辑用户");
-      }
-
-      const result = userService.update(body);
-      if (!result.success) {
-        if (result.reason === "user_not_found") {
-          set.status = 404;
-          return fail(404, "用户不存在");
+          set.status = 400;
+          return fail(400, "角色不存在");
         }
 
-        set.status = 400;
-        return fail(400, "角色不存在");
+        return ok(true, "修改成功");
       }
-
-      return ok(true, "修改成功");
-    },
+    ),
     {
       body: UpdateUserSchema,
       response: {
@@ -199,25 +194,23 @@ export const userRoutes = new Elysia({
   )
   .put(
     "/resetPwd",
-    ({ body, currentUser, set }) => {
-      if (!currentUser) {
-        set.status = 401;
-        return fail(401, "未登录或登录已失效");
-      }
+    secured(
+      {
+        permission: "system:user:resetPwd",
+        denyMessage: "无权限重置用户密码",
+        operLog: OPER_LOG.RESET_PASSWORD,
+      },
+      ({ body, set }) => {
+        const typedBody = body as ResetPasswordBody;
+        const result = userService.resetPassword(typedBody);
+        if (!result.success) {
+          set.status = 404;
+          return fail(404, "用户不存在");
+        }
 
-      if (!hasPermission(currentUser, "system:user:resetPwd")) {
-        set.status = 403;
-        return fail(403, "无权限重置密码");
+        return ok(true, "重置成功");
       }
-
-      const result = userService.resetPassword(body);
-      if (!result.success) {
-        set.status = 404;
-        return fail(404, "用户不存在");
-      }
-
-      return ok(true, "重置成功");
-    },
+    ),
     {
       body: ResetPasswordSchema,
       response: {

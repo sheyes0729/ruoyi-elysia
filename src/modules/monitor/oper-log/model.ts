@@ -5,6 +5,20 @@ export const ListOperLogSchema = t.Object({
   pageSize: t.Optional(t.Numeric({ minimum: 1, maximum: 200 })),
   operName: t.Optional(t.String()),
   status: t.Optional(t.Union([t.Literal("0"), t.Literal("1")])),
+  businessType: t.Optional(
+    t.Union([
+      t.Literal("OTHER"),
+      t.Literal("INSERT"),
+      t.Literal("UPDATE"),
+      t.Literal("DELETE"),
+      t.Literal("EXPORT"),
+      t.Literal("CLEAN"),
+      t.Literal("GRANT"),
+      t.Literal("FORCE"),
+      t.Literal("LOGIN"),
+      t.Literal("LOGOUT"),
+    ])
+  ),
   beginTime: t.Optional(t.String()),
   endTime: t.Optional(t.String()),
 });
@@ -22,6 +36,18 @@ export const CleanOperLogResponseSchema = t.Object({
 export const OperLogItemSchema = t.Object({
   operId: t.Number(),
   title: t.String(),
+  businessType: t.Union([
+    t.Literal("OTHER"),
+    t.Literal("INSERT"),
+    t.Literal("UPDATE"),
+    t.Literal("DELETE"),
+    t.Literal("EXPORT"),
+    t.Literal("CLEAN"),
+    t.Literal("GRANT"),
+    t.Literal("FORCE"),
+    t.Literal("LOGIN"),
+    t.Literal("LOGOUT"),
+  ]),
   operName: t.String(),
   method: t.String(),
   requestMethod: t.String(),

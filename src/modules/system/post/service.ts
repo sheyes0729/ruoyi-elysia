@@ -1,6 +1,19 @@
 import { removeBatchByNumericId } from "../../../common/data/array";
 import { accessDataStore } from "../access-data";
-import type { ListPostQuery, PostListItem } from "./model";
+import type {
+  CreatePostBody,
+  ListPostQuery,
+  PostListItem,
+  UpdatePostBody,
+} from "./model";
+
+type CreatePostResult =
+  | { success: true; postId: number }
+  | { success: false; reason: "post_code_exists" };
+
+type UpdatePostResult =
+  | { success: true }
+  | { success: false; reason: "post_not_found" | "post_code_exists" };
 
 export class PostService {
   list(query?: ListPostQuery): PostListItem[] {
@@ -35,6 +48,52 @@ export class PostService {
 
   removeBatch(ids: number[]): number {
     return removeBatchByNumericId(accessDataStore.posts, ids, (item) => item.postId);
+  }
+
+  create(payload: CreatePostBody): CreatePostResult {
+    const existed = accessDataStore.posts.some(
+      (item) => item.postCode === payload.postCode
+    );
+    if (existed) {
+      return { success: false, reason: "post_code_exists" };
+    }
+
+    const nextId =
+      accessDataStore.posts.reduce(
+        (maxPostId, item) => Math.max(maxPostId, item.postId),
+        0
+      ) + 1;
+
+    accessDataStore.posts.push({
+      postId: nextId,
+      postCode: payload.postCode,
+      postName: payload.postName,
+      postSort: payload.postSort,
+      status: payload.status,
+    });
+
+    return { success: true, postId: nextId };
+  }
+
+  update(payload: UpdatePostBody): UpdatePostResult {
+    const target = accessDataStore.posts.find((item) => item.postId === payload.postId);
+    if (!target) {
+      return { success: false, reason: "post_not_found" };
+    }
+
+    const existed = accessDataStore.posts.some(
+      (item) => item.postCode === payload.postCode && item.postId !== payload.postId
+    );
+    if (existed) {
+      return { success: false, reason: "post_code_exists" };
+    }
+
+    target.postCode = payload.postCode;
+    target.postName = payload.postName;
+    target.postSort = payload.postSort;
+    target.status = payload.status;
+
+    return { success: true };
   }
 }
 

@@ -11,6 +11,25 @@ export const RemoveBatchDeptSchema = t.Object({
   ids: t.Array(t.Numeric({ minimum: 1 }), { minItems: 1 }),
 });
 
+export const CreateDeptSchema = t.Object({
+  parentId: t.Numeric({ minimum: 0 }),
+  deptName: t.String({ minLength: 1, maxLength: 100 }),
+  orderNum: t.Numeric({ minimum: 0 }),
+  status: t.Union([t.Literal("0"), t.Literal("1")]),
+});
+
+export type CreateDeptBody = typeof CreateDeptSchema.static;
+
+export const UpdateDeptSchema = t.Object({
+  deptId: t.Numeric({ minimum: 1 }),
+  parentId: t.Numeric({ minimum: 0 }),
+  deptName: t.String({ minLength: 1, maxLength: 100 }),
+  orderNum: t.Numeric({ minimum: 0 }),
+  status: t.Union([t.Literal("0"), t.Literal("1")]),
+});
+
+export type UpdateDeptBody = typeof UpdateDeptSchema.static;
+
 export type DeptTreeItem = {
   deptId: number;
   parentId: number;
@@ -41,6 +60,20 @@ export const RemoveBatchDeptResponseSchema = t.Object({
   data: t.Object({
     count: t.Number(),
   }),
+});
+
+export const CreateDeptResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    deptId: t.Number(),
+  }),
+});
+
+export const UpdateDeptResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Boolean(),
 });
 
 export const DeptFailResponseSchema = t.Object({
