@@ -1,26 +1,68 @@
 {
   "name": "ruoyi-elysia",
   "version": "0.0.1",
+  "module": "src/index.js",
+  "description": "基于 Elysia + Bun 重构若依后端，提供高性能、易扩展、模块化的后台服务框架，包含认证授权、RBAC权限管理、系统管理等完整能力",
+  "license": "MIT",
+  "keywords": [
+    "elysia",
+    "bun",
+    "ruoyi",
+    "backend",
+    "typescript",
+    "rbac",
+    "权限管理",
+    "后台框架",
+    "若依",
+    "权限系统",
+    "用户管理",
+    "角色权限"
+  ],
+  "author": {
+    "name": "sheyes0729",
+    "email": "sheyes0729@163.com"
+  },
   "scripts": {
     "dev": "bun run --watch src/index.ts",
     "start": "bun run src/index.ts",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint \"src/**/*.ts\""
+    "lint": "eslint \"src/**/*.ts\"",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio",
+    "test": "bun test"
   },
   "dependencies": {
-    "@elysiajs/bearer": "latest",
-    "@elysiajs/cors": "latest",
-    "@elysiajs/jwt": "latest",
-    "@elysiajs/swagger": "latest",
-    "elysia": "latest"
+    "@elysiajs/bearer": "^1",
+    "@elysiajs/cors": "^1",
+    "@elysiajs/jwt": "^1",
+    "@elysiajs/swagger": "^1",
+    "elysia": "latest",
+    "dotenv": "^16",
+    "zod": "^3",
+    "pino": "^9",
+    "pino-pretty": "^13",
+    "bcryptjs": "^2",
+    "ioredis": "^5",
+    "dayjs": "^1",
+    "drizzle-orm": "^0.38",
+    "mysql2": "^3",
+    "xlsx": "^0.18",
+    "csv-parse": "^5",
+    "csv-stringify": "^6",
+    "svg-captcha": "^1.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.23.0",
+    "@types/bcryptjs": "^2.4",
     "@types/node": "^22.13.14",
     "bun-types": "latest",
+    "drizzle-kit": "^0.30",
     "eslint": "^9.23.0",
+    "prettier": "^3",
     "typescript": "^5.8.2",
-    "typescript-eslint": "^8.27.0"
-  },
-  "module": "src/index.js"
+    "typescript-eslint": "^8.27.0",
+    "supertest": "^7",
+    "@faker-js/faker": "^9"
+  }
 }
