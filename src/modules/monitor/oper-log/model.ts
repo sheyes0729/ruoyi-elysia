@@ -12,6 +12,7 @@ export const ListOperLogSchema = t.Object({
       t.Literal("UPDATE"),
       t.Literal("DELETE"),
       t.Literal("EXPORT"),
+      t.Literal("IMPORT"),
       t.Literal("CLEAN"),
       t.Literal("GRANT"),
       t.Literal("FORCE"),

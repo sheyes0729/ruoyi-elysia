@@ -91,3 +91,35 @@ export const DictDataFailResponseSchema = t.Object({
   msg: t.String(),
   data: t.Null(),
 });
+
+export const ImportDictDataSchema = t.Object({
+  file: t.File(),
+});
+
+export type ImportDictDataBody = typeof ImportDictDataSchema.static;
+
+export const ImportDictDataResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    successCount: t.Number(),
+    failureCount: t.Number(),
+    errors: t.Array(
+      t.Object({
+        row: t.Number(),
+        dictLabel: t.String(),
+        error: t.String(),
+      })
+    ),
+  }),
+});
+
+export const DICT_DATA_IMPORT_HEADERS = ["字典排序", "字典标签", "字典键值", "字典类型", "状态"] as const;
+
+export type DictDataImportRow = {
+  字典排序: string;
+  字典标签: string;
+  字典键值: string;
+  字典类型: string;
+  状态: string;
+};

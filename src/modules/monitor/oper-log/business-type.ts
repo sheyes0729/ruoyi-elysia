@@ -4,6 +4,7 @@ export const OPER_BUSINESS_TYPES = [
   "UPDATE",
   "DELETE",
   "EXPORT",
+  "IMPORT",
   "CLEAN",
   "GRANT",
   "FORCE",

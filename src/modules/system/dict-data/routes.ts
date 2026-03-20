@@ -1,6 +1,6 @@
 import { Elysia } from "elysia";
 import { secured } from "../../../common/auth/secured";
-import { toCsv } from "../../../common/http/csv";
+import { buildCsvDownload, buildCsvTemplate, parseCsv } from "../../../common/http/csv";
 import { paginateData } from "../../../common/http/page";
 import { fail, ok } from "../../../common/http/response";
 import { securityPlugin } from "../../../plugins/security";
@@ -9,7 +9,10 @@ import {
   CreateDictDataBody,
   CreateDictDataResponseSchema,
   CreateDictDataSchema,
+  DICT_DATA_IMPORT_HEADERS,
   DictDataFailResponseSchema,
+  ImportDictDataResponseSchema,
+  ImportDictDataSchema,
   ListDictDataQuery,
   ListDictDataResponseSchema,
   ListDictDataSchema,
@@ -62,20 +65,19 @@ export const DictDataRoutes = new Elysia({
       ({ query, set }) => {
         const typedQuery = query as ListDictDataQuery;
         const rows = dictDataService.list(typedQuery);
-        const csv = toCsv(rows, [
-          { header: "字典编码", value: (row) => row.dictCode },
-          { header: "字典排序", value: (row) => row.dictSort },
-          { header: "字典标签", value: (row) => row.dictLabel },
-          { header: "字典键值", value: (row) => row.dictValue },
-          { header: "字典类型", value: (row) => row.dictType },
-          { header: "状态", value: (row) => row.status },
-        ]);
-
-        const headers = set.headers as Record<string, string>;
-        headers["content-type"] = "text/csv; charset=utf-8";
-        headers["content-disposition"] =
-          "attachment; filename=system-dict-data-export.csv";
-        return `\uFEFF${csv}`;
+        return buildCsvDownload(
+          set,
+          rows,
+          [
+            { header: "字典编码", value: (row) => row.dictCode },
+            { header: "字典排序", value: (row) => row.dictSort },
+            { header: "字典标签", value: (row) => row.dictLabel },
+            { header: "字典键值", value: (row) => row.dictValue },
+            { header: "字典类型", value: (row) => row.dictType },
+            { header: "状态", value: (row) => row.status },
+          ],
+          "system-dict-data-export.csv"
+        );
       }
     ),
     {
@@ -83,6 +85,88 @@ export const DictDataRoutes = new Elysia({
       detail: {
         tags: ["系统管理-字典数据"],
         summary: "导出字典数据列表",
+      },
+    }
+  )
+  .post(
+    "/importTemplate",
+    secured(
+      {
+        permission: "system:dict:data:import",
+        denyMessage: "无权限导入字典数据",
+      },
+      ({ set }) => {
+        return buildCsvTemplate(set, "system-dict-data-import-template.csv", [
+          { key: "字典排序", title: "字典排序" },
+          { key: "字典标签", title: "字典标签" },
+          { key: "字典键值", title: "字典键值" },
+          { key: "字典类型", title: "字典类型" },
+          { key: "状态", title: "状态" },
+        ]);
+      }
+    ),
+    {
+      detail: {
+        tags: ["系统管理-字典数据"],
+        summary: "下载字典数据导入模板",
+      },
+    }
+  )
+  .post(
+    "/import",
+    secured(
+      {
+        permission: "system:dict:data:import",
+        denyMessage: "无权限导入字典数据",
+        operLog: OPER_LOG.IMPORT,
+      },
+      async ({ body, set }) => {
+        const file = (body as { file?: File }).file;
+        if (!file) {
+          set.status = 400;
+          return fail(400, "请上传文件");
+        }
+
+        const content = await file.text();
+        let rows: Record<string, string>[];
+
+        try {
+          rows = parseCsv(content, {
+            headers: [...DICT_DATA_IMPORT_HEADERS],
+            skipEmptyRows: true,
+          });
+        } catch (e) {
+          set.status = 400;
+          return fail(400, e instanceof Error ? e.message : "CSV解析失败");
+        }
+
+        const result = dictDataService.importDictData(rows);
+
+        return ok(
+          {
+            successCount: result.success.length,
+            failureCount: result.failures.length,
+            errors: result.failures.map((f) => ({
+              row: f.row,
+              dictLabel: f.data["字典标签"] || "",
+              error: f.error,
+            })),
+          },
+          result.failures.length > 0 ? "部分数据导入失败" : "导入成功"
+        );
+      }
+    ),
+    {
+      body: ImportDictDataSchema,
+      response: {
+        200: ImportDictDataResponseSchema,
+        400: DictDataFailResponseSchema,
+        401: DictDataFailResponseSchema,
+        403: DictDataFailResponseSchema,
+      },
+      detail: {
+        tags: ["系统管理-字典数据"],
+        summary: "导入字典数据",
       },
     }
   )

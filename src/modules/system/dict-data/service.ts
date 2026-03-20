@@ -2,10 +2,12 @@ import { removeBatchByNumericId } from "../../../common/data/array";
 import { accessDataStore } from "../access-data";
 import type {
   CreateDictDataBody,
+  DictDataImportRow,
   DictDataListItem,
   ListDictDataQuery,
   UpdateDictDataBody,
 } from "./model";
+import type { ImportResult } from "../../../common/http/csv";
 
 type CreateDictDataResult =
   | { success: true; dictCode: number }
@@ -14,6 +16,8 @@ type CreateDictDataResult =
 type UpdateDictDataResult =
   | { success: true }
   | { success: false; reason: "dict_data_not_found" | "dict_type_not_found" };
+
+type ImportDictDataResult = ImportResult<DictDataImportRow>;
 
 export class DictDataService {
   list(query?: ListDictDataQuery): DictDataListItem[] {
@@ -97,6 +101,92 @@ export class DictDataService {
 
   private dictTypeExists(dictType: string): boolean {
     return accessDataStore.dictTypes.some((item) => item.dictType === dictType);
+  }
+
+  importDictData(rows: Record<string, string>[]): ImportDictDataResult {
+    const success: DictDataImportRow[] = [];
+    const failures: { row: number; data: Record<string, string>; error: string }[] = [];
+
+    rows.forEach((row, index) => {
+      const rowNum = index + 2;
+
+      const dictSortStr = row["字典排序"]?.trim();
+      const dictLabel = row["字典标签"]?.trim();
+      const dictValue = row["字典键值"]?.trim();
+      const dictType = row["字典类型"]?.trim();
+      const status = row["状态"]?.trim();
+
+      if (!dictSortStr) {
+        failures.push({ row: rowNum, data: row, error: "字典排序为空" });
+        return;
+      }
+
+      const dictSort = parseInt(dictSortStr, 10);
+      if (isNaN(dictSort)) {
+        failures.push({ row: rowNum, data: row, error: "字典排序必须为数字" });
+        return;
+      }
+
+      if (!dictLabel) {
+        failures.push({ row: rowNum, data: row, error: "字典标签为空" });
+        return;
+      }
+
+      if (dictLabel.length > 100) {
+        failures.push({ row: rowNum, data: row, error: "字典标签长度不能超过100" });
+        return;
+      }
+
+      if (!dictValue) {
+        failures.push({ row: rowNum, data: row, error: "字典键值为空" });
+        return;
+      }
+
+      if (dictValue.length > 100) {
+        failures.push({ row: rowNum, data: row, error: "字典键值长度不能超过100" });
+        return;
+      }
+
+      if (!dictType) {
+        failures.push({ row: rowNum, data: row, error: "字典类型为空" });
+        return;
+      }
+
+      if (!this.dictTypeExists(dictType)) {
+        failures.push({ row: rowNum, data: row, error: "字典类型不存在" });
+        return;
+      }
+
+      if (!status || !["0", "1"].includes(status)) {
+        failures.push({ row: rowNum, data: row, error: "状态必须为0或1" });
+        return;
+      }
+
+      const nextCode =
+        accessDataStore.dictData.reduce(
+          (maxDictCode, item) => Math.max(maxDictCode, item.dictCode),
+          0
+        ) + 1;
+
+      accessDataStore.dictData.push({
+        dictCode: nextCode,
+        dictSort,
+        dictLabel,
+        dictValue,
+        dictType,
+        status: status as "0" | "1",
+      });
+
+      success.push({
+        字典排序: dictSortStr,
+        字典标签: dictLabel,
+        字典键值: dictValue,
+        字典类型: dictType,
+        状态: status,
+      });
+    });
+
+    return { success, failures };
   }
 }
 

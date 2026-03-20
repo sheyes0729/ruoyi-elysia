@@ -94,8 +94,40 @@ export const ResetPasswordResponseSchema = t.Object({
   data: t.Boolean(),
 });
 
+export const ImportUserSchema = t.Object({
+  file: t.File(),
+});
+
+export type ImportUserBody = typeof ImportUserSchema.static;
+
+export const ImportUserResponseSchema = t.Object({
+  code: t.Number(),
+  msg: t.String(),
+  data: t.Object({
+    successCount: t.Number(),
+    failureCount: t.Number(),
+    errors: t.Array(
+      t.Object({
+        row: t.Number(),
+        username: t.String(),
+        error: t.String(),
+      })
+    ),
+  }),
+});
+
 export const UserFailResponseSchema = t.Object({
   code: t.Number(),
   msg: t.String(),
   data: t.Null(),
 });
+
+export const USER_IMPORT_HEADERS = ["用户名", "昵称", "密码", "角色ID列表", "状态"] as const;
+
+export type UserImportRow = {
+  用户名: string;
+  昵称: string;
+  密码: string;
+  角色ID列表: string;
+  状态: string;
+};
