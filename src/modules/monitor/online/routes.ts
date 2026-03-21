@@ -25,11 +25,11 @@ export const OnlineRoutes = new Elysia({
         permission: "monitor:online:list",
         denyMessage: "无权限访问在线用户",
       },
-      ({ query }) => {
+      async ({ query }) => {
         const typedQuery = query as ListOnlineQuery;
-        const sessions = onlineService.listSessions(typedQuery);
+        const sessions = await onlineService.listSessions(typedQuery);
         return ok(paginateData(sessions, typedQuery));
-      }
+      },
     ),
     {
       query: ListOnlineSchema,
@@ -42,7 +42,7 @@ export const OnlineRoutes = new Elysia({
         tags: ["监控管理-在线用户"],
         summary: "查询在线用户列表",
       },
-    }
+    },
   )
   .delete(
     "/:token",
@@ -52,16 +52,16 @@ export const OnlineRoutes = new Elysia({
         denyMessage: "无权限强制下线",
         operLog: OPER_LOG.FORCE_LOGOUT,
       },
-      ({ params, set }) => {
+      async ({ params, set }) => {
         const typedParams = params as { token: string };
-        const removed = onlineService.removeSession(typedParams.token);
+        const removed = await onlineService.removeSession(typedParams.token);
         if (!removed) {
           set.status = 404;
           return fail(404, "会话不存在或已下线");
         }
 
         return ok(true, "下线成功");
-      }
+      },
     ),
     {
       params: t.Object({
@@ -77,5 +77,5 @@ export const OnlineRoutes = new Elysia({
         tags: ["监控管理-在线用户"],
         summary: "强制下线",
       },
-    }
+    },
   );

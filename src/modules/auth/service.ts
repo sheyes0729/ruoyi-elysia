@@ -1,4 +1,5 @@
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
+import bcrypt from "bcryptjs";
 import type { LoginBody, AuthUser } from "./model";
 import { db } from "../../database";
 import { sys_user, sys_user_role, sys_role } from "../../database/schema";
@@ -15,11 +16,23 @@ export class AuthService {
     }
 
     const user = users[0];
-    if (user.password !== payload.password || user.status !== "0") {
+    const passwordValid = await bcrypt.compare(payload.password, user.password);
+    if (!passwordValid || user.status !== "0") {
       return null;
     }
 
     return this.buildAuthUser(user.userId, user.username, user.nickName);
+  }
+
+  async verifyPassword(
+    plainPassword: string,
+    hashedPassword: string,
+  ): Promise<boolean> {
+    return bcrypt.compare(plainPassword, hashedPassword);
+  }
+
+  async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, 10);
   }
 
   async getProfile(userId: number): Promise<AuthUser | null> {
@@ -38,6 +51,26 @@ export class AuthService {
     }
 
     return this.buildAuthUser(user.userId, user.username, user.nickName);
+  }
+
+  async getUserById(
+    userId: number,
+  ): Promise<{ username: string; password: string; status: string } | null> {
+    const users = await db
+      .select()
+      .from(sys_user)
+      .where(eq(sys_user.userId, userId));
+
+    if (users.length === 0) {
+      return null;
+    }
+
+    const user = users[0];
+    return {
+      username: user.username,
+      password: user.password,
+      status: user.status,
+    };
   }
 
   private async buildAuthUser(
@@ -64,7 +97,7 @@ export class AuthService {
     const roles = await db
       .select()
       .from(sys_role)
-      .where(eq(sys_role.roleId, roleIds[0]));
+      .where(inArray(sys_role.roleId, roleIds));
 
     if (roles.length === 0) {
       return {
@@ -76,15 +109,22 @@ export class AuthService {
       };
     }
 
-    const role = roles[0];
+    const allPermissions: string[] = [];
+    for (const role of roles) {
+      if (role.permissions) {
+        const perms = JSON.parse(role.permissions) as string[];
+        allPermissions.push(...perms);
+      }
+    }
+
+    const uniquePermissions = [...new Set(allPermissions)];
+
     return {
       userId,
       username,
       nickName,
-      roles: [role.roleKey],
-      permissions: role.permissions
-        ? (JSON.parse(role.permissions) as string[])
-        : [],
+      roles: roles.map((r) => r.roleKey),
+      permissions: uniquePermissions,
     };
   }
 }

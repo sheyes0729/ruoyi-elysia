@@ -14,6 +14,12 @@ export const env = {
     password: process.env.DB_PASSWORD ?? "password",
     database: process.env.DB_NAME ?? "ruoyi",
   },
+  redis: {
+    host: process.env.REDIS_HOST ?? "localhost",
+    port: Number(process.env.REDIS_PORT ?? "6379"),
+    password: process.env.REDIS_PASSWORD ?? undefined,
+    db: Number(process.env.REDIS_DB ?? "0"),
+  },
   rateLimit: {
     duration: Number(process.env.RATE_LIMIT_DURATION ?? "60000"),
     max: Number(process.env.RATE_LIMIT_MAX ?? "100"),

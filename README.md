@@ -5,13 +5,16 @@
 ## 当前状态
 
 - 已完成：基础服务与平台能力（CORS、Swagger、统一响应、全局异常）
-- 已完成：认证授权主链路（登录/登出/getInfo、JWT、权限守卫）
+- 已完成：认证授权主链路（登录/登出/getInfo、JWT、Refresh Token、图形验证码、bcrypt 密码加密）
 - 已完成：系统与监控核心列表能力（用户/角色/菜单/部门/岗位/字典/参数/公告、在线用户、登录日志、操作日志）
 - 已完成：分页、导出、批量删除/清空等通用能力
 - 已完成：`secured` 统一鉴权包装（登录校验、权限校验、可配置操作日志）
 - 已完成：操作日志结构升级（`businessType` 贯通查询/导出）与模块级 `oper-log.ts` 元数据治理
 - 已完成：系统管理模块 CRUD 完整化（含用户/角色/菜单/部门/岗位/字典/参数/公告新增与编辑，用户重置密码，角色/菜单授权，CSV 导入导出）
 - 已完成：P2 数据库持久化（MySQL + Drizzle ORM，13 张表，异步 Repository 模式）
+- 已完成：API 限流（elysia-rate-limit + request-ip）
+- 已完成：Redis 缓存（在线用户会话、登录日志、图形验证码）
+- 已完成：Docker 部署支持（Dockerfile, docker-compose.yml）
 
 ## 里程碑记录
 
@@ -51,6 +54,13 @@
 - 完成 bun test 测试体系（认证、用户、角色、菜单 API 测试，10 个测试用例全部通过）
 - 完成 API 限流能力（elysia-rate-limit，默认 100 请求/分钟）
 
+### 2026-03-21（P2.5 认证授权细节完善）
+
+- 完成图形验证码功能（`GET /api/auth/captcha`，svg-captcha + Redis 存储，5分钟过期）
+- 完成密码加密验证（bcryptjs，种子数据已更新为 bcrypt 哈希）
+- 完成 JWT Refresh Token 机制（Access Token 1天 + Refresh Token 7天）
+- 完成多角色支持修复（`buildAuthUser` 返回用户所有角色并合并权限）
+
 ## 下个里程碑目标
 
 ### P2（数据库与生产化）
@@ -66,9 +76,7 @@
 
 ### P3（部署与生产化）
 
-- [ ] Docker 部署与生产配置模板
-- [ ] CI/CD 流水线
-- [ ] Docker 部署与生产配置模板
+- [x] Docker 部署与生产配置模板（Dockerfile, docker-compose.yml, .env.docker）
 - [ ] CI/CD 流水线
 
 ## 功能清单
@@ -76,17 +84,17 @@
 ### 1. 基础能力
 
 - [x] 配置管理（环境变量、配置校验）
-- [ ] 日志体系（请求日志、业务日志、错误日志、审计日志）
+- [x] 日志体系（pino + pino-pretty，请求日志、错误日志）
 - [x] 统一响应结构（`code / msg / data`）
 - [x] 全局异常处理与错误码规范
 - [x] 参数校验与请求 DTO 规范
-- [ ] 中间件体系（鉴权、限流、幂等、请求追踪）
+- [x] 中间件体系（限流、请求日志）- 鉴权、幂等、请求追踪待完善
 - [x] OpenAPI/Swagger 接口文档
 
 ### 2. 认证与授权（若依 RBAC 核心）
 
-- [ ] 登录/登出（账号密码、图形验证码）
-- [ ] JWT/Session 机制与刷新策略
+- [x] 登录/登出（账号密码、图形验证码）
+- [x] JWT/Session 机制与刷新策略（Access Token 1天 + Refresh Token 7天）
 - [x] 用户信息获取（`getInfo`）
 - [x] 菜单权限与按钮权限（`perms`）
 - [ ] 角色管理（角色分配、角色状态、数据范围）
@@ -111,7 +119,7 @@
 - [x] 登录日志（登录成功/失败追踪）
 - [x] 在线用户监控
 - [x] 服务健康检查（health/readiness）
-- [ ] 限流与防刷（IP/用户维度）
+- [x] 限流与防刷（IP维度，elysia-rate-limit）
 - [ ] 任务调度（可选：Cron）
 
 ### 5. 工程化与质量保障
@@ -124,7 +132,7 @@
 - [ ] 单元测试与集成测试
 - [x] Lint、Type Check、格式化规范
 - [ ] CI/CD 流水线
-- [ ] Docker 部署与生产配置模板
+- [x] Docker 部署与生产配置模板
 
 ## 推荐包清单（按功能映射）
 
@@ -249,7 +257,7 @@ bun add -d supertest @faker-js/faker husky lint-staged
 - [x] 完成用户管理与角色管理基础接口
 - [x] 统一错误处理、统一响应结构、参数校验
 - [x] 完成 Repository 层架构与 Drizzle ORM 实现
-- [ ] 接入数据库与 ORM，建立用户/角色/菜单/部门核心表
+- [x] 接入数据库与 ORM，建立用户/角色/菜单/部门核心表
 
 ### P1（补齐若依系统管理能力）
 
@@ -263,9 +271,20 @@ bun add -d supertest @faker-js/faker husky lint-staged
 - [x] 完成 Service 层数据库持久化改造（async repository 模式）
 - [x] 接入真实 MySQL 数据库，完成数据迁移
 - [x] 建立测试体系（核心鉴权、权限、系统管理模块）
+- [x] 增加限流能力（elysia-rate-limit + request-ip）
+- [x] 完成 Redis 缓存集成（在线用户会话、登录日志）
+- [x] 完成容器化部署（Dockerfile, docker-compose.yml）
 - [ ] 完成接口文档与变更规范
-- [ ] 增加限流、审计追踪、告警能力
-- [ ] 完成容器化部署与 CI/CD 自动化发布
+- [ ] CI/CD 流水线
+
+### P3（认证授权细节与完善）
+
+- [x] 图形验证码（svg-captcha + Redis 存储）
+- [x] 密码加密（bcryptjs）
+- [x] JWT Refresh Token 机制
+- [x] 多角色权限合并
+- [ ] 数据范围（部门数据权限）
+- [ ] 幂等性处理
 
 ## 本地开发
 
@@ -274,4 +293,19 @@ bun install
 bun run dev
 ```
 
-默认启动地址：`http://localhost:3000`
+默认启动地址：`http://localhost:4000`
+
+## Docker 部署
+
+```bash
+# 启动所有服务（应用 + MySQL + Redis）
+docker-compose up -d
+
+# 查看日志
+docker-compose logs -f app
+
+# 停止服务
+docker-compose down
+```
+
+访问 `http://localhost:4000`

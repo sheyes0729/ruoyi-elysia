@@ -26,11 +26,11 @@ export const LoginLogRoutes = new Elysia({
         permission: "monitor:logininfor:list",
         denyMessage: "无权限访问登录日志",
       },
-      ({ query }) => {
+      async ({ query }) => {
         const typedQuery = query as ListLoginLogQuery;
-        const records = loginLogService.list(typedQuery);
+        const records = await loginLogService.list(typedQuery);
         return ok(paginateData(records, typedQuery));
-      }
+      },
     ),
     {
       query: ListLoginLogSchema,
@@ -43,7 +43,7 @@ export const LoginLogRoutes = new Elysia({
         tags: ["监控管理-登录日志"],
         summary: "查询登录日志列表",
       },
-    }
+    },
   )
   .post(
     "/export",
@@ -53,23 +53,35 @@ export const LoginLogRoutes = new Elysia({
         denyMessage: "无权限导出登录日志",
         operLog: OPER_LOG.EXPORT,
       },
-      ({ query, set }) => {
+      async ({ query, set }) => {
         const typedQuery = query as ListLoginLogQuery;
-        const rows = loginLogService.list(typedQuery);
+        const rows = await loginLogService.list(typedQuery);
         return buildCsvDownload(
           set,
-          rows,
+          rows as unknown[],
           [
-            { header: "日志ID", value: (row) => row.infoId },
-            { header: "用户名", value: (row) => row.username },
-            { header: "IP", value: (row) => row.ip },
-            { header: "状态", value: (row) => row.status },
-            { header: "消息", value: (row) => row.msg },
-            { header: "时间", value: (row) => row.loginTime },
+            {
+              header: "日志ID",
+              value: (row) => (row as { infoId: number }).infoId,
+            },
+            {
+              header: "用户名",
+              value: (row) => (row as { username: string }).username,
+            },
+            { header: "IP", value: (row) => (row as { ip: string }).ip },
+            {
+              header: "状态",
+              value: (row) => (row as { status: string }).status,
+            },
+            { header: "消息", value: (row) => (row as { msg: string }).msg },
+            {
+              header: "时间",
+              value: (row) => (row as { loginTime: string }).loginTime,
+            },
           ],
-          "monitor-login-log-export.csv"
+          "monitor-login-log-export.csv",
         );
-      }
+      },
     ),
     {
       query: ListLoginLogSchema,
@@ -77,7 +89,7 @@ export const LoginLogRoutes = new Elysia({
         tags: ["监控管理-登录日志"],
         summary: "导出登录日志",
       },
-    }
+    },
   )
   .delete(
     "/clean",
@@ -87,10 +99,10 @@ export const LoginLogRoutes = new Elysia({
         denyMessage: "无权限清空登录日志",
         operLog: OPER_LOG.CLEAN,
       },
-      () => {
-        const count = loginLogService.clear();
+      async () => {
+        const count = await loginLogService.clear();
         return ok({ count }, "清空成功");
-      }
+      },
     ),
     {
       response: {
@@ -102,5 +114,5 @@ export const LoginLogRoutes = new Elysia({
         tags: ["监控管理-登录日志"],
         summary: "清空登录日志",
       },
-    }
+    },
   );

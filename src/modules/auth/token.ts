@@ -4,3 +4,8 @@ export type JwtUserPayload = {
   roles: string[];
   permissions: string[];
 };
+
+export type JwtRefreshPayload = {
+  userId: number;
+  type: "refresh";
+};

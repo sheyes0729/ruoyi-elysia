@@ -1,5 +1,14 @@
-import { monitorStore } from "../store";
+import { redis, REDIS_KEYS } from "../../../plugins/redis";
 import type { ListOnlineQuery } from "./model";
+
+type OnlineSession = {
+  token: string;
+  userId: number;
+  username: string;
+  loginTime: string;
+  lastAccessTime: string;
+  ip: string;
+};
 
 type RegisterOnlineSessionInput = {
   token: string;
@@ -9,48 +18,66 @@ type RegisterOnlineSessionInput = {
 };
 
 export class OnlineService {
-  registerSession(input: RegisterOnlineSessionInput): void {
-    const now = new Date().toISOString();
-    const found = monitorStore.onlineSessions.find(
-      (item) => item.token === input.token
-    );
+  private getKey(token: string): string {
+    return `${REDIS_KEYS.ONLINE_SESSION}${token}`;
+  }
 
-    if (found) {
-      found.lastAccessTime = now;
-      found.ip = input.ip;
+  async registerSession(input: RegisterOnlineSessionInput): Promise<void> {
+    const now = new Date().toISOString();
+    const key = this.getKey(input.token);
+
+    const existing = await redis.get(key);
+    if (existing) {
+      await redis.hset(key, "lastAccessTime", now, "ip", input.ip);
+      await redis.expire(key, 86400);
       return;
     }
 
-    monitorStore.onlineSessions.unshift({
+    await redis.hset(key, {
       token: input.token,
-      userId: input.userId,
+      userId: String(input.userId),
       username: input.username,
       loginTime: now,
       lastAccessTime: now,
       ip: input.ip,
     });
+    await redis.expire(key, 86400);
   }
 
-  removeSession(token: string): boolean {
-    const index = monitorStore.onlineSessions.findIndex(
-      (item) => item.token === token
-    );
+  async removeSession(token: string): Promise<boolean> {
+    const key = this.getKey(token);
+    const result = await redis.del(key);
+    return result > 0;
+  }
 
-    if (index < 0) {
-      return false;
+  async listSessions(query?: ListOnlineQuery): Promise<OnlineSession[]> {
+    const keys = await redis.keys(`${REDIS_KEYS.ONLINE_SESSION}*`);
+    if (keys.length === 0) {
+      return [];
     }
 
-    monitorStore.onlineSessions.splice(index, 1);
-    return true;
-  }
+    const sessions: OnlineSession[] = [];
+    for (const key of keys) {
+      const data = await redis.hgetall(key);
+      if (data) {
+        sessions.push({
+          token: data.token ?? "",
+          userId: parseInt(data.userId ?? "0", 10),
+          username: data.username ?? "",
+          loginTime: data.loginTime ?? "",
+          lastAccessTime: data.lastAccessTime ?? "",
+          ip: data.ip ?? "",
+        });
+      }
+    }
 
-  listSessions(query?: ListOnlineQuery): typeof monitorStore.onlineSessions {
-    const source = [...monitorStore.onlineSessions];
     if (!query?.username) {
-      return source;
+      return sessions;
     }
 
-    return source.filter((item) => item.username.includes(query.username ?? ""));
+    return sessions.filter((item) =>
+      item.username.includes(query.username ?? ""),
+    );
   }
 }
 
