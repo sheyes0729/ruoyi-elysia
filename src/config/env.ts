@@ -14,4 +14,9 @@ export const env = {
     password: process.env.DB_PASSWORD ?? "password",
     database: process.env.DB_NAME ?? "ruoyi",
   },
+  rateLimit: {
+    duration: Number(process.env.RATE_LIMIT_DURATION ?? "60000"),
+    max: Number(process.env.RATE_LIMIT_MAX ?? "100"),
+    authMax: Number(process.env.RATE_LIMIT_AUTH_MAX ?? "10"),
+  },
 };

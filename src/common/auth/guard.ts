@@ -1,19 +1,23 @@
 import type { JwtUserPayload } from "../../modules/auth/token";
-import { fail, type ApiResponse } from "../http/response";
+import { fail } from "../http/response";
 import { hasPermission } from "./permission";
 
 type AuthSet = {
   status?: number | string;
 };
 
-type AuthFailure = ApiResponse<null>;
+type AuthFailure = {
+  code: number;
+  msg: string;
+  data: null;
+};
 
 const DEFAULT_UNAUTHORIZED_MESSAGE = "未登录或登录已失效";
 
 export const requireLogin = (
   currentUser: JwtUserPayload | null,
   set: AuthSet,
-  message = DEFAULT_UNAUTHORIZED_MESSAGE
+  message = DEFAULT_UNAUTHORIZED_MESSAGE,
 ): AuthFailure | null => {
   if (currentUser) {
     return null;
@@ -27,7 +31,7 @@ export const requirePermission = (
   currentUser: JwtUserPayload | null,
   set: AuthSet,
   permission: string,
-  message: string
+  message: string,
 ): AuthFailure | null => {
   const loginError = requireLogin(currentUser, set);
   if (loginError) {

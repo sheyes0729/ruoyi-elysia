@@ -1,7 +1,6 @@
 import type { JwtUserPayload } from "../../modules/auth/token";
 import type { OperBusinessType } from "../../modules/monitor/oper-log/business-type";
 import { operLogService } from "../../modules/monitor/oper-log/service";
-import type { ApiResponse } from "../http/response";
 import { requireLogin, requirePermission } from "./guard";
 
 type SecuredSet = {
@@ -93,7 +92,7 @@ export const secured = <TContext extends SecuredContext, TResult>(
     context: TContext & { currentUser: JwtUserPayload },
   ) => TResult | Promise<TResult>,
 ) => {
-  return async (context: TContext): Promise<TResult | ApiResponse<null>> => {
+  return async (context: TContext) => {
     const operLogMeta = getOperLogMeta(meta, context.request);
     const authError = meta.permission
       ? requirePermission(

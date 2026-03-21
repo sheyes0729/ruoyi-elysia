@@ -10,8 +10,12 @@ export class AuthService {
       .from(sys_user)
       .where(eq(sys_user.username, payload.username));
 
+    if (users.length === 0) {
+      return null;
+    }
+
     const user = users[0];
-    if (!user || user.password !== payload.password || user.status !== "0") {
+    if (user.password !== payload.password || user.status !== "0") {
       return null;
     }
 
@@ -24,8 +28,12 @@ export class AuthService {
       .from(sys_user)
       .where(eq(sys_user.userId, userId));
 
+    if (users.length === 0) {
+      return null;
+    }
+
     const user = users[0];
-    if (!user || user.status !== "0") {
+    if (user.status !== "0") {
       return null;
     }
 
@@ -58,8 +66,7 @@ export class AuthService {
       .from(sys_role)
       .where(eq(sys_role.roleId, roleIds[0]));
 
-    const role = roles[0];
-    if (!role) {
+    if (roles.length === 0) {
       return {
         userId,
         username,
@@ -69,6 +76,7 @@ export class AuthService {
       };
     }
 
+    const role = roles[0];
     return {
       userId,
       username,

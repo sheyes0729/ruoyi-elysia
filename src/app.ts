@@ -7,11 +7,13 @@ import type { OperBusinessType } from "./modules/monitor/oper-log/business-type"
 import { operLogService } from "./modules/monitor/oper-log/service";
 import { systemRoutes } from "./modules/system/routes";
 import { platformPlugin } from "./plugins/platform";
+import { rateLimitPlugin } from "./plugins/rate-limit";
 import { securityPlugin } from "./plugins/security";
 
 export const app = new Elysia({ name: "ruoyi.elysia.app" })
   .use(platformPlugin)
   .use(securityPlugin)
+  .use(rateLimitPlugin)
   .get("/", () => ok("RuoYi Elysia Backend is running"))
   .get("/health", () => ok({ status: "UP" }))
   .use(authRoutes)

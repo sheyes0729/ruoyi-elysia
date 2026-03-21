@@ -85,7 +85,7 @@ export class RoleService {
       return { success: false, reason: "role_not_found" };
     }
 
-    const menuIds = toUniqueIds(payload.menuIds ?? target.menuIds ?? []);
+    const menuIds = toUniqueIds(payload.menuIds ?? target.menuIds);
     if (!(await this.checkMenusExist(menuIds))) {
       return { success: false, reason: "menu_not_found" };
     }
