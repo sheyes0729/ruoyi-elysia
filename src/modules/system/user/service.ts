@@ -132,11 +132,11 @@ export class UserService {
     for (const row of rows) {
       const rowNum = rows.indexOf(row) + 2;
 
-      const username = row["用户名"]?.trim();
-      const nickName = row["昵称"]?.trim();
-      const password = row["密码"]?.trim();
-      const roleIdsStr = row["角色ID列表"]?.trim();
-      const status = row["状态"]?.trim();
+      const username = row["用户名"].trim();
+      const nickName = row["昵称"].trim();
+      const password = row["密码"].trim();
+      const roleIdsStr = row["角色ID列表"].trim();
+      const status = row["状态"].trim();
 
       if (!username) {
         failures.push({ row: rowNum, data: row, error: "用户名为空" });

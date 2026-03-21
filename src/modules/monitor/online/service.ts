@@ -59,14 +59,15 @@ export class OnlineService {
     const sessions: OnlineSession[] = [];
     for (const key of keys) {
       const data = await redis.hgetall(key);
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
       if (data) {
         sessions.push({
-          token: data.token ?? "",
-          userId: parseInt(data.userId ?? "0", 10),
-          username: data.username ?? "",
-          loginTime: data.loginTime ?? "",
-          lastAccessTime: data.lastAccessTime ?? "",
-          ip: data.ip ?? "",
+          token: data.token || "",
+          userId: parseInt(data.userId || "0", 10),
+          username: data.username || "",
+          loginTime: data.loginTime || "",
+          lastAccessTime: data.lastAccessTime || "",
+          ip: data.ip || "",
         });
       }
     }

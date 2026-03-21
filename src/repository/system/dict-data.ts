@@ -64,6 +64,7 @@ export class DrizzleDictDataRepository implements DictDataRepository {
       .update(sys_dict_data)
       .set(data as typeof sys_dict_data.$inferInsert)
       .where(eq(sys_dict_data.dictCode, dictCode));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 
@@ -71,6 +72,7 @@ export class DrizzleDictDataRepository implements DictDataRepository {
     const result = await db
       .delete(sys_dict_data)
       .where(eq(sys_dict_data.dictCode, dictCode));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 

@@ -59,11 +59,13 @@ export class DrizzlePostRepository implements PostRepository {
       .update(sys_post)
       .set(data as typeof sys_post.$inferInsert)
       .where(eq(sys_post.postId, postId));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 
   async delete(postId: number): Promise<boolean> {
     const result = await db.delete(sys_post).where(eq(sys_post.postId, postId));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 

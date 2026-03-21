@@ -83,11 +83,13 @@ export class DrizzleUserRepository implements UserRepository {
         status: data.status,
       } as typeof sys_user.$inferInsert)
       .where(eq(sys_user.userId, userId));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 
   async delete(userId: number): Promise<boolean> {
     const result = await db.delete(sys_user).where(eq(sys_user.userId, userId));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 

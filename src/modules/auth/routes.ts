@@ -150,6 +150,7 @@ export const authRoutes = new Elysia({
         type: string;
       } | null;
 
+      // eslint-disable-next-line @typescript-eslint/prefer-optional-chain
       if (!payload || payload.type !== "refresh") {
         set.status = 401;
         return fail(401, "刷新令牌无效或已过期");

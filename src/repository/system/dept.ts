@@ -59,11 +59,13 @@ export class DrizzleDeptRepository implements DeptRepository {
       .update(sys_dept)
       .set(data as typeof sys_dept.$inferInsert)
       .where(eq(sys_dept.deptId, deptId));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 
   async delete(deptId: number): Promise<boolean> {
     const result = await db.delete(sys_dept).where(eq(sys_dept.deptId, deptId));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 

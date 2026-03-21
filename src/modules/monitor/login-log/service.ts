@@ -44,9 +44,7 @@ export class LoginLogService {
   async list(query?: ListLoginLogQuery): Promise<LoginLog[]> {
     const logs = await redis.lrange(LOG_LIST_KEY, 0, MAX_LOG_ENTRIES - 1);
 
-    let result: LoginLog[] = logs
-      .map((log) => JSON.parse(log) as LoginLog)
-      .filter((item) => item !== null);
+    let result: LoginLog[] = logs.map((log) => JSON.parse(log) as LoginLog);
 
     if (!query) {
       return result;

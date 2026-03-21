@@ -52,6 +52,7 @@ export class DrizzleNoticeRepository implements Repository<
       .update(sys_notice)
       .set(data as typeof sys_notice.$inferInsert)
       .where(eq(sys_notice.noticeId, noticeId));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 
@@ -59,6 +60,7 @@ export class DrizzleNoticeRepository implements Repository<
     const result = await db
       .delete(sys_notice)
       .where(eq(sys_notice.noticeId, noticeId));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 

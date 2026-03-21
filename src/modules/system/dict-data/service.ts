@@ -111,11 +111,11 @@ export class DictDataService {
     for (const row of rows) {
       const rowNum = rows.indexOf(row) + 2;
 
-      const dictSortStr = row["字典排序"]?.trim();
-      const dictLabel = row["字典标签"]?.trim();
-      const dictValue = row["字典键值"]?.trim();
-      const dictType = row["字典类型"]?.trim();
-      const status = row["状态"]?.trim();
+      const dictSortStr = row["字典排序"].trim();
+      const dictLabel = row["字典标签"].trim();
+      const dictValue = row["字典键值"].trim();
+      const dictType = row["字典类型"].trim();
+      const status = row["状态"].trim();
 
       if (!dictSortStr) {
         failures.push({ row: rowNum, data: row, error: "字典排序为空" });

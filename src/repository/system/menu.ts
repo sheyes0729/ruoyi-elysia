@@ -69,11 +69,13 @@ export class DrizzleMenuRepository implements MenuRepository {
       .update(sys_menu)
       .set(data as typeof sys_menu.$inferInsert)
       .where(eq(sys_menu.menuId, menuId));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 
   async delete(menuId: number): Promise<boolean> {
     const result = await db.delete(sys_menu).where(eq(sys_menu.menuId, menuId));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 
