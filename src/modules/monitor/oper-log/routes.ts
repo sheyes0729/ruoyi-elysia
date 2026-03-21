@@ -26,10 +26,11 @@ export const OperLogRoutes = new Elysia({
         permission: "monitor:operlog:list",
         denyMessage: "无权限访问操作日志",
       },
-      ({ query }) => {
+      async ({ query }) => {
         const typedQuery = query as ListOperLogQuery;
-        const records = operLogService.list(typedQuery);
-        return ok(paginateData(records, typedQuery));
+        const records = await operLogService.list(typedQuery);
+        const total = await operLogService.count(typedQuery);
+        return ok(paginateData(records, typedQuery, total));
       },
     ) as any,
     {
@@ -53,9 +54,9 @@ export const OperLogRoutes = new Elysia({
         denyMessage: "无权限导出操作日志",
         operLog: OPER_LOG.EXPORT,
       },
-      ({ query, set }) => {
+      async ({ query, set }) => {
         const typedQuery = query as ListOperLogQuery;
-        const rows = operLogService.list(typedQuery);
+        const rows = await operLogService.list(typedQuery);
         return buildCsvDownload(
           set,
           rows,
@@ -90,8 +91,8 @@ export const OperLogRoutes = new Elysia({
         denyMessage: "无权限清空操作日志",
         operLog: OPER_LOG.CLEAN,
       },
-      () => {
-        const count = operLogService.clear();
+      async () => {
+        const count = await operLogService.clear();
         return ok({ count }, "清空成功");
       },
     ),

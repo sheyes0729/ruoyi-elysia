@@ -7,19 +7,25 @@ export const QueryPageSchema = t.Object({
 
 export type QueryPage = typeof QueryPageSchema.static;
 
-export const toPage = (query: QueryPage): { pageNum: number; pageSize: number } => ({
+export const toPage = (
+  query: QueryPage,
+): { pageNum: number; pageSize: number } => ({
   pageNum: query.pageNum ?? 1,
   pageSize: query.pageSize ?? 10,
 });
 
-export const paginateData = <T>(rows: T[], query: QueryPage) => {
+export const paginateData = <T>(
+  rows: T[],
+  query: QueryPage,
+  total?: number,
+) => {
   const { pageNum, pageSize } = toPage(query);
   const start = (pageNum - 1) * pageSize;
   const end = start + pageSize;
 
   return {
     rows: rows.slice(start, end),
-    total: rows.length,
+    total: total ?? rows.length,
     pageNum,
     pageSize,
   };

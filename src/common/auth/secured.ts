@@ -105,7 +105,7 @@ export const secured = <TContext extends SecuredContext, TResult>(
 
     if (authError) {
       if (operLogMeta) {
-        operLogService.record({
+        void operLogService.record({
           title: operLogMeta.title,
           operName: context.currentUser?.username ?? "anonymous",
           method: operLogMeta.method ?? "secured",
@@ -136,7 +136,7 @@ export const secured = <TContext extends SecuredContext, TResult>(
         const statusCode = toStatusCode(context.set.status);
         const isFailure = failed || statusCode >= 400;
         if (!operLogMeta.onlyFailure || isFailure) {
-          operLogService.record({
+          void operLogService.record({
             title: operLogMeta.title,
             operName: context.currentUser?.username ?? "anonymous",
             method: operLogMeta.method ?? "secured",

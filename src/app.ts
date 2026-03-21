@@ -58,7 +58,7 @@ export const app = new Elysia({ name: "ruoyi.elysia.app" })
     const currentUser = (request as Request & { currentUser?: unknown })
       .currentUser as { username?: string } | undefined;
 
-    operLogService.record({
+    void operLogService.record({
       title: `${request.method} ${pathname}`,
       businessType,
       operName: currentUser?.username ?? "anonymous",

@@ -1,6 +1,7 @@
-import { monitorStore } from "../store";
+import { operLogRepository } from "../../../repository/monitor/oper-log";
 import type { OperBusinessType } from "./business-type";
 import type { ListOperLogQuery } from "./model";
+import type { OperLogRecord } from "../../../repository/monitor/oper-log";
 
 type RecordOperLogInput = {
   title: string;
@@ -13,55 +14,28 @@ type RecordOperLogInput = {
 };
 
 export class OperLogService {
-  record(input: RecordOperLogInput): void {
-    monitorStore.operLogs.unshift({
-      operId: monitorStore.nextOperLogId(),
+  async record(input: RecordOperLogInput): Promise<void> {
+    await operLogRepository.create({
       title: input.title,
       businessType: input.businessType ?? "OTHER",
-      operName: input.operName,
       method: input.method,
       requestMethod: input.requestMethod,
+      operName: input.operName,
       operUrl: input.operUrl,
       status: input.status,
-      operTime: new Date().toISOString(),
     });
   }
 
-  list(query?: ListOperLogQuery) {
-    const source = [...monitorStore.operLogs];
-    if (!query) {
-      return source;
-    }
-
-    return source.filter((item) => {
-      if (query.operName && !item.operName.includes(query.operName)) {
-        return false;
-      }
-
-      if (query.status && item.status !== query.status) {
-        return false;
-      }
-
-      if (query.businessType && item.businessType !== query.businessType) {
-        return false;
-      }
-
-      if (query.beginTime && item.operTime < query.beginTime) {
-        return false;
-      }
-
-      if (query.endTime && item.operTime > query.endTime) {
-        return false;
-      }
-
-      return true;
-    });
+  async list(query?: ListOperLogQuery): Promise<OperLogRecord[]> {
+    return operLogRepository.findAll(query);
   }
 
-  clear(): number {
-    const count = monitorStore.operLogs.length;
-    monitorStore.operLogs.splice(0, monitorStore.operLogs.length);
-    return count;
+  async count(query?: ListOperLogQuery): Promise<number> {
+    return operLogRepository.count(query);
+  }
+
+  async clear(): Promise<number> {
+    return operLogRepository.clear();
   }
 }
 
