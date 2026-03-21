@@ -31,7 +31,7 @@ export const OperLogRoutes = new Elysia({
         const records = operLogService.list(typedQuery);
         return ok(paginateData(records, typedQuery));
       },
-    ),
+    ) as any,
     {
       query: ListOperLogSchema,
       response: {

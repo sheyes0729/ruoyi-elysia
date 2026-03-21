@@ -77,7 +77,7 @@
 ### P3（部署与生产化）
 
 - [x] Docker 部署与生产配置模板（Dockerfile, docker-compose.yml, .env.docker）
-- [ ] CI/CD 流水线
+- [x] CI/CD 流水线（GitHub Actions: lint, typecheck, test, build, deploy）
 
 ## 功能清单
 
@@ -131,7 +131,7 @@
 - [x] 测试体系 - bun test 测试框架，10 个测试用例覆盖认证、用户、角色、菜单 API
 - [ ] 单元测试与集成测试
 - [x] Lint、Type Check、格式化规范
-- [ ] CI/CD 流水线
+- [x] CI/CD 流水线
 - [x] Docker 部署与生产配置模板
 
 ## 推荐包清单（按功能映射）
@@ -275,7 +275,7 @@ bun add -d supertest @faker-js/faker husky lint-staged
 - [x] 完成 Redis 缓存集成（在线用户会话、登录日志）
 - [x] 完成容器化部署（Dockerfile, docker-compose.yml）
 - [ ] 完成接口文档与变更规范
-- [ ] CI/CD 流水线
+- [x] CI/CD 流水线
 
 ### P3（认证授权细节与完善）
 
