@@ -17,6 +17,7 @@ import { securityPlugin } from "./plugins/security";
 import { idempotencyPlugin } from "./plugins/idempotency-plugin";
 import { idempotencyService } from "./plugins/idempotency";
 import { scheduler, registerScheduledTasks } from "./common/scheduler";
+import { checkDbHealth } from "./database";
 
 export const app = new Elysia({ name: "ruoyi.elysia.app" })
   .use(platformPlugin)
@@ -32,13 +33,28 @@ export const app = new Elysia({ name: "ruoyi.elysia.app" })
     scheduler.stop();
   })
   .get("/", () => ok("RuoYi Elysia Backend is running"))
-  .get("/health", async () => {
-    try {
-      await redis.ping();
-      return ok({ status: "UP", redis: "UP" });
-    } catch {
-      return ok({ status: "UP", redis: "DOWN" });
-    }
+  .get("/health", async ({ set }) => {
+    const [redisOk, dbOk] = await Promise.all([
+      redis
+        .ping()
+        .then(() => true)
+        .catch(() => false),
+      checkDbHealth(),
+    ]);
+
+    const status = redisOk && dbOk ? "UP" : "DEGRADED";
+    set.status = status === "UP" ? 200 : 503;
+
+    return {
+      code: set.status,
+      msg: status === "UP" ? "健康" : "部分组件异常",
+      data: {
+        status,
+        redis: redisOk ? "UP" : "DOWN",
+        db: dbOk ? "UP" : "DOWN",
+        timestamp: new Date().toISOString(),
+      },
+    };
   })
   .use(authRoutes)
   .use(exportSseRoutes)

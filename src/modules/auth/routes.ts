@@ -16,6 +16,7 @@ import { authService } from "./service";
 import { loginLogService } from "../monitor/login-log/service";
 import { onlineService } from "../monitor/online/service";
 import { captchaService } from "./captcha";
+import { accountLockService } from "../../plugins/account-lock";
 
 const parseExpireSeconds = (exp: string): number => {
   const match = exp.match(/^(\d+)([dhms])$/);
@@ -66,11 +67,32 @@ export const authRoutes = new Elysia({
     async ({ body, jwt, refreshJwt, request, set }) => {
       const loginBody = body as LoginBody;
       const { uuid, code, username } = loginBody;
+      const ip =
+        request.headers.get("x-forwarded-for") ??
+        request.headers.get("x-real-ip") ??
+        "127.0.0.1";
+
+      if (await accountLockService.isLocked(username)) {
+        const remaining =
+          await accountLockService.getLockRemainingTime(username);
+        await loginLogService.record({
+          username,
+          ip,
+          status: "1",
+          msg: `账户已锁定，剩余 ${Math.ceil(remaining / 60000)} 分钟`,
+        });
+        set.status = 423;
+        return fail(
+          423,
+          `账户已锁定，请 ${Math.ceil(remaining / 60000)} 分钟后再试`,
+        );
+      }
+
       const captchaValid = await captchaService.verify(uuid, code);
       if (!captchaValid) {
         await loginLogService.record({
           username,
-          ip: request.headers.get("x-forwarded-for") ?? "127.0.0.1",
+          ip,
           status: "1",
           msg: "验证码错误",
         });
@@ -80,15 +102,22 @@ export const authRoutes = new Elysia({
 
       const authUser = await authService.login(loginBody);
       if (!authUser) {
+        const failure = await accountLockService.recordFailure(username);
+        const remaining = failure.lockedUntil
+          ? `，账户已锁定 ${Math.ceil((failure.lockedUntil - Date.now()) / 60000)} 分钟`
+          : `，剩余 ${5 - failure.count} 次尝试`;
+
         await loginLogService.record({
           username,
-          ip: request.headers.get("x-forwarded-for") ?? "127.0.0.1",
+          ip,
           status: "1",
-          msg: "用户名或密码错误",
+          msg: `用户名或密码错误${remaining}`,
         });
         set.status = 401;
-        return fail(401, "用户名或密码错误");
+        return fail(401, `用户名或密码错误${remaining}`);
       }
+
+      await accountLockService.clearFailures(username);
 
       const token: string = await jwt.sign({
         userId: authUser.userId,
@@ -107,11 +136,11 @@ export const authRoutes = new Elysia({
         token,
         userId: authUser.userId,
         username: authUser.username,
-        ip: request.headers.get("x-forwarded-for") ?? "127.0.0.1",
+        ip,
       });
       await loginLogService.record({
         username: authUser.username,
-        ip: request.headers.get("x-forwarded-for") ?? "127.0.0.1",
+        ip,
         status: "0",
         msg: "登录成功",
       });

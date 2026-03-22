@@ -23,4 +23,5 @@ export const REDIS_KEYS = {
   LOGIN_LOG: "ruoyi:loginlog:",
   CAPTCHA: "ruoyi:captcha:",
   IDEMPOTENCY: "ruoyi:idempotency:",
+  ACCOUNT_LOCK: "ruoyi:account:lock:",
 } as const;
