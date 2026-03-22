@@ -66,15 +66,15 @@ jobs:
       - name: Wait for MySQL and Redis
         run: |
           sleep 20
-          bunx wait-on tcp:localhost:3306 tcp:localhost:6379 --timeout 120000
+          bunx wait-on tcp:127.0.0.1:3306 tcp:127.0.0.1:6379 --timeout 120000
 
       - name: Create database
-        run: mysql -h localhost -u root -prootpassword -e "CREATE DATABASE IF NOT EXISTS ruoyi;"
+        run: mysql -h 127.0.0.1 -u root -prootpassword -e "CREATE DATABASE IF NOT EXISTS ruoyi;"
 
       - name: Run database migrations
         run: bun run db:migrate
         env:
-          DB_HOST: localhost
+          DB_HOST: 127.0.0.1
           DB_PORT: 3306
           DB_USER: root
           DB_PASSWORD: rootpassword
@@ -82,10 +82,10 @@ jobs:
 
       - name: Clear and seed database
         run: |
-          mysql -h localhost -u root -prootpassword ruoyi -e "SET FOREIGN_KEY_CHECKS = 0; TRUNCATE TABLE sys_user; TRUNCATE TABLE sys_role; TRUNCATE TABLE sys_user_role; TRUNCATE TABLE sys_menu; TRUNCATE TABLE sys_dept; TRUNCATE TABLE sys_post; TRUNCATE TABLE sys_dict_type; TRUNCATE TABLE sys_dict_data; TRUNCATE TABLE sys_config; TRUNCATE TABLE sys_notice; SET FOREIGN_KEY_CHECKS = 1;"
+          mysql -h 127.0.0.1 -u root -prootpassword ruoyi -e "SET FOREIGN_KEY_CHECKS = 0; TRUNCATE TABLE sys_user; TRUNCATE TABLE sys_role; TRUNCATE TABLE sys_user_role; TRUNCATE TABLE sys_menu; TRUNCATE TABLE sys_dept; TRUNCATE TABLE sys_post; TRUNCATE TABLE sys_dict_type; TRUNCATE TABLE sys_dict_data; TRUNCATE TABLE sys_config; TRUNCATE TABLE sys_notice; SET FOREIGN_KEY_CHECKS = 1;"
           bun run db:seed
         env:
-          DB_HOST: localhost
+          DB_HOST: 127.0.0.1
           DB_PORT: 3306
           DB_USER: root
           DB_PASSWORD: rootpassword
@@ -94,19 +94,19 @@ jobs:
       - name: Start server in background
         run: bun run start &
         env:
-          DB_HOST: localhost
+          DB_HOST: 127.0.0.1
           DB_PORT: 3306
           DB_USER: root
           DB_PASSWORD: rootpassword
           DB_NAME: ruoyi
-          REDIS_HOST: localhost
+          REDIS_HOST: 127.0.0.1
           REDIS_PORT: 6379
           PORT: 4000
 
       - name: Wait for server to be ready
         run: |
           sleep 15
-          bunx wait-on http://localhost:4000 --timeout 120000
+          bunx wait-on http://127.0.0.1:4000 --timeout 120000
 
       - name: Run tests
         run: bun test
