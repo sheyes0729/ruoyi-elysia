@@ -247,9 +247,15 @@ export const authRoutes = new Elysia({
   .post(
     "/logout",
     secured({ operLog: OPER_LOG.LOGOUT }, async ({ bearer, currentUser }) => {
-      if (typeof bearer === "string" && currentUser) {
+      if (typeof bearer === "string") {
         await onlineService.removeSession(bearer);
-        await tokenBlacklistService.blacklistToken(bearer, currentUser.userId);
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (currentUser) {
+          await tokenBlacklistService.blacklistToken(
+            bearer,
+            currentUser.userId,
+          );
+        }
       }
 
       return ok(true, "退出成功");

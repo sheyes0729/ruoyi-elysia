@@ -103,11 +103,13 @@ export class JobRepository {
         remark: input.remark,
       })
       .where(eq(sys_job.jobId, input.jobId));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 
   async delete(jobId: number): Promise<boolean> {
     const result = await db.delete(sys_job).where(eq(sys_job.jobId, jobId));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 
@@ -116,6 +118,7 @@ export class JobRepository {
       .update(sys_job)
       .set({ status })
       .where(eq(sys_job.jobId, jobId));
+    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
     return result.length > 0;
   }
 
