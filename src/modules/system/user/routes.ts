@@ -254,7 +254,7 @@ export const userRoutes = new Elysia({
         tags: ["系统管理-用户"],
         summary: "新增用户",
         description:
-          "创建新用户，需指定用户名、昵称、密码、状态和角色。用户名校验唯一性。需具有system:user:add权限。",
+          "创建新用户，需指定用户名、昵称、密码、状态和角色。用户名校验唯一性。支持幂等性请求，携带X-Idempotency-Key头可防止重复提交。需具有system:user:add权限。",
       },
     },
   )
@@ -295,7 +295,7 @@ export const userRoutes = new Elysia({
         tags: ["系统管理-用户"],
         summary: "编辑用户",
         description:
-          "更新指定用户的信息，包括昵称、状态、角色分配。需具有system:user:edit权限。",
+          "更新指定用户的信息，包括昵称、状态、角色分配。支持幂等性请求，携带X-Idempotency-Key头可防止重复提交。需具有system:user:edit权限。",
       },
     },
   )

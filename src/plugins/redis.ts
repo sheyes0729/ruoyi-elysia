@@ -22,4 +22,5 @@ export const REDIS_KEYS = {
   RATE_LIMIT: "ruoyi:ratelimit:",
   LOGIN_LOG: "ruoyi:loginlog:",
   CAPTCHA: "ruoyi:captcha:",
+  IDEMPOTENCY: "ruoyi:idempotency:",
 } as const;

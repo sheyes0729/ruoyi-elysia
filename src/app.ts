@@ -11,11 +11,14 @@ import { platformPlugin } from "./plugins/platform";
 import { rateLimitPlugin } from "./plugins/rate-limit";
 import { redis } from "./plugins/redis";
 import { securityPlugin } from "./plugins/security";
+import { idempotencyPlugin } from "./plugins/idempotency-plugin";
+import { idempotencyService } from "./plugins/idempotency";
 
 export const app = new Elysia({ name: "ruoyi.elysia.app" })
   .use(platformPlugin)
   .use(securityPlugin)
   .use(rateLimitPlugin)
+  .use(idempotencyPlugin)
   .onStart(() => {
     logger.info("RuoYi Elysia server starting...");
   })
@@ -31,7 +34,10 @@ export const app = new Elysia({ name: "ruoyi.elysia.app" })
   .use(authRoutes)
   .use(systemRoutes)
   .use(MonitorRoutes)
-  .onAfterHandle(({ request, set }) => {
+  .onAfterHandle(async (context) => {
+    const { request, set, result } = context as typeof context & {
+      result?: unknown;
+    };
     const requestUrl = new URL(request.url);
     const pathname = requestUrl.pathname;
     const statusCode = typeof set.status === "number" ? set.status : 200;
@@ -40,6 +46,12 @@ export const app = new Elysia({ name: "ruoyi.elysia.app" })
 
     if (request.method === "GET" || pathname.startsWith("/swagger")) {
       return;
+    }
+
+    const idempotencyKey = (request as Request & { idempotencyKey?: string })
+      .idempotencyKey;
+    if (idempotencyKey && result && statusCode >= 200 && statusCode < 300) {
+      await idempotencyService.set(idempotencyKey, result);
     }
 
     if ((set as Record<string, unknown>)[SECURED_OPER_LOG_KEY] === true) {
