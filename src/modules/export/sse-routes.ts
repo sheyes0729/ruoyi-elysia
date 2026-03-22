@@ -2,6 +2,7 @@ import { Elysia } from "elysia";
 import { securityPlugin } from "../../plugins/security";
 import { exportJobService } from "../../common/export/job-service";
 import { fail, ok } from "../../common/http/response";
+import { sseConnectionManager } from "../../plugins/sse-manager";
 
 export const exportSseRoutes = new Elysia({
   prefix: "/api/export",
@@ -31,6 +32,8 @@ export const exportSseRoutes = new Elysia({
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       start(controller) {
+        const cleanup = sseConnectionManager.register(jobId, controller);
+
         const sendEvent = (data: object) => {
           const message = `data: ${JSON.stringify(data)}\n\n`;
           controller.enqueue(encoder.encode(message));
@@ -50,9 +53,13 @@ export const exportSseRoutes = new Elysia({
           ) {
             sendEvent({ type: "done", jobId });
             unsubscribe();
+            cleanup();
             controller.close();
           }
         });
+      },
+      cancel() {
+        // Stream was cancelled by client disconnect
       },
     });
 

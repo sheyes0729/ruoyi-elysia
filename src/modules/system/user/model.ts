@@ -45,6 +45,7 @@ export type UserListItem = {
   nickName: string;
   status: "0" | "1";
   roleIds: number[];
+  deptId?: number;
 };
 
 export const UserListItemSchema = t.Object({
@@ -53,6 +54,7 @@ export const UserListItemSchema = t.Object({
   nickName: t.String(),
   status: t.Union([t.Literal("0"), t.Literal("1")]),
   roleIds: t.Array(t.Number()),
+  deptId: t.Optional(t.Number()),
 });
 
 export const ListUserResponseSchema = t.Object({
@@ -111,7 +113,7 @@ export const ImportUserResponseSchema = t.Object({
         row: t.Number(),
         username: t.String(),
         error: t.String(),
-      })
+      }),
     ),
   }),
 });
@@ -122,7 +124,13 @@ export const UserFailResponseSchema = t.Object({
   data: t.Null(),
 });
 
-export const USER_IMPORT_HEADERS = ["用户名", "昵称", "密码", "角色ID列表", "状态"] as const;
+export const USER_IMPORT_HEADERS = [
+  "用户名",
+  "昵称",
+  "密码",
+  "角色ID列表",
+  "状态",
+] as const;
 
 export type UserImportRow = {
   用户名: string;

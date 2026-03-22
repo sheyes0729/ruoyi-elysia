@@ -1,4 +1,3 @@
-import { Worker } from "bun";
 import { exportJobService } from "./index";
 
 export type ExportTask = {
@@ -26,9 +25,22 @@ export function scheduleExportTask(task: ExportTask): void {
     };
   `);
 
+  const sendMessage = (data: unknown) => {
+    const message = JSON.stringify(data);
+    worker.postMessage(message);
+  };
+
+  const terminateWorker = () => {
+    try {
+      worker.terminate();
+    } catch {
+      // ignore
+    }
+  };
+
   processor()
     .then((result) => {
-      worker.postMessage({
+      sendMessage({
         type: "process",
         jobId,
         csvContent: result.csvContent,
@@ -41,34 +53,40 @@ export function scheduleExportTask(task: ExportTask): void {
         status: "failed",
         error: message,
       });
-      worker.terminate();
+      terminateWorker();
     });
 
-  worker.onmessage = (event) => {
-    const data = event.data as {
-      type: string;
-      jobId: string;
-      progress?: number;
-      fileName?: string;
-    };
+  worker.onmessage = (event: { data: string }) => {
+    try {
+      const data = JSON.parse(event.data) as {
+        type: string;
+        jobId: string;
+        progress?: number;
+        fileName?: string;
+      };
 
-    if (data.type === "progress" && data.progress !== undefined) {
-      void exportJobService.updateJob(data.jobId, { progress: data.progress });
-    } else if (data.type === "completed" && data.fileName) {
-      void exportJobService.updateJob(data.jobId, {
-        status: "completed",
-        progress: 100,
-        fileName: data.fileName,
-      });
-      worker.terminate();
+      if (data.type === "progress" && data.progress !== undefined) {
+        void exportJobService.updateJob(data.jobId, {
+          progress: data.progress,
+        });
+      } else if (data.type === "completed" && data.fileName) {
+        void exportJobService.updateJob(data.jobId, {
+          status: "completed",
+          progress: 100,
+          fileName: data.fileName,
+        });
+        terminateWorker();
+      }
+    } catch {
+      // ignore parse errors
     }
   };
 
-  worker.onerror = (event: ErrorEvent) => {
+  worker.onerror = (event: { message?: string }) => {
     void exportJobService.updateJob(jobId, {
       status: "failed",
-      error: event.message || "Worker执行失败",
+      error: event.message ?? "Worker执行失败",
     });
-    worker.terminate();
+    terminateWorker();
   };
 }

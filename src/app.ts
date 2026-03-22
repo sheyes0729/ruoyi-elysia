@@ -18,16 +18,18 @@ import { idempotencyPlugin } from "./plugins/idempotency-plugin";
 import { idempotencyService } from "./plugins/idempotency";
 import { scheduler, registerScheduledTasks } from "./common/scheduler";
 import { checkDbHealth } from "./database";
+import { jobService } from "./modules/system/job/service";
 
 export const app = new Elysia({ name: "ruoyi.elysia.app" })
   .use(platformPlugin)
   .use(securityPlugin)
   .use(rateLimitPlugin)
   .use(idempotencyPlugin)
-  .onStart(() => {
+  .onStart(async () => {
     logger.info("RuoYi Elysia server starting...");
     registerScheduledTasks();
     scheduler.start();
+    await jobService.initialize();
   })
   .onStop(() => {
     scheduler.stop();

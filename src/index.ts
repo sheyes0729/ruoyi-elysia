@@ -3,6 +3,7 @@ import { env } from "./config/env";
 import { logger } from "./plugins/logger";
 import { redis } from "./plugins/redis";
 import { scheduler } from "./common/scheduler";
+import { sseConnectionManager } from "./plugins/sse-manager";
 
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access */
 const server = app.listen(env.port) as any;
@@ -15,6 +16,12 @@ console.log(`🦊 RuoYi Elysia is running at http://${hostname}:${port}`);
 /* eslint-disable @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access, @typescript-eslint/no-unsafe-call */
 const shutdown = async (signal: string) => {
   logger.info(`Received ${signal}, starting graceful shutdown...`);
+
+  const activeSSE = sseConnectionManager.getActiveCount();
+  if (activeSSE > 0) {
+    logger.info(`Closing ${activeSSE} active SSE connections...`);
+    sseConnectionManager.closeAll();
+  }
 
   scheduler.stop();
 

@@ -80,11 +80,12 @@ export const logRequest = (
 };
 
 export const logError = (error: Error, context?: Record<string, unknown>) => {
+  const maskedContext = context ? maskSensitiveFields(context) : undefined;
   logger.error({
     type: "error",
     message: error.message,
     stack: error.stack,
-    ...context,
+    ...maskedContext,
   });
 };
 

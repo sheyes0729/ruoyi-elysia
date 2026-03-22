@@ -7,6 +7,7 @@ export type Task = {
 
 export type TaskSchedule = {
   name: string;
+  jobId?: number;
   intervalMs: number;
   handler: () => Promise<void>;
 };
@@ -36,7 +37,7 @@ class Scheduler {
   private intervals: ReturnType<typeof setInterval>[] = [];
   private running = false;
 
-  register(task: Task): void {
+  register(task: Task & { jobId?: number }): void {
     if (!task.enabled) {
       return;
     }
@@ -45,6 +46,7 @@ class Scheduler {
 
     this.tasks.push({
       name: task.name,
+      jobId: task.jobId,
       intervalMs,
       handler: task.handler,
     });
@@ -52,6 +54,52 @@ class Scheduler {
     console.log(
       `[Scheduler] Registered task: ${task.name} (every ${intervalMs}ms)`,
     );
+  }
+
+  registerDynamicJob(
+    jobId: number,
+    name: string,
+    cron: string,
+    handler: () => Promise<void>,
+  ): void {
+    const intervalMs = parseCronToMs(cron);
+
+    const existing = this.tasks.findIndex((t) => t.jobId === jobId);
+    if (existing >= 0) {
+      clearInterval(this.intervals[existing]);
+      this.intervals.splice(existing, 1);
+      this.tasks.splice(existing, 1);
+    }
+
+    const interval = setInterval(async () => {
+      try {
+        const start = Date.now();
+        await handler();
+        const duration = Date.now() - start;
+        console.log(
+          `[Scheduler] Dynamic job "${name}" completed in ${duration}ms`,
+        );
+      } catch (error) {
+        console.error(`[Scheduler] Dynamic job "${name}" failed:`, error);
+      }
+    }, intervalMs);
+
+    this.tasks.push({ name, jobId, intervalMs, handler });
+    this.intervals.push(interval);
+
+    console.log(
+      `[Scheduler] Registered dynamic job: ${name} (every ${intervalMs}ms)`,
+    );
+  }
+
+  removeJob(jobId: number): void {
+    const index = this.tasks.findIndex((t) => t.jobId === jobId);
+    if (index >= 0) {
+      clearInterval(this.intervals[index]);
+      this.intervals.splice(index, 1);
+      this.tasks.splice(index, 1);
+      console.log(`[Scheduler] Removed dynamic job with ID: ${jobId}`);
+    }
   }
 
   start(): void {

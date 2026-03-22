@@ -10,6 +10,10 @@ import type { ImportResult } from "../../../common/http/csv";
 import { userRepository, roleRepository } from "../../../repository";
 import { getDataScopeByUserId } from "../../../repository/data-scope";
 import { validatePassword } from "../../../common/password";
+import { cacheService } from "../../../plugins/cache";
+
+const USER_LIST_CACHE_KEY = "user:list";
+const USER_LIST_CACHE_TTL = 300;
 
 type CreateUserResult =
   | { success: true; userId: number }
@@ -30,7 +34,14 @@ export class UserService {
     query?: ListUserQuery,
     currentUserId?: number,
   ): Promise<UserListItem[]> {
-    const users = await userRepository.findAll();
+    const cached = await cacheService.get<UserListItem[]>(USER_LIST_CACHE_KEY);
+    const users = cached ?? (await userRepository.findAll());
+
+    if (!cached) {
+      await cacheService.set(USER_LIST_CACHE_KEY, users, {
+        ttl: USER_LIST_CACHE_TTL,
+      });
+    }
 
     const source = users.map((item) => ({
       userId: item.userId,
@@ -81,7 +92,9 @@ export class UserService {
   }
 
   async removeBatch(ids: number[]): Promise<number> {
-    return userRepository.deleteBatch(ids);
+    const result = await userRepository.deleteBatch(ids);
+    await cacheService.del(USER_LIST_CACHE_KEY);
+    return result;
   }
 
   async create(payload: CreateUserBody): Promise<CreateUserResult> {
@@ -106,6 +119,7 @@ export class UserService {
       roleIds: payload.roleIds,
     });
 
+    await cacheService.del(USER_LIST_CACHE_KEY);
     return { success: true, userId };
   }
 
@@ -129,6 +143,7 @@ export class UserService {
       roleIds: payload.roleIds,
     });
 
+    await cacheService.del(USER_LIST_CACHE_KEY);
     return { success: true };
   }
 
@@ -144,6 +159,7 @@ export class UserService {
       password: payload.password,
     });
 
+    await cacheService.del(USER_LIST_CACHE_KEY);
     return { success: true };
   }
 
@@ -253,6 +269,7 @@ export class UserService {
       });
     }
 
+    await cacheService.del(USER_LIST_CACHE_KEY);
     return { success, failures };
   }
 }
