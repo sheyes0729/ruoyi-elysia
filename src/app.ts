@@ -3,6 +3,7 @@ import { SECURED_OPER_LOG_KEY } from "./common/auth/secured";
 import { fail, ok } from "./common/http/response";
 import { authRoutes } from "./modules/auth/routes";
 import { MonitorRoutes } from "./modules/monitor/routes";
+import { metricsRoutes } from "./modules/monitor/metrics/routes";
 import type { OperBusinessType } from "./modules/monitor/oper-log/business-type";
 import { operLogService } from "./modules/monitor/oper-log/service";
 import { systemRoutes } from "./modules/system/routes";
@@ -44,6 +45,7 @@ export const app = new Elysia({ name: "ruoyi.elysia.app" })
   .use(uploadRoutes)
   .use(systemRoutes)
   .use(MonitorRoutes)
+  .use(metricsRoutes)
   .onAfterHandle(async (context) => {
     const { request, set, result } = context as typeof context & {
       result?: unknown;

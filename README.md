@@ -320,6 +320,8 @@ bun run dev
 | `RATE_LIMIT_MAX`      | `100`         | 通用限流最大请求数     |
 | `RATE_LIMIT_AUTH_MAX` | `10`          | 认证接口限流最大请求数 |
 | `SCHEDULER_ENABLED`   | `true`        | 是否启用定时任务调度   |
+| `LOG_DIR`             | `./logs`      | 日志文件目录           |
+| `LOG_LEVEL`           | `info`        | 日志级别               |
 
 ## Docker 部署
 
@@ -394,6 +396,44 @@ RATE_LIMIT_AUTH_MAX=10
 3. **使用 Nginx 反向代理并配置 HTTPS**
 4. **设置合理的限流参数**
 5. **定期备份数据库**
+
+## 监控指标
+
+应用暴露 Prometheus 格式的监控指标：
+
+### 端点
+
+- `GET /metrics` - Prometheus 指标端点
+- `GET /metrics/health` - 健康检查端点
+
+### 指标列表
+
+| 指标名称                        | 类型      | 说明                                  |
+| ------------------------------- | --------- | ------------------------------------- |
+| `http_requests_total`           | Counter   | HTTP 请求总数（method, path, status） |
+| `http_request_duration_seconds` | Histogram | HTTP 请求延迟（method, path, status） |
+| `http_active_connections`       | Gauge     | 活跃连接数                            |
+| `redis_connected`               | Gauge     | Redis 连接状态（1=连接，0=断开）      |
+| `db_pool_connections`           | Gauge     | 数据库连接池连接数                    |
+
+### Grafana 配置
+
+```yaml
+# prometheus.yml
+scrape_configs:
+  - job_name: "ruoyi-elysia"
+    static_configs:
+      - targets: ["your-host:4000"]
+```
+
+## 日志持久化
+
+生产环境日志自动输出到文件：
+
+- `./logs/app.log` - 应用日志
+- `./logs/access.log` - 访问日志
+
+可通过 `LOG_DIR` 环境变量配置日志目录。
 
 ## API 文档
 

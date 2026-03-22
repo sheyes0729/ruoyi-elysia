@@ -1,19 +1,42 @@
 import pino from "pino";
+import { join } from "path";
+import { existsSync, mkdirSync } from "fs";
 
 const isDev = process.env.NODE_ENV !== "production";
+const logDir = process.env.LOG_DIR ?? "./logs";
 
-export const logger = pino({
-  level: process.env.LOG_LEVEL ?? (isDev ? "debug" : "info"),
-  transport: isDev
-    ? {
+if (!existsSync(logDir)) {
+  mkdirSync(logDir, { recursive: true });
+}
+
+const transports = isDev
+  ? {
+      transport: {
         target: "pino-pretty",
         options: {
           colorize: true,
           translateTime: "SYS:standard",
           ignore: "pid,hostname",
         },
-      }
-    : undefined,
+      },
+    }
+  : {
+      file: join(logDir, "app.log"),
+    };
+
+export const logger = pino({
+  level: process.env.LOG_LEVEL ?? (isDev ? "debug" : "info"),
+  ...transports,
+  formatters: {
+    level: (label) => ({ level: label }),
+  },
+  timestamp: pino.stdTimeFunctions.isoTime,
+});
+
+export const accessLogger = pino({
+  level: "info",
+  ...(isDev ? {} : { file: join(logDir, "access.log") }),
+  timestamp: pino.stdTimeFunctions.isoTime,
 });
 
 export const logRequest = (
@@ -22,7 +45,7 @@ export const logRequest = (
   statusCode: number,
   duration?: number,
 ) => {
-  logger.info({
+  accessLogger.info({
     type: "access",
     method,
     url,
