@@ -13,8 +13,11 @@
 - 已完成：系统管理模块 CRUD 完整化（含用户/角色/菜单/部门/岗位/字典/参数/公告新增与编辑，用户重置密码，角色/菜单授权，CSV 导入导出）
 - 已完成：P2 数据库持久化（MySQL + Drizzle ORM，13 张表，异步 Repository 模式）
 - 已完成：API 限流（elysia-rate-limit + request-ip）
-- 已完成：Redis 缓存（在线用户会话、登录日志、图形验证码）
+- 已完成：Redis 缓存（在线用户会话、登录日志、图形验证码、幂等性）
 - 已完成：Docker 部署支持（Dockerfile, docker-compose.yml）
+- 已完成：数据范围（部门数据权限）过滤
+- 已完成：幂等性处理（X-Idempotency-Key）
+- 已完成：Swagger API 文档完善
 
 ## 里程碑记录
 
@@ -97,7 +100,8 @@
 - [x] JWT/Session 机制与刷新策略（Access Token 1天 + Refresh Token 7天）
 - [x] 用户信息获取（`getInfo`）
 - [x] 菜单权限与按钮权限（`perms`）
-- [ ] 角色管理（角色分配、角色状态、数据范围）
+- [x] 角色管理（角色分配、角色状态、数据范围）
+- [x] 数据范围（部门数据权限，过滤用户/部门列表）
 - [x] 权限注解/权限守卫
 - [x] 在线用户管理与强制下线
 
@@ -120,6 +124,7 @@
 - [x] 在线用户监控
 - [x] 服务健康检查（health/readiness）
 - [x] 限流与防刷（IP维度，elysia-rate-limit）
+- [x] 幂等性处理（X-Idempotency-Key，Redis 存储 24h）
 - [ ] 任务调度（可选：Cron）
 
 ### 5. 工程化与质量保障
@@ -129,10 +134,11 @@
 - [x] Service 层数据库持久化 - 全部 9 个系统管理模块已改造为 async repository 模式
 - [x] MySQL 数据库连接 - 13 张表已创建，种子数据已初始化
 - [x] 测试体系 - bun test 测试框架，10 个测试用例覆盖认证、用户、角色、菜单 API
-- [ ] 单元测试与集成测试
+- [ ] 单元测试与集成测试（待完善）
 - [x] Lint、Type Check、格式化规范
 - [x] CI/CD 流水线
 - [x] Docker 部署与生产配置模板
+- [x] Swagger API 文档完善
 
 ## 推荐包清单（按功能映射）
 
@@ -274,7 +280,7 @@ bun add -d supertest @faker-js/faker husky lint-staged
 - [x] 增加限流能力（elysia-rate-limit + request-ip）
 - [x] 完成 Redis 缓存集成（在线用户会话、登录日志）
 - [x] 完成容器化部署（Dockerfile, docker-compose.yml）
-- [ ] 完成接口文档与变更规范
+- [x] 完成接口文档与变更规范
 - [x] CI/CD 流水线
 
 ### P3（认证授权细节与完善）
@@ -283,8 +289,8 @@ bun add -d supertest @faker-js/faker husky lint-staged
 - [x] 密码加密（bcryptjs）
 - [x] JWT Refresh Token 机制
 - [x] 多角色权限合并
-- [ ] 数据范围（部门数据权限）
-- [ ] 幂等性处理
+- [x] 数据范围（部门数据权限）
+- [x] 幂等性处理
 
 ## 本地开发
 
@@ -295,17 +301,132 @@ bun run dev
 
 默认启动地址：`http://localhost:4000`
 
+## 环境变量配置
+
+| 变量名                | 默认值        | 说明                   |
+| --------------------- | ------------- | ---------------------- |
+| `PORT`                | `4000`        | 服务端口               |
+| `NODE_ENV`            | `development` | 运行环境               |
+| `DB_HOST`             | `localhost`   | MySQL 主机             |
+| `DB_PORT`             | `3306`        | MySQL 端口             |
+| `DB_USER`             | `root`        | MySQL 用户名           |
+| `DB_PASSWORD`         | `ruoyi123`    | MySQL 密码             |
+| `DB_NAME`             | `ruoyi`       | MySQL 数据库名         |
+| `REDIS_HOST`          | `localhost`   | Redis 主机             |
+| `REDIS_PORT`          | `6379`        | Redis 端口             |
+| `REDIS_PASSWORD`      | -             | Redis 密码             |
+| `JWT_SECRET`          | -             | JWT 密钥（必填）       |
+| `RATE_LIMIT_DURATION` | `60000`       | 限流时间窗口（毫秒）   |
+| `RATE_LIMIT_MAX`      | `100`         | 通用限流最大请求数     |
+| `RATE_LIMIT_AUTH_MAX` | `10`          | 认证接口限流最大请求数 |
+
 ## Docker 部署
+
+### 使用 docker-compose（推荐）
 
 ```bash
 # 启动所有服务（应用 + MySQL + Redis）
 docker-compose up -d
 
-# 查看日志
+# 查看服务状态
+docker-compose ps
+
+# 查看应用日志
 docker-compose logs -f app
+
+# 查看所有服务日志
+docker-compose logs -f
 
 # 停止服务
 docker-compose down
+
+# 重新构建并启动
+docker-compose up -d --build
 ```
 
-访问 `http://localhost:4000`
+### 单独使用 Docker
+
+```bash
+# 构建镜像
+docker build -t ruoyi-elysia .
+
+# 运行容器（需要先启动 MySQL 和 Redis）
+docker run -d \
+  --name ruoyi-elysia \
+  -p 4000:4000 \
+  -e NODE_ENV=production \
+  -e DB_HOST=mysql-host \
+  -e DB_PORT=3306 \
+  -e DB_USER=root \
+  -e DB_PASSWORD=ruoyi123 \
+  -e DB_NAME=ruoyi \
+  -e REDIS_HOST=redis-host \
+  -e REDIS_PORT=6379 \
+  -e JWT_SECRET=your-secret-key \
+  ruoyi-elysia
+```
+
+### 环境变量文件
+
+创建 `.env` 文件配置环境变量：
+
+```env
+NODE_ENV=production
+PORT=4000
+DB_HOST=mysql
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=ruoyi123
+DB_NAME=ruoyi
+REDIS_HOST=redis
+REDIS_PORT=6379
+JWT_SECRET=your-production-secret-key-change-this
+RATE_LIMIT_DURATION=60000
+RATE_LIMIT_MAX=100
+RATE_LIMIT_AUTH_MAX=10
+```
+
+### 生产环境建议
+
+1. **使用 Docker Secrets** 管理敏感信息
+2. **配置 MySQL 和 Redis 持久化存储**
+3. **使用 Nginx 反向代理并配置 HTTPS**
+4. **设置合理的限流参数**
+5. **定期备份数据库**
+
+## API 文档
+
+启动服务后访问 Swagger UI：`http://localhost:4000/swagger`
+
+### 幂等性请求
+
+对于 POST/PUT/DELETE/PATCH 请求，可以使用 `X-Idempotency-Key` 头防止重复提交：
+
+```bash
+curl -X POST http://localhost:4000/api/system/user/add \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -H "X-Idempotency-Key: <uuid>" \
+  -d '{"username":"test","nickName":"Test","password":"123456","status":"0","roleIds":[1]}'
+```
+
+携带相同 `X-Idempotency-Key` 的重复请求将返回缓存结果，有效期 24 小时。
+
+## 健康检查
+
+```bash
+curl http://localhost:4000/health
+```
+
+返回示例：
+
+```json
+{
+  "code": 200,
+  "msg": "操作成功",
+  "data": {
+    "status": "UP",
+    "redis": "UP"
+  }
+}
+```
