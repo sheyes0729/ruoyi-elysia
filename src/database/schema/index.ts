@@ -13,6 +13,7 @@ export const sys_user = mysqlTable("sys_user", {
   nickName: varchar("nick_name", { length: 30 }).notNull(),
   password: varchar("password", { length: 100 }).notNull(),
   status: char("status", { length: 1 }).notNull().default("0"),
+  deptId: int("dept_id").default(0),
   createTime: timestamp("create_time").defaultNow(),
 });
 
@@ -23,6 +24,11 @@ export const sys_role = mysqlTable("sys_role", {
   status: char("status", { length: 1 }).notNull().default("0"),
   menuIds: text("menu_ids"),
   permissions: text("permissions"),
+  dataScope: char("data_scope", { length: 1 }).notNull().default("1"),
+  deptCheckStrictly: char("dept_check_strictly", { length: 1 })
+    .notNull()
+    .default("0"),
+  deptIds: text("dept_ids"),
   createTime: timestamp("create_time").defaultNow(),
 });
 

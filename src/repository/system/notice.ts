@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { SystemNotice } from "../../modules/system/access-data";
+import type { SystemNotice } from "../../modules/system/types";
 import { sys_notice } from "../../database/schema";
 import { db } from "../../database";
 import type { Repository } from "../base";

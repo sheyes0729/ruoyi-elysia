@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { SystemRole } from "../../modules/system/access-data";
+import type { SystemRole, DataScope } from "../../modules/system/types";
 import { sys_role } from "../../database/schema";
 import { db } from "../../database";
 import type { Repository } from "../base";
@@ -21,6 +21,9 @@ export class DrizzleRoleRepository implements RoleRepository {
       permissions: row.permissions
         ? (JSON.parse(row.permissions) as string[])
         : [],
+      dataScope: row.dataScope as DataScope,
+      deptCheckStrictly: row.deptCheckStrictly as "0" | "1",
+      deptIds: row.deptIds ? (JSON.parse(row.deptIds) as number[]) : [],
     };
   }
 
@@ -54,6 +57,9 @@ export class DrizzleRoleRepository implements RoleRepository {
       status: data.status,
       menuIds: data.menuIds ? JSON.stringify(data.menuIds) : null,
       permissions: data.permissions ? JSON.stringify(data.permissions) : null,
+      dataScope: data.dataScope ?? "1",
+      deptCheckStrictly: data.deptCheckStrictly ?? "0",
+      deptIds: data.deptIds ? JSON.stringify(data.deptIds) : null,
     } as typeof sys_role.$inferInsert);
     return result[0].insertId;
   }
@@ -68,6 +74,9 @@ export class DrizzleRoleRepository implements RoleRepository {
         permissions: data.permissions
           ? JSON.stringify(data.permissions)
           : undefined,
+        dataScope: data.dataScope,
+        deptCheckStrictly: data.deptCheckStrictly,
+        deptIds: data.deptIds ? JSON.stringify(data.deptIds) : undefined,
       } as typeof sys_role.$inferInsert)
       .where(eq(sys_role.roleId, roleId));
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition

@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { SystemPost } from "../../modules/system/access-data";
+import type { SystemPost } from "../../modules/system/types";
 import { sys_post } from "../../database/schema";
 import { db } from "../../database";
 import type { Repository } from "../base";

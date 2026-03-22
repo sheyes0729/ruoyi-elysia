@@ -1,11 +1,12 @@
-import { eq } from "drizzle-orm";
-import type { SystemDept } from "../../modules/system/access-data";
+import { eq, inArray } from "drizzle-orm";
+import type { SystemDept } from "../../modules/system/types";
 import { sys_dept } from "../../database/schema";
 import { db } from "../../database";
 import type { Repository } from "../base";
 
 export interface DeptRepository extends Repository<SystemDept, number> {
   findByParentId(parentId: number): Promise<SystemDept[]>;
+  findChildDepts(deptId: number): Promise<SystemDept[]>;
 }
 
 export class DrizzleDeptRepository implements DeptRepository {
@@ -44,6 +45,25 @@ export class DrizzleDeptRepository implements DeptRepository {
     return result.map((row) => this.toEntity(row));
   }
 
+  async findChildDepts(deptId: number): Promise<SystemDept[]> {
+    const allDepts = await this.findAll();
+    return this.filterChildDepts(deptId, allDepts);
+  }
+
+  private filterChildDepts(
+    parentId: number,
+    allDepts: SystemDept[],
+  ): SystemDept[] {
+    const children: SystemDept[] = [];
+    for (const dept of allDepts) {
+      if (dept.parentId === parentId) {
+        children.push(dept);
+        children.push(...this.filterChildDepts(dept.deptId, allDepts));
+      }
+    }
+    return children;
+  }
+
   async create(data: Partial<SystemDept>): Promise<number> {
     const result = await db.insert(sys_dept).values({
       deptName: data.deptName,
@@ -72,7 +92,7 @@ export class DrizzleDeptRepository implements DeptRepository {
   async deleteBatch(deptIds: number[]): Promise<number> {
     const result = await db
       .delete(sys_dept)
-      .where(eq(sys_dept.deptId, deptIds[0]));
+      .where(inArray(sys_dept.deptId, deptIds));
     return result.length;
   }
 }

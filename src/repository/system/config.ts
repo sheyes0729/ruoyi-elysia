@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { SystemConfig } from "../../modules/system/access-data";
+import type { SystemConfig } from "../../modules/system/types";
 import { sys_config } from "../../database/schema";
 import { db } from "../../database";
 import type { Repository } from "../base";

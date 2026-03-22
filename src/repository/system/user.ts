@@ -1,5 +1,5 @@
-import { eq } from "drizzle-orm";
-import type { SystemUser } from "../../modules/system/access-data";
+import { eq, inArray } from "drizzle-orm";
+import type { SystemUser } from "../../modules/system/types";
 import { sys_user, sys_user_role } from "../../database/schema";
 import { db } from "../../database";
 import type { Repository } from "../base";
@@ -7,6 +7,7 @@ import type { Repository } from "../base";
 export interface UserRepository extends Repository<SystemUser, number> {
   findByUsername(username: string): Promise<SystemUser | null>;
   findByRoleId(roleId: number): Promise<SystemUser[]>;
+  findByDeptIds(deptIds: number[]): Promise<SystemUser[]>;
 }
 
 export class DrizzleUserRepository implements UserRepository {
@@ -20,6 +21,7 @@ export class DrizzleUserRepository implements UserRepository {
       password: row.password,
       status: row.status as "0" | "1",
       roleIds: [],
+      deptId: row.deptId ?? undefined,
     };
   }
 
@@ -60,8 +62,19 @@ export class DrizzleUserRepository implements UserRepository {
     const result = await db
       .select()
       .from(sys_user)
-      .where(eq(sys_user.userId, userIds[0]));
+      .where(inArray(sys_user.userId, userIds));
 
+    return result.map((row) => this.toEntity(row));
+  }
+
+  async findByDeptIds(deptIds: number[]): Promise<SystemUser[]> {
+    if (deptIds.length === 0) {
+      return [];
+    }
+    const result = await db
+      .select()
+      .from(sys_user)
+      .where(inArray(sys_user.deptId, deptIds));
     return result.map((row) => this.toEntity(row));
   }
 
@@ -71,6 +84,7 @@ export class DrizzleUserRepository implements UserRepository {
       nickName: data.nickName,
       password: data.password,
       status: data.status,
+      deptId: data.deptId,
     } as typeof sys_user.$inferInsert);
     return result[0].insertId;
   }
@@ -81,6 +95,7 @@ export class DrizzleUserRepository implements UserRepository {
       .set({
         nickName: data.nickName,
         status: data.status,
+        deptId: data.deptId,
       } as typeof sys_user.$inferInsert)
       .where(eq(sys_user.userId, userId));
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
@@ -96,7 +111,7 @@ export class DrizzleUserRepository implements UserRepository {
   async deleteBatch(userIds: number[]): Promise<number> {
     const result = await db
       .delete(sys_user)
-      .where(eq(sys_user.userId, userIds[0]));
+      .where(inArray(sys_user.userId, userIds));
     return result.length;
   }
 }

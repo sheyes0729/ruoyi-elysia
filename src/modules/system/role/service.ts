@@ -30,6 +30,9 @@ export class RoleService {
       roleKey: item.roleKey,
       roleName: item.roleName,
       status: item.status,
+      dataScope: item.dataScope,
+      deptCheckStrictly: item.deptCheckStrictly,
+      deptIds: item.deptIds,
     }));
 
     if (!query) {
@@ -74,6 +77,9 @@ export class RoleService {
       status: payload.status,
       menuIds,
       permissions: await this.resolvePermissionsByMenuIds(menuIds),
+      dataScope: payload.dataScope ?? "1",
+      deptCheckStrictly: payload.deptCheckStrictly ?? "0",
+      deptIds: payload.deptIds ?? [],
     });
 
     return { success: true, roleId };
@@ -95,6 +101,9 @@ export class RoleService {
       status: payload.status,
       menuIds,
       permissions: await this.resolvePermissionsByMenuIds(menuIds),
+      dataScope: payload.dataScope,
+      deptCheckStrictly: payload.deptCheckStrictly,
+      deptIds: payload.deptIds,
     });
 
     return { success: true };

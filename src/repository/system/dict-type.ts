@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { SystemDictType } from "../../modules/system/access-data";
+import type { SystemDictType } from "../../modules/system/types";
 import { sys_dict_type } from "../../database/schema";
 import { db } from "../../database";
 import type { Repository } from "../base";

@@ -1,5 +1,5 @@
 import { eq } from "drizzle-orm";
-import type { SystemMenu } from "../../modules/system/access-data";
+import type { SystemMenu } from "../../modules/system/types";
 import { sys_menu } from "../../database/schema";
 import { db } from "../../database";
 import type { Repository } from "../base";
