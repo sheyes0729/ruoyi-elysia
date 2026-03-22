@@ -80,6 +80,12 @@ export class OnlineService {
       item.username.includes(query.username ?? ""),
     );
   }
+
+  async cleanupExpiredSessions(): Promise<void> {
+    console.log(
+      "[OnlineService] Cleanup expired sessions - no-op (sessions auto-expire via Redis TTL)",
+    );
+  }
 }
 
 export const onlineService = new OnlineService();

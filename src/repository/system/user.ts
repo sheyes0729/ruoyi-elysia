@@ -98,21 +98,19 @@ export class DrizzleUserRepository implements UserRepository {
         deptId: data.deptId,
       } as typeof sys_user.$inferInsert)
       .where(eq(sys_user.userId, userId));
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    return result.length > 0;
+    return (result as unknown as { affectedRows: number }).affectedRows > 0;
   }
 
   async delete(userId: number): Promise<boolean> {
     const result = await db.delete(sys_user).where(eq(sys_user.userId, userId));
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    return result.length > 0;
+    return (result as unknown as { affectedRows: number }).affectedRows > 0;
   }
 
   async deleteBatch(userIds: number[]): Promise<number> {
     const result = await db
       .delete(sys_user)
       .where(inArray(sys_user.userId, userIds));
-    return result.length;
+    return (result as unknown as { affectedRows: number }).affectedRows;
   }
 }
 

@@ -52,23 +52,21 @@ export class DrizzleNoticeRepository implements Repository<
       .update(sys_notice)
       .set(data as typeof sys_notice.$inferInsert)
       .where(eq(sys_notice.noticeId, noticeId));
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    return result.length > 0;
+    return (result as unknown as { affectedRows: number }).affectedRows > 0;
   }
 
   async delete(noticeId: number): Promise<boolean> {
     const result = await db
       .delete(sys_notice)
       .where(eq(sys_notice.noticeId, noticeId));
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    return result.length > 0;
+    return (result as unknown as { affectedRows: number }).affectedRows > 0;
   }
 
   async deleteBatch(noticeIds: number[]): Promise<number> {
     const result = await db
       .delete(sys_notice)
       .where(eq(sys_notice.noticeId, noticeIds[0]));
-    return result.length;
+    return (result as unknown as { affectedRows: number }).affectedRows;
   }
 }
 

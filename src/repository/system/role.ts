@@ -79,21 +79,19 @@ export class DrizzleRoleRepository implements RoleRepository {
         deptIds: data.deptIds ? JSON.stringify(data.deptIds) : undefined,
       } as typeof sys_role.$inferInsert)
       .where(eq(sys_role.roleId, roleId));
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    return result.length > 0;
+    return (result as unknown as { affectedRows: number }).affectedRows > 0;
   }
 
   async delete(roleId: number): Promise<boolean> {
     const result = await db.delete(sys_role).where(eq(sys_role.roleId, roleId));
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    return result.length > 0;
+    return (result as unknown as { affectedRows: number }).affectedRows > 0;
   }
 
   async deleteBatch(roleIds: number[]): Promise<number> {
     const result = await db
       .delete(sys_role)
       .where(eq(sys_role.roleId, roleIds[0]));
-    return result.length;
+    return (result as unknown as { affectedRows: number }).affectedRows;
   }
 }
 

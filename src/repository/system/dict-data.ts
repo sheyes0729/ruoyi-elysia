@@ -64,23 +64,21 @@ export class DrizzleDictDataRepository implements DictDataRepository {
       .update(sys_dict_data)
       .set(data as typeof sys_dict_data.$inferInsert)
       .where(eq(sys_dict_data.dictCode, dictCode));
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    return result.length > 0;
+    return (result as unknown as { affectedRows: number }).affectedRows > 0;
   }
 
   async delete(dictCode: number): Promise<boolean> {
     const result = await db
       .delete(sys_dict_data)
       .where(eq(sys_dict_data.dictCode, dictCode));
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-    return result.length > 0;
+    return (result as unknown as { affectedRows: number }).affectedRows > 0;
   }
 
   async deleteBatch(dictCodes: number[]): Promise<number> {
     const result = await db
       .delete(sys_dict_data)
       .where(eq(sys_dict_data.dictCode, dictCodes[0]));
-    return result.length;
+    return (result as unknown as { affectedRows: number }).affectedRows;
   }
 }
 

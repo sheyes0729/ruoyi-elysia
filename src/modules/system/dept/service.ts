@@ -6,6 +6,10 @@ import type {
 } from "./model";
 import { deptRepository } from "../../../repository";
 import { getAccessibleDeptIds } from "../../../repository/data-scope";
+import { cacheService } from "../../../plugins/cache";
+
+const DEPT_LIST_CACHE_KEY = "dept:list";
+const DEPT_LIST_CACHE_TTL = 300;
 
 type CreateDeptResult =
   | { success: true; deptId: number }
@@ -48,7 +52,14 @@ export class DeptService {
     query?: ListDeptQuery,
     currentUserId?: number,
   ): Promise<DeptListItem[]> {
-    const depts = await deptRepository.findAll();
+    const cached = await cacheService.get<DeptListItem[]>(DEPT_LIST_CACHE_KEY);
+    const depts = cached ?? (await deptRepository.findAll());
+
+    if (!cached) {
+      await cacheService.set(DEPT_LIST_CACHE_KEY, depts, {
+        ttl: DEPT_LIST_CACHE_TTL,
+      });
+    }
 
     let source = depts.map((item) => ({
       deptId: item.deptId,
@@ -113,7 +124,9 @@ export class DeptService {
       }
     }
 
-    return deptRepository.deleteBatch([...idSet]);
+    const result = await deptRepository.deleteBatch([...idSet]);
+    await cacheService.del(DEPT_LIST_CACHE_KEY);
+    return result;
   }
 
   async create(payload: CreateDeptBody): Promise<CreateDeptResult> {
@@ -128,6 +141,7 @@ export class DeptService {
       status: payload.status,
     });
 
+    await cacheService.del(DEPT_LIST_CACHE_KEY);
     return { success: true, deptId };
   }
 
@@ -155,6 +169,7 @@ export class DeptService {
       status: payload.status,
     });
 
+    await cacheService.del(DEPT_LIST_CACHE_KEY);
     return { success: true };
   }
 

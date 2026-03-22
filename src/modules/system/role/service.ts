@@ -6,6 +6,10 @@ import type {
   UpdateRoleBody,
 } from "./model";
 import { roleRepository, menuRepository } from "../../../repository";
+import { cacheService } from "../../../plugins/cache";
+
+const ROLE_LIST_CACHE_KEY = "role:list";
+const ROLE_LIST_CACHE_TTL = 300;
 
 type CreateRoleResult =
   | { success: true; roleId: number }
@@ -23,7 +27,14 @@ const toUniqueIds = (ids: number[]): number[] => [...new Set(ids)];
 
 export class RoleService {
   async list(query?: ListRoleQuery): Promise<RoleListItem[]> {
-    const roles = await roleRepository.findAll();
+    const cached = await cacheService.get<RoleListItem[]>(ROLE_LIST_CACHE_KEY);
+    const roles = cached ?? (await roleRepository.findAll());
+
+    if (!cached) {
+      await cacheService.set(ROLE_LIST_CACHE_KEY, roles, {
+        ttl: ROLE_LIST_CACHE_TTL,
+      });
+    }
 
     const source = roles.map((item) => ({
       roleId: item.roleId,
@@ -57,7 +68,9 @@ export class RoleService {
   }
 
   async removeBatch(ids: number[]): Promise<number> {
-    return roleRepository.deleteBatch(ids);
+    const result = await roleRepository.deleteBatch(ids);
+    await cacheService.del(ROLE_LIST_CACHE_KEY);
+    return result;
   }
 
   async create(payload: CreateRoleBody): Promise<CreateRoleResult> {
@@ -82,6 +95,7 @@ export class RoleService {
       deptIds: payload.deptIds ?? [],
     });
 
+    await cacheService.del(ROLE_LIST_CACHE_KEY);
     return { success: true, roleId };
   }
 
@@ -106,6 +120,7 @@ export class RoleService {
       deptIds: payload.deptIds,
     });
 
+    await cacheService.del(ROLE_LIST_CACHE_KEY);
     return { success: true };
   }
 
@@ -125,6 +140,7 @@ export class RoleService {
       permissions: await this.resolvePermissionsByMenuIds(menuIds),
     });
 
+    await cacheService.del(ROLE_LIST_CACHE_KEY);
     return { success: true };
   }
 

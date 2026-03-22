@@ -5,12 +5,7 @@ import {
 } from "../../../repository/system/job";
 import type { Job, JobLog } from "../../../repository/system/job";
 import { scheduler } from "../../../common/scheduler";
-
-const NOOP_HANDLER = async () => {
-  console.log(
-    "[Scheduler] Dynamic job executed (noop - no handler registered)",
-  );
-};
+import { executeJob } from "../../../common/job-handlers";
 
 export class JobService {
   private initialized = false;
@@ -23,11 +18,14 @@ export class JobService {
     const jobs = await jobRepository.findAll();
     for (const job of jobs) {
       if (job.status === "0") {
+        const handler = async () => {
+          await executeJob(job.jobId, job.jobName, job.invokeTarget);
+        };
         scheduler.registerDynamicJob(
           job.jobId,
           job.jobName,
           job.cronExpression,
-          NOOP_HANDLER,
+          handler,
         );
       }
     }
@@ -55,11 +53,14 @@ export class JobService {
       const jobId = await jobRepository.create(input);
       const job = await jobRepository.findById(jobId);
       if (job?.status === "0") {
+        const handler = async () => {
+          await executeJob(job.jobId, job.jobName, job.invokeTarget);
+        };
         scheduler.registerDynamicJob(
           job.jobId,
           job.jobName,
           job.cronExpression,
-          NOOP_HANDLER,
+          handler,
         );
       }
       return { success: true, jobId };
@@ -80,11 +81,14 @@ export class JobService {
       await jobRepository.update(input);
       scheduler.removeJob(input.jobId);
       if (input.status === "0") {
+        const handler = async () => {
+          await executeJob(input.jobId, input.jobName, input.invokeTarget);
+        };
         scheduler.registerDynamicJob(
           input.jobId,
           input.jobName,
           input.cronExpression,
-          NOOP_HANDLER,
+          handler,
         );
       }
       return { success: true };
@@ -122,11 +126,14 @@ export class JobService {
     try {
       await jobRepository.updateStatus(jobId, status);
       if (status === "0") {
+        const handler = async () => {
+          await executeJob(jobId, existing.jobName, existing.invokeTarget);
+        };
         scheduler.registerDynamicJob(
           jobId,
           existing.jobName,
           existing.cronExpression,
-          NOOP_HANDLER,
+          handler,
         );
       } else {
         scheduler.removeJob(jobId);

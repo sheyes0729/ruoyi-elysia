@@ -77,6 +77,11 @@ export class LoginLogService {
     await redis.del(LOG_COUNTER_KEY);
     return count;
   }
+
+  async cleanupOldLogs(): Promise<void> {
+    console.log("[LoginLogService] Cleanup old logs - using clear()");
+    await this.clear();
+  }
 }
 
 export const loginLogService = new LoginLogService();

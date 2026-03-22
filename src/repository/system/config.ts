@@ -62,21 +62,21 @@ export class DrizzleConfigRepository implements ConfigRepository {
       .update(sys_config)
       .set(data as typeof sys_config.$inferInsert)
       .where(eq(sys_config.configId, configId));
-    return !!result.length;
+    return (result as unknown as { affectedRows: number }).affectedRows > 0;
   }
 
   async delete(configId: number): Promise<boolean> {
     const result = await db
       .delete(sys_config)
       .where(eq(sys_config.configId, configId));
-    return !!result.length;
+    return (result as unknown as { affectedRows: number }).affectedRows > 0;
   }
 
   async deleteBatch(configIds: number[]): Promise<number> {
     const result = await db
       .delete(sys_config)
       .where(eq(sys_config.configId, configIds[0]));
-    return result.length;
+    return (result as unknown as { affectedRows: number }).affectedRows;
   }
 }
 
