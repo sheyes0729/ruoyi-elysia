@@ -1,6 +1,31 @@
 import pino from "pino";
 import { join } from "path";
 import { existsSync, mkdirSync } from "fs";
+import { maskSensitiveData } from "../common/desensitize";
+
+const SENSITIVE_KEYS: readonly string[] = [
+  "password",
+  "oldPassword",
+  "newPassword",
+  "confirmPassword",
+  "token",
+  "accessToken",
+  "refreshToken",
+  "authorization",
+  "cookie",
+  "secret",
+  "secretKey",
+  "privateKey",
+  "creditCard",
+  "cardNumber",
+  "cvv",
+  "idNumber",
+  "idCard",
+  "phone",
+  "mobile",
+  "bankCard",
+  "bankAccount",
+];
 
 const isDev = process.env.NODE_ENV !== "production";
 const logDir = process.env.LOG_DIR ?? "./logs";
@@ -62,3 +87,27 @@ export const logError = (error: Error, context?: Record<string, unknown>) => {
     ...context,
   });
 };
+
+export function maskSensitiveFields(
+  data: Record<string, unknown>,
+): Record<string, unknown> {
+  const masked = maskSensitiveData(data, SENSITIVE_KEYS);
+  const result: Record<string, unknown> = { ...data };
+
+  for (const [key, value] of Object.entries(masked)) {
+    result[key] = value;
+  }
+
+  return result;
+}
+
+export function logWithMask(
+  type: string,
+  data: Record<string, unknown>,
+  maskFields = true,
+): void {
+  const logData = maskFields
+    ? { type, ...maskSensitiveFields(data) }
+    : { type, ...data };
+  logger.info(logData);
+}
