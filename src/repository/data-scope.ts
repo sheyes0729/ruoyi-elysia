@@ -69,6 +69,17 @@ export async function getDataScopeByUserId(
   return getDataScopeByRoles(systemRoles);
 }
 
+export async function getAccessibleDeptIds(userId: number): Promise<number[]> {
+  const dataScope = await getDataScopeByUserId(userId);
+
+  if (dataScope.allData) {
+    const allDepts = await deptRepository.findAll();
+    return allDepts.map((d) => d.deptId);
+  }
+
+  return dataScope.deptIds;
+}
+
 function getAccessibleDeptsForRole(
   role: SystemRole,
   allDeptIds: number[],

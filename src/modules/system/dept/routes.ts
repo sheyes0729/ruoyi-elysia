@@ -32,9 +32,9 @@ export const DeptRoutes = new Elysia({
         permission: "system:dept:list",
         denyMessage: "无权限访问部门管理",
       },
-      async ({ query }) => {
+      async ({ query, currentUser }) => {
         const typedQuery = query as ListDeptQuery;
-        return ok(await deptService.list(typedQuery));
+        return ok(await deptService.list(typedQuery, currentUser.userId));
       },
     ),
     {
@@ -48,7 +48,7 @@ export const DeptRoutes = new Elysia({
         tags: ["系统管理-部门管理"],
         summary: "查询部门树列表",
         description:
-          "查询部门列表并构建树形结构返回。需具有system:dept:list权限。",
+          "查询部门列表并构建树形结构返回。根据当前用户角色数据范围过滤结果。需具有system:dept:list权限。",
       },
     },
   )
@@ -60,9 +60,9 @@ export const DeptRoutes = new Elysia({
         denyMessage: "无权限导出部门数据",
         operLog: OPER_LOG.EXPORT,
       },
-      async ({ query, set }) => {
+      async ({ query, set, currentUser }) => {
         const typedQuery = query as ListDeptQuery;
-        const rows = await deptService.listFlat(typedQuery);
+        const rows = await deptService.listFlat(typedQuery, currentUser.userId);
         const csv = toCsv(rows, [
           { header: "部门ID", value: (row) => row.deptId },
           { header: "父部门ID", value: (row) => row.parentId },
@@ -83,7 +83,8 @@ export const DeptRoutes = new Elysia({
       detail: {
         tags: ["系统管理-部门管理"],
         summary: "导出部门列表",
-        description: "导出部门列表为CSV文件。需具有system:dept:export权限。",
+        description:
+          "导出部门列表为CSV文件。根据当前用户角色数据范围过滤结果。需具有system:dept:export权限。",
       },
     },
   )

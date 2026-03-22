@@ -5,6 +5,7 @@ import type {
   UpdateDeptBody,
 } from "./model";
 import { deptRepository } from "../../../repository";
+import { getAccessibleDeptIds } from "../../../repository/data-scope";
 
 type CreateDeptResult =
   | { success: true; deptId: number }
@@ -43,21 +44,35 @@ const filterByQuery = (source: DeptListItem[], query?: ListDeptQuery) =>
   });
 
 export class DeptService {
-  async listFlat(query?: ListDeptQuery): Promise<DeptListItem[]> {
+  async listFlat(
+    query?: ListDeptQuery,
+    currentUserId?: number,
+  ): Promise<DeptListItem[]> {
     const depts = await deptRepository.findAll();
 
-    const source = depts.map((item) => ({
+    let source = depts.map((item) => ({
       deptId: item.deptId,
       parentId: item.parentId,
       deptName: item.deptName,
       orderNum: item.orderNum,
       status: item.status,
     }));
+
+    if (currentUserId) {
+      const accessibleDepts = await getAccessibleDeptIds(currentUserId);
+      if (accessibleDepts.length > 0) {
+        source = source.filter((item) => accessibleDepts.includes(item.deptId));
+      }
+    }
+
     return filterByQuery(source, query).sort((a, b) => a.orderNum - b.orderNum);
   }
 
-  async list(query?: ListDeptQuery): Promise<DeptTreeItem[]> {
-    const source = await this.listFlat(query);
+  async list(
+    query?: ListDeptQuery,
+    currentUserId?: number,
+  ): Promise<DeptTreeItem[]> {
+    const source = await this.listFlat(query, currentUserId);
 
     const map = new Map<number, DeptTreeItem>(
       source.map((item) => [item.deptId, { ...item, children: [] }]),
