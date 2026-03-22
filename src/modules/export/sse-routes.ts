@@ -1,7 +1,7 @@
 import { Elysia } from "elysia";
 import { securityPlugin } from "../../plugins/security";
 import { exportJobService } from "../../common/export/job-service";
-import { fail } from "../../common/http/response";
+import { fail, ok } from "../../common/http/response";
 
 export const exportSseRoutes = new Elysia({
   prefix: "/api/export",
@@ -84,5 +84,5 @@ export const exportSseRoutes = new Elysia({
       return fail(403, "无权限访问此任务");
     }
 
-    return { code: 200, msg: "操作成功", data: job };
+    return ok(job, "操作成功");
   });
