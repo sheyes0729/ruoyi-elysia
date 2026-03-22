@@ -6,6 +6,7 @@ import { MonitorRoutes } from "./modules/monitor/routes";
 import type { OperBusinessType } from "./modules/monitor/oper-log/business-type";
 import { operLogService } from "./modules/monitor/oper-log/service";
 import { systemRoutes } from "./modules/system/routes";
+import { exportSseRoutes } from "./modules/export/sse-routes";
 import { logger, logRequest, logError } from "./plugins/logger";
 import { platformPlugin } from "./plugins/platform";
 import { rateLimitPlugin } from "./plugins/rate-limit";
@@ -38,6 +39,7 @@ export const app = new Elysia({ name: "ruoyi.elysia.app" })
     }
   })
   .use(authRoutes)
+  .use(exportSseRoutes)
   .use(systemRoutes)
   .use(MonitorRoutes)
   .onAfterHandle(async (context) => {
