@@ -180,7 +180,7 @@ export const jobRoutes = new Elysia({
   .get(
     "/logs",
     secured({ permission: "system:job:list" }, async ({ query }) => {
-      const jobId = (query as { jobId?: string })?.jobId
+      const jobId = (query as { jobId?: string }).jobId
         ? parseInt((query as { jobId: string }).jobId, 10)
         : undefined;
       const logs = await jobService.getLogs(jobId);

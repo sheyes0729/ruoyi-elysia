@@ -1,0 +1,38 @@
+module.exports = {
+  apps: [
+    {
+      name: "ruoyi-elysia",
+      script: "src/index.ts",
+      interpreter: "bun",
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "500M",
+      env: {
+        NODE_ENV: "production",
+        PORT: 4000,
+      },
+      env_production: {
+        NODE_ENV: "production",
+        PORT: 4000,
+        DB_HOST: "localhost",
+        DB_PORT: 3306,
+        DB_USER: "root",
+        DB_PASSWORD: "ruoyi123",
+        DB_NAME: "ruoyi",
+        REDIS_HOST: "localhost",
+        REDIS_PORT: 6379,
+        JWT_SECRET: "your-production-secret-change-me",
+        LOG_DIR: "./logs",
+        LOG_LEVEL: "info",
+        SCHEDULER_ENABLED: "true",
+      },
+      error_file: "./logs/pm2-error.log",
+      out_file: "./logs/pm2-out.log",
+      log_date_format: "YYYY-MM-DD HH:mm:ss",
+      merge_logs: true,
+      kill_timeout: 5000,
+      listen_timeout: 3000,
+    },
+  ],
+};
