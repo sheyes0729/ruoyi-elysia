@@ -43,6 +43,8 @@ export const OperLogRoutes = new Elysia({
       detail: {
         tags: ["监控管理-操作日志"],
         summary: "查询操作日志列表",
+        description:
+          "分页查询操作日志列表，支持按标题、操作人、业务类型、状态、时间范围筛选。日志数据持久化到MySQL数据库。需具有monitor:operlog:list权限。",
       },
     },
   )
@@ -80,6 +82,8 @@ export const OperLogRoutes = new Elysia({
       detail: {
         tags: ["监控管理-操作日志"],
         summary: "导出操作日志",
+        description:
+          "导出操作日志为CSV文件，支持按条件筛选。需具有monitor:operlog:export权限。",
       },
     },
   )
@@ -105,6 +109,8 @@ export const OperLogRoutes = new Elysia({
       detail: {
         tags: ["监控管理-操作日志"],
         summary: "清空操作日志",
+        description:
+          "清空所有操作日志记录。此操作不可逆。需具有monitor:operlog:remove权限。",
       },
     },
   );

@@ -58,6 +58,8 @@ export const userRoutes = new Elysia({
       detail: {
         tags: ["系统管理-用户"],
         summary: "查询用户列表",
+        description:
+          "分页查询用户列表，支持按用户名、状态筛选。需具有system:user:list权限。",
       },
     },
   )
@@ -90,6 +92,8 @@ export const userRoutes = new Elysia({
       detail: {
         tags: ["系统管理-用户"],
         summary: "导出用户列表",
+        description:
+          "导出用户列表为CSV文件，支持按条件筛选。需具有system:user:export权限。",
       },
     },
   )
@@ -114,6 +118,8 @@ export const userRoutes = new Elysia({
       detail: {
         tags: ["系统管理-用户"],
         summary: "下载用户导入模板",
+        description:
+          "下载用户批量导入的CSV模板文件。需具有system:user:import权限。",
       },
     },
   )
@@ -172,6 +178,8 @@ export const userRoutes = new Elysia({
       detail: {
         tags: ["系统管理-用户"],
         summary: "导入用户数据",
+        description:
+          "批量导入用户数据，支持CSV格式。返回导入成功数和失败数，失败时包含具体错误信息。需具有system:user:import权限。",
       },
     },
   )
@@ -199,6 +207,8 @@ export const userRoutes = new Elysia({
       detail: {
         tags: ["系统管理-用户"],
         summary: "批量删除用户",
+        description:
+          "批量删除指定ID的用户。删除操作会同时清除用户与角色的关联。需具有system:user:remove权限。",
       },
     },
   )
@@ -238,6 +248,8 @@ export const userRoutes = new Elysia({
       detail: {
         tags: ["系统管理-用户"],
         summary: "新增用户",
+        description:
+          "创建新用户，需指定用户名、昵称、密码、状态和角色。用户名校验唯一性。需具有system:user:add权限。",
       },
     },
   )
@@ -277,6 +289,8 @@ export const userRoutes = new Elysia({
       detail: {
         tags: ["系统管理-用户"],
         summary: "编辑用户",
+        description:
+          "更新指定用户的信息，包括昵称、状态、角色分配。需具有system:user:edit权限。",
       },
     },
   )
@@ -310,6 +324,8 @@ export const userRoutes = new Elysia({
       detail: {
         tags: ["系统管理-用户"],
         summary: "重置用户密码",
+        description:
+          "强制重置指定用户的密码，新密码需符合6-64位长度要求。需具有system:user:resetPwd权限。",
       },
     },
   );

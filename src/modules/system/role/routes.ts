@@ -51,6 +51,8 @@ export const roleRoutes = new Elysia({
       detail: {
         tags: ["系统管理-角色"],
         summary: "查询角色列表",
+        description:
+          "分页查询角色列表，支持按角色名称、角色标识、状态筛选。返回角色信息包含数据范围配置。需具有system:role:list权限。",
       },
     },
   )
@@ -83,6 +85,8 @@ export const roleRoutes = new Elysia({
       detail: {
         tags: ["系统管理-角色"],
         summary: "导出角色列表",
+        description:
+          "导出角色列表为CSV文件，支持按条件筛选。需具有system:role:export权限。",
       },
     },
   )
@@ -110,6 +114,8 @@ export const roleRoutes = new Elysia({
       detail: {
         tags: ["系统管理-角色"],
         summary: "批量删除角色",
+        description:
+          "批量删除指定ID的角色。删除操作会同时清除角色与用户的关联。需具有system:role:remove权限。",
       },
     },
   )
@@ -149,6 +155,8 @@ export const roleRoutes = new Elysia({
       detail: {
         tags: ["系统管理-角色"],
         summary: "新增角色",
+        description:
+          "创建新角色，需指定角色标识、角色名称、状态、菜单权限。角色标识全局唯一。可配置数据范围权限。需具有system:role:add权限。",
       },
     },
   )
@@ -188,6 +196,8 @@ export const roleRoutes = new Elysia({
       detail: {
         tags: ["系统管理-角色"],
         summary: "编辑角色",
+        description:
+          "更新指定角色的信息，包括角色名称、状态、菜单权限、数据范围配置。需具有system:role:edit权限。",
       },
     },
   )
@@ -227,6 +237,8 @@ export const roleRoutes = new Elysia({
       detail: {
         tags: ["系统管理-角色"],
         summary: "角色菜单授权",
+        description:
+          "为角色分配菜单权限。分配后会根据菜单权限自动解析角色拥有的操作权限。需具有system:role:auth权限。",
       },
     },
   );

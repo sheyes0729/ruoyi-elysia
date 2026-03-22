@@ -41,6 +41,8 @@ export const OnlineRoutes = new Elysia({
       detail: {
         tags: ["监控管理-在线用户"],
         summary: "查询在线用户列表",
+        description:
+          "分页查询当前在线用户列表，支持按用户名、IP地址筛选。会话数据存储在Redis中，默认24小时过期自动清除。需具有monitor:online:list权限。",
       },
     },
   )
@@ -76,6 +78,8 @@ export const OnlineRoutes = new Elysia({
       detail: {
         tags: ["监控管理-在线用户"],
         summary: "强制下线",
+        description:
+          "强制指定用户下线，移除其在线会话。会话令牌存储在Redis中。需具有monitor:online:forceLogout权限。",
       },
     },
   );

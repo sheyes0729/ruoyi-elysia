@@ -56,6 +56,8 @@ export const authRoutes = new Elysia({
       detail: {
         tags: ["认证授权"],
         summary: "获取图形验证码",
+        description:
+          "获取SVG图形验证码，用于登录防暴力破解。返回UUID和Base64编码的SVG图片，验证码5分钟内有效。",
       },
     },
   )
@@ -132,6 +134,8 @@ export const authRoutes = new Elysia({
       detail: {
         tags: ["认证授权"],
         summary: "账号密码登录",
+        description:
+          "使用用户名、密码和图形验证码进行登录。返回JWT访问令牌（有效期1天）和刷新令牌（有效期7天）。登录成功后会记录登录日志并创建在线会话。",
       },
     },
   )
@@ -191,6 +195,8 @@ export const authRoutes = new Elysia({
       detail: {
         tags: ["认证授权"],
         summary: "刷新访问令牌",
+        description:
+          "使用刷新令牌获取新的访问令牌。刷新令牌有效期7天，每次刷新后会获得新的刷新令牌。",
       },
     },
   )
@@ -211,6 +217,8 @@ export const authRoutes = new Elysia({
       detail: {
         tags: ["认证授权"],
         summary: "退出登录",
+        description:
+          "注销当前登录会话，清除在线用户记录。需携带有效的访问令牌。",
       },
     },
   )
@@ -241,6 +249,8 @@ export const authRoutes = new Elysia({
       detail: {
         tags: ["认证授权"],
         summary: "获取当前登录用户信息",
+        description:
+          "获取当前登录用户的详细信息，包括用户ID、用户名、昵称、角色列表、权限列表。需携带有效的访问令牌。",
       },
     },
   );

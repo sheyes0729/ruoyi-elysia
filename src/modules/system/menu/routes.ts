@@ -48,6 +48,8 @@ export const MenuRoutes = new Elysia({
       detail: {
         tags: ["系统管理-菜单管理"],
         summary: "查询菜单列表",
+        description:
+          "分页查询菜单列表，支持按菜单名称、可见状态筛选。菜单类型包括：目录(M)、菜单(C)、按钮(F)。需具有system:menu:list权限。",
       },
     },
   )
@@ -87,6 +89,7 @@ export const MenuRoutes = new Elysia({
       detail: {
         tags: ["系统管理-菜单管理"],
         summary: "导出菜单列表",
+        description: "导出菜单列表为CSV文件。需具有system:menu:export权限。",
       },
     },
   )
@@ -114,6 +117,8 @@ export const MenuRoutes = new Elysia({
       detail: {
         tags: ["系统管理-菜单管理"],
         summary: "批量删除菜单",
+        description:
+          "批量删除指定菜单。删除菜单会同时清除角色与菜单的关联。需具有system:menu:remove权限。",
       },
     },
   )
@@ -147,6 +152,8 @@ export const MenuRoutes = new Elysia({
       detail: {
         tags: ["系统管理-菜单管理"],
         summary: "新增菜单",
+        description:
+          "创建新菜单，需指定菜单类型、菜单名称、父级菜单、路由地址等。菜单类型包括：目录(M)、菜单(C)、按钮(F)。按钮类型的菜单需要配置权限标识。需具有system:menu:add权限。",
       },
     },
   )
@@ -191,6 +198,8 @@ export const MenuRoutes = new Elysia({
       detail: {
         tags: ["系统管理-菜单管理"],
         summary: "编辑菜单",
+        description:
+          "更新指定菜单的信息。上级菜单不能选择自身或下级菜单。需具有system:menu:edit权限。",
       },
     },
   );

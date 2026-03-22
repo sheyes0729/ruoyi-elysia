@@ -42,6 +42,8 @@ export const LoginLogRoutes = new Elysia({
       detail: {
         tags: ["监控管理-登录日志"],
         summary: "查询登录日志列表",
+        description:
+          "分页查询登录日志列表，支持按用户名、登录状态、IP地址筛选。日志数据存储在Redis中，最多保留1000条记录。需具有monitor:logininfor:list权限。",
       },
     },
   )
@@ -88,6 +90,8 @@ export const LoginLogRoutes = new Elysia({
       detail: {
         tags: ["监控管理-登录日志"],
         summary: "导出登录日志",
+        description:
+          "导出登录日志为CSV文件，支持按条件筛选。需具有monitor:logininfor:export权限。",
       },
     },
   )
@@ -113,6 +117,8 @@ export const LoginLogRoutes = new Elysia({
       detail: {
         tags: ["监控管理-登录日志"],
         summary: "清空登录日志",
+        description:
+          "清空所有登录日志记录。此操作不可逆。需具有monitor:logininfor:remove权限。",
       },
     },
   );

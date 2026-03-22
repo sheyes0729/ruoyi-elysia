@@ -47,6 +47,8 @@ export const DeptRoutes = new Elysia({
       detail: {
         tags: ["系统管理-部门管理"],
         summary: "查询部门树列表",
+        description:
+          "查询部门列表并构建树形结构返回。需具有system:dept:list权限。",
       },
     },
   )
@@ -81,6 +83,7 @@ export const DeptRoutes = new Elysia({
       detail: {
         tags: ["系统管理-部门管理"],
         summary: "导出部门列表",
+        description: "导出部门列表为CSV文件。需具有system:dept:export权限。",
       },
     },
   )
@@ -108,6 +111,8 @@ export const DeptRoutes = new Elysia({
       detail: {
         tags: ["系统管理-部门管理"],
         summary: "批量删除部门（含子节点）",
+        description:
+          "批量删除指定部门，同时删除其所有子部门。需具有system:dept:remove权限。",
       },
     },
   )
@@ -141,6 +146,8 @@ export const DeptRoutes = new Elysia({
       detail: {
         tags: ["系统管理-部门管理"],
         summary: "新增部门",
+        description:
+          "创建新部门，需指定父部门ID、部门名称、显示顺序、状态。父部门必须存在。需具有system:dept:add权限。",
       },
     },
   )
@@ -185,6 +192,8 @@ export const DeptRoutes = new Elysia({
       detail: {
         tags: ["系统管理-部门管理"],
         summary: "编辑部门",
+        description:
+          "更新指定部门的信息。上级部门不能选择自身或下级部门。需具有system:dept:edit权限。",
       },
     },
   );
