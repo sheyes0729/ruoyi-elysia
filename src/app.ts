@@ -13,6 +13,7 @@ import { redis } from "./plugins/redis";
 import { securityPlugin } from "./plugins/security";
 import { idempotencyPlugin } from "./plugins/idempotency-plugin";
 import { idempotencyService } from "./plugins/idempotency";
+import { scheduler, registerScheduledTasks } from "./common/scheduler";
 
 export const app = new Elysia({ name: "ruoyi.elysia.app" })
   .use(platformPlugin)
@@ -21,6 +22,11 @@ export const app = new Elysia({ name: "ruoyi.elysia.app" })
   .use(idempotencyPlugin)
   .onStart(() => {
     logger.info("RuoYi Elysia server starting...");
+    registerScheduledTasks();
+    scheduler.start();
+  })
+  .onStop(() => {
+    scheduler.stop();
   })
   .get("/", () => ok("RuoYi Elysia Backend is running"))
   .get("/health", async () => {

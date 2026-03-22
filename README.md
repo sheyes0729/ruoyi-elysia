@@ -125,7 +125,7 @@
 - [x] 服务健康检查（health/readiness）
 - [x] 限流与防刷（IP维度，elysia-rate-limit）
 - [x] 幂等性处理（X-Idempotency-Key，Redis 存储 24h）
-- [ ] 任务调度（可选：Cron）
+- [x] 任务调度（定时清理过期会话、清理旧日志）
 
 ### 5. 工程化与质量保障
 
@@ -319,6 +319,7 @@ bun run dev
 | `RATE_LIMIT_DURATION` | `60000`       | 限流时间窗口（毫秒）   |
 | `RATE_LIMIT_MAX`      | `100`         | 通用限流最大请求数     |
 | `RATE_LIMIT_AUTH_MAX` | `10`          | 认证接口限流最大请求数 |
+| `SCHEDULER_ENABLED`   | `true`        | 是否启用定时任务调度   |
 
 ## Docker 部署
 
