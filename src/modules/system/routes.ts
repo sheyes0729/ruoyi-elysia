@@ -8,6 +8,7 @@ import { NoticeRoutes } from "./notice/routes";
 import { PostRoutes } from "./post/routes";
 import { roleRoutes } from "./role/routes";
 import { userRoutes } from "./user/routes";
+import { jobRoutes } from "./job/routes";
 
 export const systemRoutes = new Elysia({ name: "system.routes" })
   .use(userRoutes)
@@ -18,4 +19,5 @@ export const systemRoutes = new Elysia({ name: "system.routes" })
   .use(DictDataRoutes)
   .use(MenuRoutes)
   .use(DeptRoutes)
-  .use(PostRoutes);
+  .use(PostRoutes)
+  .use(jobRoutes);

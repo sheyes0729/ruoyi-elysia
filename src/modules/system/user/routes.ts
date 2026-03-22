@@ -30,6 +30,7 @@ import {
   UserFailResponseSchema,
 } from "./model";
 import { userService } from "./service";
+import { validatePassword } from "../../../common/password";
 
 export const userRoutes = new Elysia({
   prefix: "/api/system/user",
@@ -227,6 +228,13 @@ export const userRoutes = new Elysia({
       },
       async ({ body, set }) => {
         const typedBody = body as CreateUserBody;
+
+        const passwordValidation = validatePassword(typedBody.password);
+        if (!passwordValidation.valid) {
+          set.status = 400;
+          return fail(400, passwordValidation.errors.join("；"));
+        }
+
         const result = await userService.create(typedBody);
         if (!result.success) {
           if (result.reason === "username_exists") {
@@ -254,7 +262,7 @@ export const userRoutes = new Elysia({
         tags: ["系统管理-用户"],
         summary: "新增用户",
         description:
-          "创建新用户，需指定用户名、昵称、密码、状态和角色。用户名校验唯一性。支持幂等性请求，携带X-Idempotency-Key头可防止重复提交。需具有system:user:add权限。",
+          "创建新用户，需指定用户名、昵称、密码、状态和角色。密码需8位以上，包含大小写字母和数字。需具有system:user:add权限。",
       },
     },
   )
@@ -309,6 +317,13 @@ export const userRoutes = new Elysia({
       },
       async ({ body, set }) => {
         const typedBody = body as ResetPasswordBody;
+
+        const passwordValidation = validatePassword(typedBody.password);
+        if (!passwordValidation.valid) {
+          set.status = 400;
+          return fail(400, passwordValidation.errors.join("；"));
+        }
+
         const result = await userService.resetPassword(typedBody);
         if (!result.success) {
           set.status = 404;
@@ -322,6 +337,7 @@ export const userRoutes = new Elysia({
       body: ResetPasswordSchema,
       response: {
         200: ResetPasswordResponseSchema,
+        400: UserFailResponseSchema,
         401: UserFailResponseSchema,
         403: UserFailResponseSchema,
         404: UserFailResponseSchema,
@@ -330,7 +346,7 @@ export const userRoutes = new Elysia({
         tags: ["系统管理-用户"],
         summary: "重置用户密码",
         description:
-          "强制重置指定用户的密码，新密码需符合6-64位长度要求。需具有system:user:resetPwd权限。",
+          "强制重置指定用户的密码，新密码需8位以上，包含大小写字母和数字。需具有system:user:resetPwd权限。",
       },
     },
   );

@@ -9,6 +9,7 @@ import type {
 import type { ImportResult } from "../../../common/http/csv";
 import { userRepository, roleRepository } from "../../../repository";
 import { getDataScopeByUserId } from "../../../repository/data-scope";
+import { validatePassword } from "../../../common/password";
 
 type CreateUserResult =
   | { success: true; userId: number }
@@ -189,6 +190,16 @@ export class UserService {
           row: rowNum,
           data: row,
           error: "密码长度需在6-64之间",
+        });
+        continue;
+      }
+
+      const passwordValidation = validatePassword(password);
+      if (!passwordValidation.valid) {
+        failures.push({
+          row: rowNum,
+          data: row,
+          error: `密码强度不足：${passwordValidation.errors.join("；")}`,
         });
         continue;
       }

@@ -17,6 +17,7 @@ import { loginLogService } from "../monitor/login-log/service";
 import { onlineService } from "../monitor/online/service";
 import { captchaService } from "./captcha";
 import { accountLockService } from "../../plugins/account-lock";
+import { ipPolicyService } from "../../plugins/ip-policy";
 
 const parseExpireSeconds = (exp: string): number => {
   const match = exp.match(/^(\d+)([dhms])$/);
@@ -71,6 +72,17 @@ export const authRoutes = new Elysia({
         request.headers.get("x-forwarded-for") ??
         request.headers.get("x-real-ip") ??
         "127.0.0.1";
+
+      if (!(await ipPolicyService.isIpAllowed(ip))) {
+        await loginLogService.record({
+          username,
+          ip,
+          status: "1",
+          msg: "IP已被禁止登录",
+        });
+        set.status = 403;
+        return fail(403, "IP已被禁止登录");
+      }
 
       if (await accountLockService.isLocked(username)) {
         const remaining =

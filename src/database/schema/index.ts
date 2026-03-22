@@ -131,3 +131,5 @@ export const sys_login_log = mysqlTable("sys_login_log", {
   msg: varchar("msg", { length: 255 }),
   loginTime: timestamp("login_time").defaultNow(),
 });
+
+export * from "./job";
