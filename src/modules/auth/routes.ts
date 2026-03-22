@@ -18,6 +18,7 @@ import { onlineService } from "../monitor/online/service";
 import { captchaService } from "./captcha";
 import { accountLockService } from "../../plugins/account-lock";
 import { ipPolicyService } from "../../plugins/ip-policy";
+import { tokenBlacklistService } from "../../plugins/token-blacklist";
 
 const parseExpireSeconds = (exp: string): number => {
   const match = exp.match(/^(\d+)([dhms])$/);
@@ -245,9 +246,10 @@ export const authRoutes = new Elysia({
   )
   .post(
     "/logout",
-    secured({ operLog: OPER_LOG.LOGOUT }, async ({ bearer }) => {
-      if (typeof bearer === "string") {
+    secured({ operLog: OPER_LOG.LOGOUT }, async ({ bearer, currentUser }) => {
+      if (typeof bearer === "string" && currentUser) {
         await onlineService.removeSession(bearer);
+        await tokenBlacklistService.blacklistToken(bearer, currentUser.userId);
       }
 
       return ok(true, "退出成功");
@@ -261,7 +263,7 @@ export const authRoutes = new Elysia({
         tags: ["认证授权"],
         summary: "退出登录",
         description:
-          "注销当前登录会话，清除在线用户记录。需携带有效的访问令牌。",
+          "注销当前登录会话，清除在线用户记录，使令牌失效。需携带有效的访问令牌。",
       },
     },
   )

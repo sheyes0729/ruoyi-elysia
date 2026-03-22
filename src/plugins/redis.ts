@@ -58,4 +58,5 @@ export const REDIS_KEYS = {
   IDEMPOTENCY: "ruoyi:idempotency:",
   ACCOUNT_LOCK: "ruoyi:account:lock:",
   IP_POLICY: "ruoyi:ip:policy",
+  CACHE: "ruoyi:cache:",
 } as const;
