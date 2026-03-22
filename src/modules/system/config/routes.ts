@@ -50,6 +50,7 @@ export const ConfigRoutes = new Elysia({
       detail: {
         tags: ["系统管理-参数配置"],
         summary: "查询参数配置列表",
+        description: "分页查询系统参数配置列表",
       },
     },
   )
@@ -84,6 +85,7 @@ export const ConfigRoutes = new Elysia({
       detail: {
         tags: ["系统管理-参数配置"],
         summary: "导出参数配置列表",
+        description: "导出参数配置为CSV文件",
       },
     },
   )
@@ -111,6 +113,7 @@ export const ConfigRoutes = new Elysia({
       detail: {
         tags: ["系统管理-参数配置"],
         summary: "批量删除参数配置",
+        description: "根据ID批量删除参数配置",
       },
     },
   )
@@ -144,6 +147,7 @@ export const ConfigRoutes = new Elysia({
       detail: {
         tags: ["系统管理-参数配置"],
         summary: "新增参数配置",
+        description: "创建新的系统参数配置",
       },
     },
   )
@@ -183,6 +187,7 @@ export const ConfigRoutes = new Elysia({
       detail: {
         tags: ["系统管理-参数配置"],
         summary: "编辑参数配置",
+        description: "更新指定参数配置信息",
       },
     },
   );

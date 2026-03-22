@@ -50,6 +50,7 @@ export const NoticeRoutes = new Elysia({
       detail: {
         tags: ["系统管理-通知公告"],
         summary: "查询通知公告列表",
+        description: "分页查询通知公告列表信息",
       },
     },
   )
@@ -84,6 +85,7 @@ export const NoticeRoutes = new Elysia({
       detail: {
         tags: ["系统管理-通知公告"],
         summary: "导出通知公告列表",
+        description: "导出通知公告为CSV文件",
       },
     },
   )
@@ -111,6 +113,7 @@ export const NoticeRoutes = new Elysia({
       detail: {
         tags: ["系统管理-通知公告"],
         summary: "批量删除通知公告",
+        description: "根据ID批量删除通知公告",
       },
     },
   )
@@ -138,6 +141,7 @@ export const NoticeRoutes = new Elysia({
       detail: {
         tags: ["系统管理-通知公告"],
         summary: "新增通知公告",
+        description: "创建新的通知公告",
       },
     },
   )
@@ -171,6 +175,7 @@ export const NoticeRoutes = new Elysia({
       detail: {
         tags: ["系统管理-通知公告"],
         summary: "编辑通知公告",
+        description: "更新指定通知公告信息",
       },
     },
   );

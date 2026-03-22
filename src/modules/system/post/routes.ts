@@ -48,6 +48,7 @@ export const PostRoutes = new Elysia({
       detail: {
         tags: ["系统管理-岗位管理"],
         summary: "查询岗位列表",
+        description: "分页查询岗位列表",
       },
     },
   )
@@ -82,6 +83,7 @@ export const PostRoutes = new Elysia({
       detail: {
         tags: ["系统管理-岗位管理"],
         summary: "导出岗位列表",
+        description: "导出岗位为CSV文件",
       },
     },
   )
@@ -109,6 +111,7 @@ export const PostRoutes = new Elysia({
       detail: {
         tags: ["系统管理-岗位管理"],
         summary: "批量删除岗位",
+        description: "根据ID批量删除岗位",
       },
     },
   )
@@ -142,6 +145,7 @@ export const PostRoutes = new Elysia({
       detail: {
         tags: ["系统管理-岗位管理"],
         summary: "新增岗位",
+        description: "创建新的岗位",
       },
     },
   )
@@ -181,6 +185,7 @@ export const PostRoutes = new Elysia({
       detail: {
         tags: ["系统管理-岗位管理"],
         summary: "编辑岗位",
+        description: "更新指定岗位信息",
       },
     },
   );

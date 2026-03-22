@@ -57,6 +57,7 @@ export const DictDataRoutes = new Elysia({
       detail: {
         tags: ["系统管理-字典数据"],
         summary: "查询字典数据列表",
+        description: "分页查询字典数据列表",
       },
     },
   )
@@ -91,6 +92,7 @@ export const DictDataRoutes = new Elysia({
       detail: {
         tags: ["系统管理-字典数据"],
         summary: "导出字典数据列表",
+        description: "导出字典数据为CSV文件",
       },
     },
   )
@@ -115,6 +117,7 @@ export const DictDataRoutes = new Elysia({
       detail: {
         tags: ["系统管理-字典数据"],
         summary: "下载字典数据导入模板",
+        description: "下载CSV导入模板",
       },
     },
   )
@@ -173,6 +176,7 @@ export const DictDataRoutes = new Elysia({
       detail: {
         tags: ["系统管理-字典数据"],
         summary: "导入字典数据",
+        description: "从CSV文件导入字典数据",
       },
     },
   )
@@ -200,6 +204,7 @@ export const DictDataRoutes = new Elysia({
       detail: {
         tags: ["系统管理-字典数据"],
         summary: "批量删除字典数据",
+        description: "根据ID批量删除字典数据",
       },
     },
   )
@@ -233,6 +238,7 @@ export const DictDataRoutes = new Elysia({
       detail: {
         tags: ["系统管理-字典数据"],
         summary: "新增字典数据",
+        description: "创建新的字典数据",
       },
     },
   )
@@ -272,6 +278,7 @@ export const DictDataRoutes = new Elysia({
       detail: {
         tags: ["系统管理-字典数据"],
         summary: "编辑字典数据",
+        description: "更新指定字典数据信息",
       },
     },
   );

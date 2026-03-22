@@ -50,6 +50,7 @@ export const DictTypeRoutes = new Elysia({
       detail: {
         tags: ["系统管理-字典类型"],
         summary: "查询字典类型列表",
+        description: "分页查询字典类型列表",
       },
     },
   )
@@ -83,6 +84,7 @@ export const DictTypeRoutes = new Elysia({
       detail: {
         tags: ["系统管理-字典类型"],
         summary: "导出字典类型列表",
+        description: "导出字典类型为CSV文件",
       },
     },
   )
@@ -110,6 +112,7 @@ export const DictTypeRoutes = new Elysia({
       detail: {
         tags: ["系统管理-字典类型"],
         summary: "批量删除字典类型",
+        description: "根据ID批量删除字典类型",
       },
     },
   )
@@ -143,6 +146,7 @@ export const DictTypeRoutes = new Elysia({
       detail: {
         tags: ["系统管理-字典类型"],
         summary: "新增字典类型",
+        description: "创建新的字典类型",
       },
     },
   )
@@ -182,6 +186,7 @@ export const DictTypeRoutes = new Elysia({
       detail: {
         tags: ["系统管理-字典类型"],
         summary: "编辑字典类型",
+        description: "更新指定字典类型信息",
       },
     },
   );
