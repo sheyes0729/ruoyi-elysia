@@ -95,6 +95,7 @@ export const authRoutes = new Elysia({
         username: authUser.username,
         roles: authUser.roles,
         permissions: authUser.permissions,
+        deptId: authUser.deptId,
       });
 
       const refreshToken: string = await refreshJwt.sign({
@@ -171,6 +172,7 @@ export const authRoutes = new Elysia({
         username: profile.username,
         roles: profile.roles,
         permissions: profile.permissions,
+        deptId: profile.deptId,
       });
 
       const newRefreshToken: string = await refreshJwt.sign({
@@ -236,6 +238,7 @@ export const authRoutes = new Elysia({
           userId: profile.userId,
           userName: profile.username,
           nickName: profile.nickName,
+          deptId: profile.deptId,
         },
         roles: profile.roles,
         permissions: profile.permissions,

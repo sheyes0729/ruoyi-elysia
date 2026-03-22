@@ -8,6 +8,7 @@ import type {
 } from "./model";
 import type { ImportResult } from "../../../common/http/csv";
 import { userRepository, roleRepository } from "../../../repository";
+import { getDataScopeByUserId } from "../../../repository/data-scope";
 
 type CreateUserResult =
   | { success: true; userId: number }
@@ -24,7 +25,10 @@ type ResetPasswordResult =
 type ImportUserResult = ImportResult<UserImportRow>;
 
 export class UserService {
-  async list(query?: ListUserQuery): Promise<UserListItem[]> {
+  async list(
+    query?: ListUserQuery,
+    currentUserId?: number,
+  ): Promise<UserListItem[]> {
     const users = await userRepository.findAll();
 
     const source = users.map((item) => ({
@@ -33,23 +37,46 @@ export class UserService {
       nickName: item.nickName,
       status: item.status,
       roleIds: item.roleIds,
+      deptId: item.deptId,
     }));
 
-    if (!query) {
-      return source;
+    let filtered = source;
+
+    if (query) {
+      filtered = filtered.filter((item) => {
+        if (query.username && !item.username.includes(query.username)) {
+          return false;
+        }
+
+        if (query.status && item.status !== query.status) {
+          return false;
+        }
+
+        return true;
+      });
     }
 
-    return source.filter((item) => {
-      if (query.username && !item.username.includes(query.username)) {
-        return false;
-      }
+    if (currentUserId) {
+      const dataScope = await getDataScopeByUserId(currentUserId);
 
-      if (query.status && item.status !== query.status) {
-        return false;
-      }
+      if (!dataScope.allData) {
+        filtered = filtered.filter((item) => {
+          if (item.userId === currentUserId) {
+            return true;
+          }
 
-      return true;
-    });
+          if (dataScope.deptIds.length === 0) {
+            return false;
+          }
+
+          return (
+            item.deptId !== undefined && dataScope.deptIds.includes(item.deptId)
+          );
+        });
+      }
+    }
+
+    return filtered;
   }
 
   async removeBatch(ids: number[]): Promise<number> {

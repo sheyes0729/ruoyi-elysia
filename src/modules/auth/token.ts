@@ -3,6 +3,7 @@ export type JwtUserPayload = {
   username: string;
   roles: string[];
   permissions: string[];
+  deptId?: number;
 };
 
 export type JwtRefreshPayload = {

@@ -40,6 +40,7 @@ export const GetInfoAuthResponseSchema = t.Object({
       userId: t.Number(),
       userName: t.String(),
       nickName: t.String(),
+      deptId: t.Optional(t.Number()),
     }),
     roles: t.Array(t.String()),
     permissions: t.Array(t.String()),
@@ -60,4 +61,5 @@ export type AuthUser = {
   nickName: string;
   roles: string[];
   permissions: string[];
+  deptId?: number;
 };

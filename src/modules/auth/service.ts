@@ -21,7 +21,12 @@ export class AuthService {
       return null;
     }
 
-    return this.buildAuthUser(user.userId, user.username, user.nickName);
+    return this.buildAuthUser(
+      user.userId,
+      user.username,
+      user.nickName,
+      user.deptId ?? undefined,
+    );
   }
 
   async verifyPassword(
@@ -50,7 +55,12 @@ export class AuthService {
       return null;
     }
 
-    return this.buildAuthUser(user.userId, user.username, user.nickName);
+    return this.buildAuthUser(
+      user.userId,
+      user.username,
+      user.nickName,
+      user.deptId ?? undefined,
+    );
   }
 
   async getUserById(
@@ -77,6 +87,7 @@ export class AuthService {
     userId: number,
     username: string,
     nickName: string,
+    deptId?: number,
   ): Promise<AuthUser> {
     const userRoles = await db
       .select()
@@ -90,6 +101,7 @@ export class AuthService {
         nickName,
         roles: [],
         permissions: [],
+        deptId,
       };
     }
 
@@ -106,6 +118,7 @@ export class AuthService {
         nickName,
         roles: [],
         permissions: [],
+        deptId,
       };
     }
 
@@ -125,6 +138,7 @@ export class AuthService {
       nickName,
       roles: roles.map((r) => r.roleKey),
       permissions: uniquePermissions,
+      deptId,
     };
   }
 }

@@ -1,4 +1,7 @@
+import { eq, inArray } from "drizzle-orm";
 import type { SystemRole } from "../modules/system/types";
+import { db } from "../database";
+import { sys_user_role, sys_role } from "../database/schema";
 import { deptRepository } from "./index";
 
 export type DataScopeResult = {
@@ -31,6 +34,39 @@ export async function getDataScopeByRoles(
   const intersection = intersectSets(accessibleDeptIdSets);
 
   return { allData: false, deptIds: intersection };
+}
+
+export async function getDataScopeByUserId(
+  userId: number,
+): Promise<DataScopeResult> {
+  const userRoles = await db
+    .select()
+    .from(sys_user_role)
+    .where(eq(sys_user_role.userId, userId));
+
+  if (userRoles.length === 0) {
+    return { allData: false, deptIds: [] };
+  }
+
+  const roleIds = userRoles.map((ur) => ur.roleId);
+  const roles = await db
+    .select()
+    .from(sys_role)
+    .where(inArray(sys_role.roleId, roleIds));
+
+  const systemRoles: SystemRole[] = roles.map((r) => ({
+    roleId: r.roleId,
+    roleKey: r.roleKey,
+    roleName: r.roleName,
+    status: r.status as "0" | "1",
+    menuIds: r.menuIds ? (JSON.parse(r.menuIds) as number[]) : [],
+    permissions: r.permissions ? (JSON.parse(r.permissions) as string[]) : [],
+    dataScope: r.dataScope as SystemRole["dataScope"],
+    deptCheckStrictly: r.deptCheckStrictly as "0" | "1",
+    deptIds: r.deptIds ? (JSON.parse(r.deptIds) as number[]) : [],
+  }));
+
+  return getDataScopeByRoles(systemRoles);
 }
 
 function getAccessibleDeptsForRole(

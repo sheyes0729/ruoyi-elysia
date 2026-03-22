@@ -43,9 +43,14 @@ export const userRoutes = new Elysia({
         permission: "system:user:list",
         denyMessage: "无权限访问用户管理",
       },
-      async ({ query }) => {
+      async ({ query, currentUser }) => {
         const typedQuery = query as ListUserQuery;
-        return ok(paginateData(await userService.list(typedQuery), typedQuery));
+        return ok(
+          paginateData(
+            await userService.list(typedQuery, currentUser.userId),
+            typedQuery,
+          ),
+        );
       },
     ),
     {
@@ -59,7 +64,7 @@ export const userRoutes = new Elysia({
         tags: ["系统管理-用户"],
         summary: "查询用户列表",
         description:
-          "分页查询用户列表，支持按用户名、状态筛选。需具有system:user:list权限。",
+          "分页查询用户列表，支持按用户名、状态筛选。根据当前用户角色数据范围过滤结果。需具有system:user:list权限。",
       },
     },
   )
@@ -71,9 +76,9 @@ export const userRoutes = new Elysia({
         denyMessage: "无权限导出用户数据",
         operLog: OPER_LOG.EXPORT,
       },
-      async ({ query, set }) => {
+      async ({ query, set, currentUser }) => {
         const typedQuery = query as ListUserQuery;
-        const rows = await userService.list(typedQuery);
+        const rows = await userService.list(typedQuery, currentUser.userId);
         return buildCsvDownload(
           set,
           rows,
@@ -93,7 +98,7 @@ export const userRoutes = new Elysia({
         tags: ["系统管理-用户"],
         summary: "导出用户列表",
         description:
-          "导出用户列表为CSV文件，支持按条件筛选。需具有system:user:export权限。",
+          "导出用户列表为CSV文件，支持按条件筛选。根据当前用户角色数据范围过滤结果。需具有system:user:export权限。",
       },
     },
   )
