@@ -1,8 +1,29 @@
-# RuoYi Elysia Backend
+# RuoYi Elysia
 
-基于 Elysia + Bun 重构若依后端能力，目标是提供高性能、易扩展、模块化的后台服务框架。
+若依前后端分离管理系统 Monorepo
 
-## 当前状态
+## 子项目
+
+- [packages/backend](./packages/backend/) - 后端服务（Elysia + Bun）
+- [packages/frontend](./packages/frontend/) - 前端页面（Vue 3 + Vite）
+
+## 开发指南
+
+```bash
+# 安装依赖
+pnpm install
+
+# 启动后端开发服务器
+pnpm dev:backend
+
+# 启动前端开发服务器
+pnpm dev:frontend
+
+# 构建前端
+pnpm build:frontend
+```
+
+## 当前状态（Backend）
 
 - 已完成：基础服务与平台能力（CORS、Swagger、统一响应、全局异常）
 - 已完成：认证授权主链路（登录/登出/getInfo、JWT、Refresh Token、图形验证码、bcrypt 密码加密）
