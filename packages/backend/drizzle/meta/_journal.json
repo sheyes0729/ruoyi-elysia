@@ -8,6 +8,20 @@
       "when": 1773992969614,
       "tag": "0000_milky_firebird",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1774273735120,
+      "tag": "0001_rare_otto_octavius",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1774273872843,
+      "tag": "0002_cuddly_whistler",
+      "breakpoints": true
     }
   ]
 }

@@ -25,6 +25,9 @@ export class AuthService {
       user.userId,
       user.username,
       user.nickName,
+      user.email ?? undefined,
+      user.phone ?? undefined,
+      user.avatar ?? undefined,
       user.deptId ?? undefined,
     );
   }
@@ -59,6 +62,9 @@ export class AuthService {
       user.userId,
       user.username,
       user.nickName,
+      user.email ?? undefined,
+      user.phone ?? undefined,
+      user.avatar ?? undefined,
       user.deptId ?? undefined,
     );
   }
@@ -87,6 +93,9 @@ export class AuthService {
     userId: number,
     username: string,
     nickName: string,
+    email?: string,
+    phone?: string,
+    avatar?: string,
     deptId?: number,
   ): Promise<AuthUser> {
     const userRoles = await db
@@ -99,6 +108,9 @@ export class AuthService {
         userId,
         username,
         nickName,
+        email,
+        phone,
+        avatar,
         roles: [],
         permissions: [],
         deptId,
@@ -116,6 +128,9 @@ export class AuthService {
         userId,
         username,
         nickName,
+        email,
+        phone,
+        avatar,
         roles: [],
         permissions: [],
         deptId,
@@ -136,6 +151,9 @@ export class AuthService {
       userId,
       username,
       nickName,
+      email,
+      phone,
+      avatar,
       roles: roles.map((r) => r.roleKey),
       permissions: uniquePermissions,
       deptId,
