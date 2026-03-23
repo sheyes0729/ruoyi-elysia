@@ -1,42 +1,39 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import { routes, handleHotUpdate } from 'vue-router/auto-routes'
-import { setupLayouts } from 'virtual:generated-layouts'
-import { useAuthStore } from '@/stores/auth'
+import { createRouter, createWebHistory } from "vue-router";
+import { routes, handleHotUpdate } from "vue-router/auto-routes";
+import { setupLayouts } from "virtual:generated-layouts";
+import { useAuthStore } from "@/stores/auth";
 
 const router = createRouter({
   history: createWebHistory(),
   routes: setupLayouts(routes),
-})
+});
 
-const whiteList = ['/login']
+const whiteList = ["/login"];
 
 router.beforeEach(async (to) => {
-  const authStore = useAuthStore()
+  const authStore = useAuthStore();
 
   if (whiteList.includes(to.path)) {
-    return true
+    return true;
   }
 
   if (!authStore.isLogin) {
-    return '/login'
+    return "/login";
   }
 
   if (!authStore.userInfo) {
     try {
-      const { data } = await api.api.auth.getInfo.get()
-      if (data) {
-        authStore.setUserInfo(data)
-      }
+      await authStore.getUserInfo();
     } catch {
-      return '/login'
+      return "/login";
     }
   }
 
-  return true
-})
+  return true;
+});
 
 if (import.meta.hot) {
-  handleHotUpdate(router)
+  handleHotUpdate(router);
 }
 
-export default router
+export default router;

@@ -1,1 +1,1 @@
-export { vPermission }
+export * from "./permission";
