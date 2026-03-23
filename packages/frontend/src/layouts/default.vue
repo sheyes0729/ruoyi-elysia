@@ -272,7 +272,6 @@ const handleUserDropdown = (key: string) => {
 }
 
 .content {
-  padding: 16px;
   overflow-y: auto;
   background-color: #f5f5f5;
 }

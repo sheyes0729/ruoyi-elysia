@@ -24,7 +24,7 @@ const handleShortcut = (route: string) => {
 </script>
 
 <template>
-  <div class="dashboard">
+  <div class="dashboard h-full">
     <!-- 欢迎区域 -->
     <n-card class="welcome-card" :bordered="false">
       <div class="welcome-content">
@@ -133,6 +133,9 @@ const handleShortcut = (route: string) => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  padding: 16px;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .welcome-card {
@@ -206,7 +209,7 @@ const handleShortcut = (route: string) => {
 }
 
 .bottom-grid {
-  margin-top: 8px;
+  flex: 1;
 }
 
 .shortcuts {
