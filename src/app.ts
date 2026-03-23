@@ -122,3 +122,5 @@ export const app = new Elysia({ name: "ruoyi.elysia.app" })
     set.status = 500;
     return fail(500, "服务内部错误");
   });
+
+export type App = typeof app;
