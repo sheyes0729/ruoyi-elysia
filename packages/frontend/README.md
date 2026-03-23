@@ -1,6 +1,18 @@
 # RuoYi Elysia Frontend
 
-基于 Vue3 + TypeScript + Vite 的若依后台管理系统前端，采用 naive-ui + unocss + sass-embedded 技术栈。
+基于 Vue3 + TypeScript + Vite 的若依后台管理系统前端，与 @ruoyi/backend 配套使用。
+
+## 快速开始
+
+```bash
+# 安装依赖
+pnpm install
+
+# 启动开发服务器
+pnpm dev
+```
+
+## 技术栈
 
 ## 技术栈
 
@@ -30,7 +42,7 @@
 ### 目录结构
 
 ```
-ruoyi-elysia-web/
+packages/frontend/
 ├── src/
 │   ├── api/                    # API 接口层
 │   │   └── client.ts           # Eden API 客户端
