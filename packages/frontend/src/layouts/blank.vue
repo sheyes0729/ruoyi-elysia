@@ -2,5 +2,7 @@
 </script>
 
 <template>
-  <router-view />
+  <div h-full w-full>
+    <slot />
+  </div>
 </template>

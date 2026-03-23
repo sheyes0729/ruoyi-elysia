@@ -7,18 +7,46 @@
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
-    "typecheck": "vue-tsc --noEmit"
+    "typecheck": "vue-tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write ."
   },
   "dependencies": {
+    "@elysiajs/eden": "^1.4.8",
+    "@iconify/vue": "^5.0.0",
     "@ruoyi/backend": "workspace:*",
-    "vue": "^3.5.30"
+    "@vueuse/core": "^14.2.1",
+    "dayjs": "^1.11.20",
+    "echarts": "^6.0.0",
+    "es-toolkit": "^1.45.1",
+    "naive-ui": "^2.44.1",
+    "pinia": "^3.0.4",
+    "vue": "^3.5.30",
+    "vue-echarts": "^8.0.1",
+    "vue-router": "^5.0.4",
+    "xlsx": "^0.18.5",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.4",
     "@types/node": "^24.12.0",
+    "@unocss/reset": "^66.6.7",
     "@vitejs/plugin-vue": "^6.0.5",
     "@vue/tsconfig": "^0.9.0",
+    "eslint": "^9.39.4",
+    "eslint-config-prettier": "^10.1.8",
+    "globals": "^16.5.0",
+    "prettier": "^3.8.1",
+    "sass-embedded": "^1.98.0",
     "typescript": "~5.9.3",
+    "typescript-eslint": "^8.57.1",
+    "unocss": "^66.6.7",
+    "unplugin-auto-import": "^21.0.0",
+    "unplugin-vue-components": "^32.0.0",
     "vite": "^8.0.1",
+    "vite-plugin-vue-layouts": "^0.11.0",
+    "vue-eslint-parser": "^10.4.0",
     "vue-tsc": "^3.2.5"
   }
 }

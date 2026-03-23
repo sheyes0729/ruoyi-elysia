@@ -2,5 +2,5 @@
 </script>
 
 <template>
-  <router-view />
+  <div>403 - 无权限访问</div>
 </template>

@@ -2,5 +2,5 @@
 </script>
 
 <template>
-  <router-view />
+  <div>404 - 页面不存在</div>
 </template>
