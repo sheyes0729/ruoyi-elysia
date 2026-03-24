@@ -17,7 +17,6 @@ const formValue = ref({
   uuid: '',
 })
 const captchaImg = ref('')
-const captchaRef = ref<HTMLImageElement | null>(null)
 
 const getCaptcha = async () => {
   captchaLoading.value = true
