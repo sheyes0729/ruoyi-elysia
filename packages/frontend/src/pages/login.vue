@@ -1,27 +1,76 @@
 <script setup lang="ts">
-import { NCard, NForm, NFormItem, NInput, NButton, NSpace, NCheckbox, NIcon, NSplit } from 'naive-ui'
+import { NCard, NForm, NFormItem, NInput, NButton, NCheckbox, NIcon, useMessage } from 'naive-ui'
 import { Icon } from '@iconify/vue'
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { api } from '@/api'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const message = useMessage()
 const loading = ref(false)
+const captchaLoading = ref(false)
 const formValue = ref({
   username: '',
   password: '',
-  captcha: '',
-  remember: false,
+  code: '',
+  uuid: '',
 })
+const captchaImg = ref('')
+const captchaRef = ref<HTMLImageElement | null>(null)
+
+const getCaptcha = async () => {
+  captchaLoading.value = true
+  try {
+    const res = await api.api.auth.captcha.get()
+    if (res.data?.code === 200) {
+      formValue.value.uuid = res.data.data.uuid
+      captchaImg.value = res.data.data.img
+    }
+  } finally {
+    captchaLoading.value = false
+  }
+}
 
 const handleLogin = async () => {
+  if (!formValue.value.username || !formValue.value.password) {
+    message.warning('请输入用户名和密码')
+    return
+  }
+  if (!formValue.value.code || formValue.value.code.length !== 4) {
+    message.warning('请输入4位验证码')
+    return
+  }
+
   loading.value = true
   try {
-    // TODO: 调用登录 API
-    router.push('/')
+    const res = await api.api.auth.login.post({
+      username: formValue.value.username,
+      password: formValue.value.password,
+      uuid: formValue.value.uuid,
+      code: formValue.value.code,
+    })
+
+    if (res.data?.code === 200) {
+      const authStore = useAuthStore()
+      authStore.setToken(res.data.data.token, res.data.data.refreshToken)
+      message.success('登录成功')
+      router.push('/')
+    } else {
+      message.error(res.data?.msg || '登录失败')
+      getCaptcha()
+    }
+  } catch (err: any) {
+    message.error(err?.message || '网络错误')
+    getCaptcha()
   } finally {
     loading.value = false
   }
 }
+
+onMounted(() => {
+  getCaptcha()
+})
 </script>
 
 <template>
@@ -65,20 +114,29 @@ const handleLogin = async () => {
               </template>
             </n-input>
           </n-form-item>
-          <n-form-item path="captcha">
+          <n-form-item path="code">
             <n-input
-              v-model:value="formValue.captcha"
+              v-model:value="formValue.code"
               placeholder="请输入验证码"
               size="large"
               style="flex: 1"
+              maxlength="4"
+              @keyup.enter="handleLogin"
             >
               <template #prefix>
                 <Icon icon="lucide:shield-check" class="input-icon" />
               </template>
             </n-input>
             <div class="captcha-code">
-              <!-- TODO: 替换为真实验证码图片 -->
-              <n-tag type="warning" bordered>ABC123</n-tag>
+              <img
+                v-if="captchaImg"
+                :src="captchaImg"
+                alt="验证码"
+                class="captcha-img"
+                :class="{ loading: captchaLoading }"
+                @click="getCaptcha"
+              />
+              <n-tag v-else type="warning" bordered>加载中...</n-tag>
             </div>
           </n-form-item>
           <n-form-item>
@@ -180,6 +238,21 @@ const handleLogin = async () => {
 
 .captcha-code {
   margin-left: 12px;
+}
+
+.captcha-img {
+  height: 36px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: opacity 0.2s;
+}
+
+.captcha-img.loading {
+  opacity: 0.5;
+}
+
+.captcha-img:hover {
+  opacity: 0.8;
 }
 
 .login-footer {
