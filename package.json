@@ -5,12 +5,16 @@
   "description": "若依前后端分离管理系统 Monorepo",
   "license": "MIT",
   "scripts": {
+    "preinstall": "npx only-allow pnpm",
     "dev:frontend": "pnpm --filter @ruoyi/frontend dev",
     "build:frontend": "pnpm --filter @ruoyi/frontend build",
     "dev:backend": "pnpm --filter @ruoyi/backend dev",
     "start:backend": "pnpm --filter @ruoyi/backend start"
   },
   "devDependencies": {
-    "@types/node": "^22.13.14"
+    "@types/node": "^22.13.14",
+    "@typescript-eslint/parser": "^8.57.2",
+    "eslint-plugin-vue": "9.28.0",
+    "vue-eslint-parser": "^10.4.0"
   }
 }
