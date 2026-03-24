@@ -31,6 +31,66 @@ const formValue = ref({
 const formErrors = ref<Record<string, string>>({});
 const captchaImg = ref("");
 
+const COOKIE_NAME = "ruoyi_remember";
+const COOKIE_EXPIRY_DAYS = 7;
+
+const simpleEncrypt = (text: string): string => {
+  return btoa(encodeURIComponent(text));
+};
+
+const simpleDecrypt = (encrypted: string): string => {
+  try {
+    return decodeURIComponent(atob(encrypted));
+  } catch {
+    return "";
+  }
+};
+
+const setCookie = (name: string, value: string, days: number) => {
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+};
+
+const getCookie = (name: string): string => {
+  const nameEQ = `${name}=`;
+  const ca = document.cookie.split(";");
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) === " ") c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+  }
+  return "";
+};
+
+const removeCookie = (name: string) => {
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
+};
+
+const saveRemember = () => {
+  if (formValue.value.rememberMe) {
+    setCookie(
+      COOKIE_NAME,
+      `${simpleEncrypt(formValue.value.username)}|${simpleEncrypt(formValue.value.password)}`,
+      COOKIE_EXPIRY_DAYS
+    );
+  } else {
+    removeCookie(COOKIE_NAME);
+  }
+};
+
+const loadRemember = () => {
+  const saved = getCookie(COOKIE_NAME);
+  if (saved) {
+    const parts = saved.split("|");
+    if (parts.length === 2) {
+      formValue.value.username = simpleDecrypt(parts[0]);
+      formValue.value.password = simpleDecrypt(parts[1]);
+      formValue.value.rememberMe = true;
+    }
+  }
+};
+
 const loginSchema = z.object({
   username: z.string().min(3, "用户名至少3个字符").max(30, "用户名最多30个字符"),
   password: z.string().min(6, "密码至少6个字符").max(64, "密码最多64个字符"),
@@ -83,6 +143,7 @@ const handleLogin = async () => {
   loadingRef.value = false;
 
   if (res.data?.code === 200) {
+    saveRemember();
     authStore.setToken(res.data.data.token, res.data.data.refreshToken);
     router.push("/");
   } else {
@@ -92,6 +153,7 @@ const handleLogin = async () => {
 };
 
 onMounted(() => {
+  loadRemember();
   getCaptcha();
 });
 </script>
