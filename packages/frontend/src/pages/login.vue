@@ -8,71 +8,92 @@
 </route>
 
 <script setup lang="ts">
-import { NCard, NForm, NFormItem, NInput, NButton, NCheckbox } from 'naive-ui'
-import { Icon } from '@iconify/vue'
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { api } from '@/api'
-import { useAuthStore } from '@/stores/auth'
-import { useApi } from '@/composables/useApi'
+import { NCard, NForm, NFormItem, NInput, NButton, NCheckbox, useMessage } from "naive-ui";
+import { Icon } from "@iconify/vue";
+import { ref, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { z } from "zod";
+import { api } from "@/api";
+import { useAuthStore } from "@/stores/auth";
 
-const router = useRouter()
-const { post, get, loading } = useApi()
-const loadingRef = ref(false)
-const captchaLoading = ref(false)
+const router = useRouter();
+const message = useMessage();
+
+const loadingRef = ref(false);
+const captchaLoading = ref(false);
 const formValue = ref({
-  username: '',
-  password: '',
-  code: '',
-  uuid: '',
+  username: "",
+  password: "",
+  code: "",
+  uuid: "",
   rememberMe: false,
-})
-const captchaImg = ref('')
+});
+const formErrors = ref<Record<string, string>>({});
+const captchaImg = ref("");
+
+const loginSchema = z.object({
+  username: z.string().min(3, "用户名至少3个字符").max(30, "用户名最多30个字符"),
+  password: z.string().min(6, "密码至少6个字符").max(64, "密码最多64个字符"),
+  code: z.string().length(4, "验证码必须是4个字符"),
+});
+
+const validateForm = () => {
+  const result = loginSchema.safeParse(formValue.value);
+  if (!result.success) {
+    const errors: Record<string, string> = {};
+    result.error.errors.forEach((err) => {
+      const path = err.path[0] as string;
+      errors[path] = err.message;
+    });
+    formErrors.value = errors;
+    return false;
+  }
+  formErrors.value = {};
+  return true;
+};
 
 const getCaptcha = async () => {
-  captchaLoading.value = true
+  captchaLoading.value = true;
   try {
-    const res = await api.api.auth.captcha.get()
+    const res = await api.api.auth.captcha.get();
     if (res.data?.code === 200) {
-      formValue.value.uuid = res.data.data.uuid
-      captchaImg.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(res.data.data.img)}`
+      formValue.value.uuid = res.data.data.uuid;
+      captchaImg.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(res.data.data.img)}`;
     }
   } finally {
-    captchaLoading.value = false
+    captchaLoading.value = false;
   }
-}
+};
 
 const handleLogin = async () => {
-  if (!formValue.value.username || !formValue.value.password) {
-    return
-  }
-  if (!formValue.value.code || formValue.value.code.length !== 4) {
-    return
+  if (!validateForm()) {
+    return;
   }
 
-  loadingRef.value = true
-  const authStore = useAuthStore()
+  loadingRef.value = true;
+  const authStore = useAuthStore();
 
   const res = await api.api.auth.login.post({
     username: formValue.value.username,
     password: formValue.value.password,
     uuid: formValue.value.uuid,
     code: formValue.value.code,
-  })
+  });
 
-  loadingRef.value = false
+  loadingRef.value = false;
 
   if (res.data?.code === 200) {
-    authStore.setToken(res.data.data.token, res.data.data.refreshToken)
-    router.push('/')
+    authStore.setToken(res.data.data.token, res.data.data.refreshToken);
+    router.push("/");
   } else {
-    getCaptcha()
+    message.error(res.data?.msg || "登录失败");
+    getCaptcha();
   }
-}
+};
 
 onMounted(() => {
-  getCaptcha()
-})
+  getCaptcha();
+});
 </script>
 
 <template>
@@ -92,37 +113,52 @@ onMounted(() => {
           </div>
         </template>
         <n-form :model="formValue" @submit.prevent="handleLogin">
-          <n-form-item path="username">
+          <n-form-item
+            path="username"
+            :validation-status="formErrors.username ? 'error' : undefined"
+            :feedback="formErrors.username"
+          >
             <n-input
               v-model:value="formValue.username"
               placeholder="请输入用户名"
               size="large"
+              @input="() => { formErrors.username = '' }"
             >
               <template #prefix>
                 <Icon icon="lucide:user" class="input-icon" />
               </template>
             </n-input>
           </n-form-item>
-          <n-form-item path="password">
+          <n-form-item
+            path="password"
+            :validation-status="formErrors.password ? 'error' : undefined"
+            :feedback="formErrors.password"
+          >
             <n-input
               v-model:value="formValue.password"
               type="password"
               placeholder="请输入密码"
               size="large"
               show-password-on="click"
+              @input="() => { formErrors.password = '' }"
             >
               <template #prefix>
                 <Icon icon="lucide:lock" class="input-icon" />
               </template>
             </n-input>
           </n-form-item>
-          <n-form-item path="code">
+          <n-form-item
+            path="code"
+            :validation-status="formErrors.code ? 'error' : undefined"
+            :feedback="formErrors.code"
+          >
             <n-input
               v-model:value="formValue.code"
               placeholder="请输入验证码"
               size="large"
               style="flex: 1"
               maxlength="4"
+              @input="() => { formErrors.code = '' }"
               @keyup.enter="handleLogin"
             >
               <template #prefix>
