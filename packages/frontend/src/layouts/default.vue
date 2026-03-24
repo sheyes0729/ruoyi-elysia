@@ -1,72 +1,130 @@
 <script setup lang="ts">
-import { NLayout, NLayoutSider, NLayoutHeader, NLayoutContent, NMenu, NIcon, NButton, NBreadcrumb, NDropdown, NAvatar, NSpace } from 'naive-ui'
-import { Icon } from '@iconify/vue'
-import { ref, h, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import {
+  NLayout,
+  NLayoutSider,
+  NLayoutHeader,
+  NLayoutContent,
+  NMenu,
+  NIcon,
+  NButton,
+  NBreadcrumb,
+  NDropdown,
+  NAvatar,
+  NSpace,
+} from "naive-ui";
+import { Icon } from "@iconify/vue";
+import { ref, h, computed } from "vue";
+import { useRouter, useRoute } from "vue-router";
+import { useAuthStore } from "@/stores";
 
-const collapsed = ref(false)
-const router = useRouter()
-const route = useRoute()
+const collapsed = ref(false);
+const router = useRouter();
+const route = useRoute();
 
 const renderIcon = (icon: string) => {
-  return () => h(NIcon, null, { default: () => h(Icon, { icon }) })
-}
+  return () => h(NIcon, null, { default: () => h(Icon, { icon }) });
+};
 
 const menuOptions = [
   {
-    label: '工作台',
-    key: 'dashboard',
-    icon: renderIcon('lucide:layout-dashboard'),
+    label: "工作台",
+    key: "/",
+    icon: renderIcon("lucide:layout-dashboard"),
   },
   {
-    type: 'divider',
-    key: 'd1',
+    type: "divider",
+    key: "d1",
   },
   {
-    label: '系统管理',
-    key: 'system',
-    icon: renderIcon('lucide:settings'),
+    label: "系统管理",
+    key: "system",
+    icon: renderIcon("lucide:settings"),
     children: [
-      { label: '用户管理', key: 'system/user', icon: renderIcon('lucide:users') },
-      { label: '角色管理', key: 'system/role', icon: renderIcon('lucide:shield') },
-      { label: '菜单管理', key: 'system/menu', icon: renderIcon('lucide:menu') },
-      { label: '部门管理', key: 'system/dept', icon: renderIcon('lucide:building') },
-      { label: '岗位管理', key: 'system/post', icon: renderIcon('lucide:briefcase') },
-      { label: '字典管理', key: 'system/dict', icon: renderIcon('lucide:book') },
-      { label: '参数配置', key: 'system/config', icon: renderIcon('lucide:sliders') },
-      { label: '通知公告', key: 'system/notice', icon: renderIcon('lucide:bell') },
+      {
+        label: "用户管理",
+        key: "system/user",
+        icon: renderIcon("lucide:users"),
+      },
+      {
+        label: "角色管理",
+        key: "system/role",
+        icon: renderIcon("lucide:shield"),
+      },
+      {
+        label: "菜单管理",
+        key: "system/menu",
+        icon: renderIcon("lucide:menu"),
+      },
+      {
+        label: "部门管理",
+        key: "system/dept",
+        icon: renderIcon("lucide:building"),
+      },
+      {
+        label: "岗位管理",
+        key: "system/post",
+        icon: renderIcon("lucide:briefcase"),
+      },
+      {
+        label: "字典管理",
+        key: "system/dict",
+        icon: renderIcon("lucide:book"),
+      },
+      {
+        label: "参数配置",
+        key: "system/config",
+        icon: renderIcon("lucide:sliders"),
+      },
+      {
+        label: "通知公告",
+        key: "system/notice",
+        icon: renderIcon("lucide:bell"),
+      },
     ],
   },
   {
-    label: '系统监控',
-    key: 'monitor',
-    icon: renderIcon('lucide:monitor'),
+    label: "系统监控",
+    key: "monitor",
+    icon: renderIcon("lucide:monitor"),
     children: [
-      { label: '在线用户', key: 'monitor/online', icon: renderIcon('lucide:user-check') },
-      { label: '登录日志', key: 'monitor/login-log', icon: renderIcon('lucide:file-text') },
-      { label: '操作日志', key: 'monitor/oper-log', icon: renderIcon('lucide:history') },
+      {
+        label: "在线用户",
+        key: "monitor/online",
+        icon: renderIcon("lucide:user-check"),
+      },
+      {
+        label: "登录日志",
+        key: "monitor/login-log",
+        icon: renderIcon("lucide:file-text"),
+      },
+      {
+        label: "操作日志",
+        key: "monitor/oper-log",
+        icon: renderIcon("lucide:history"),
+      },
     ],
   },
-]
+];
 
-const activeKey = computed(() => route.path)
+const activeKey = computed(() => route.path.replace(/\^\//, ""));
 
 const userDropdownOptions = [
-  { label: '个人中心', key: 'profile' },
-  { label: '切换主题', key: 'theme' },
-  { type: 'divider' },
-  { label: '退出登录', key: 'logout' },
-]
+  { label: "个人中心", key: "profile" },
+  { label: "切换主题", key: "theme" },
+  { type: "divider" },
+  { label: "退出登录", key: "logout" },
+];
 
 const handleMenuUpdate = (key: string) => {
-  router.push(`/${key}`)
-}
+  router.push(`/${key.replace(/^\//, "")}`);
+};
 
 const handleUserDropdown = (key: string) => {
-  if (key === 'logout') {
-    router.push('/login')
+  if (key === "logout") {
+    useAuthStore().logout();
+    router.push("/login");
   }
-}
+};
 </script>
 
 <template>
@@ -96,18 +154,24 @@ const handleUserDropdown = (key: string) => {
       />
     </n-layout-sider>
 
-    <n-layout>
+    <n-layout class="left-content">
       <!-- 顶部栏 -->
       <n-layout-header bordered h-16 class="header">
         <div class="header-left">
           <n-button quaternary @click="collapsed = !collapsed">
             <template #icon>
-              <Icon :icon="collapsed ? 'lucide:menu' : 'lucide:panel-left-close'" />
+              <Icon
+                :icon="collapsed ? 'lucide:menu' : 'lucide:panel-left-close'"
+              />
             </template>
           </n-button>
           <n-breadcrumb>
-            <n-breadcrumb-item>首页</n-breadcrumb-item>
-            <n-breadcrumb-item>{{ route.meta.title || route.name }}</n-breadcrumb-item>
+            <n-breadcrumb-item @click="$router.push('/')"
+              >首页</n-breadcrumb-item
+            >
+            <n-breadcrumb-item>{{
+              route.meta.title || route.name
+            }}</n-breadcrumb-item>
           </n-breadcrumb>
         </div>
         <div class="header-right">
@@ -122,9 +186,16 @@ const handleUserDropdown = (key: string) => {
                 <Icon icon="lucide:fullscreen" />
               </template>
             </n-button>
-            <n-dropdown :options="userDropdownOptions" @select="handleUserDropdown">
+            <n-dropdown
+              :options="userDropdownOptions"
+              @select="handleUserDropdown"
+            >
               <div class="user-info">
-                <n-avatar round size="small" src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg" />
+                <n-avatar
+                  round
+                  size="small"
+                  src="https://07akioni.oss-cn-beijing.aliyuncs.com/07akioni.jpeg"
+                />
                 <span class="username">Admin</span>
                 <Icon icon="lucide:chevron-down" class="chevron" />
               </div>
@@ -146,13 +217,13 @@ const handleUserDropdown = (key: string) => {
 
       <!-- 主内容 -->
       <n-layout-content class="content">
-        <slot />
+        <router-view />
       </n-layout-content>
     </n-layout>
   </n-layout>
 </template>
 
-<style scoped>
+<style lang="scss" scoped>
 .logo {
   display: flex;
   align-items: center;
@@ -271,8 +342,19 @@ const handleUserDropdown = (key: string) => {
   opacity: 1;
 }
 
-.content {
-  overflow-y: auto;
-  background-color: #f5f5f5;
+.left-content {
+  :deep() {
+    .n-layout-scroll-container {
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  .content {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    background-color: #f5f5f5;
+  }
 }
 </style>

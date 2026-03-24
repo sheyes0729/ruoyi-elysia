@@ -141,7 +141,7 @@ onMounted(() => {
   <div class="dashboard h-full">
     <n-spin :show="loading">
       <!-- 欢迎区域 -->
-      <n-card class="welcome-card" :bordered="false">
+      <n-card class="welcome-card" hoverable :bordered="false">
         <div class="welcome-content">
           <div class="welcome-info">
             <h1 class="welcome-title">工作台</h1>
@@ -163,10 +163,10 @@ onMounted(() => {
         :x-gap="16"
         :y-gap="16"
         responsive="screen"
-        class="stat-grid"
+        class="stat-grid mt-4"
       >
         <n-gi v-for="stat in stats" :key="stat.label">
-          <n-card class="stat-card" :bordered="false">
+          <n-card hoverable :bordered="false">
             <div class="stat-content">
               <div class="stat-info">
                 <span class="stat-label">{{ stat.label }}</span>
@@ -199,11 +199,11 @@ onMounted(() => {
         :cols="2"
         :x-gap="16"
         :y-gap="16"
-        class="bottom-grid"
+        class="bottom-grid mt-4"
         responsive="screen"
       >
         <n-gi>
-          <n-card title="快捷入口" :bordered="false">
+          <n-card title="快捷入口" hoverable :bordered="false">
             <div class="shortcuts">
               <div
                 v-for="item in shortcuts"
@@ -224,7 +224,7 @@ onMounted(() => {
         </n-gi>
 
         <n-gi>
-          <n-card title="系统信息" :bordered="false">
+          <n-card title="系统信息" hoverable :bordered="false">
             <div class="system-info">
               <div class="info-item">
                 <span class="info-label">系统版本</span>

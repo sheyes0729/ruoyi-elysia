@@ -1,52 +1,50 @@
-import { api } from "@/api"
-import { defineStore } from "pinia"
-import { ref, computed } from "vue"
-
-const TOKEN_KEY = "ruoyi_token"
-const REFRESH_TOKEN_KEY = "ruoyi_refresh_token"
+import { api } from "@/api";
+import { defineStore } from "pinia";
+import { ref, computed } from "vue";
+import { TOKEN_KEY, REFRESH_TOKEN_KEY } from "@/constant/store";
 
 export const useAuthStore = defineStore("auth", () => {
-  const token = ref<string>("")
-  const refreshToken = ref<string>("")
+  const token = ref<string>("");
+  const refreshToken = ref<string>("");
 
   const userInfo = ref<{
-    userId: number
-    username: string
-    nickName: string
-    email: string
-    phone: string
-    avatar: string
-    roles: string[]
-    permissions: string[]
-  } | null>(null)
+    userId: number;
+    username: string;
+    nickName: string;
+    email: string;
+    phone: string;
+    avatar: string;
+    roles: string[];
+    permissions: string[];
+  } | null>(null);
 
-  const isLogin = computed(() => !!token.value)
+  const isLogin = computed(() => !!token.value);
 
   const initFromStorage = () => {
-    const storedToken = localStorage.getItem(TOKEN_KEY)
-    const storedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
+    const storedToken = localStorage.getItem(TOKEN_KEY);
+    const storedRefreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
     if (storedToken) {
-      token.value = storedToken
+      token.value = storedToken;
     }
     if (storedRefreshToken) {
-      refreshToken.value = storedRefreshToken
+      refreshToken.value = storedRefreshToken;
     }
-  }
+  };
 
   const setToken = (accessToken: string, refresh?: string) => {
-    token.value = accessToken
-    localStorage.setItem(TOKEN_KEY, accessToken)
+    token.value = accessToken;
+    localStorage.setItem(TOKEN_KEY, accessToken);
     if (refresh) {
-      refreshToken.value = refresh
-      localStorage.setItem(REFRESH_TOKEN_KEY, refresh)
+      refreshToken.value = refresh;
+      localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
     }
-  }
+  };
 
   const getUserInfo = async () => {
-    const { data, error } = await api.api.auth.getInfo.get()
+    const { data, error } = await api.api.auth.getInfo.get();
     if (error) {
-      console.error("Failed to get user info:", error)
-      return
+      console.error("Failed to get user info:", error);
+      return;
     }
     if (data?.code === 200 && data.data) {
       setUserInfo({
@@ -58,29 +56,29 @@ export const useAuthStore = defineStore("auth", () => {
         email: data.data.user.email || "",
         phone: data.data.user.phone || "",
         avatar: data.data.user.avatar || "",
-      })
+      });
     }
-  }
+  };
 
   const setUserInfo = (info: typeof userInfo.value) => {
-    userInfo.value = info
-  }
+    userInfo.value = info;
+  };
 
   const logout = async () => {
     try {
-      await api.api.auth.logout.post()
+      await api.api.auth.logout.post();
     } catch {
       // ignore logout API error
     }
-    token.value = ""
-    refreshToken.value = ""
-    userInfo.value = null
-    localStorage.removeItem(TOKEN_KEY)
-    localStorage.removeItem(REFRESH_TOKEN_KEY)
-  }
+    token.value = "";
+    refreshToken.value = "";
+    userInfo.value = null;
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
+  };
 
   // Initialize from storage on store creation
-  initFromStorage()
+  initFromStorage();
 
   return {
     token,
@@ -91,5 +89,5 @@ export const useAuthStore = defineStore("auth", () => {
     getUserInfo,
     setUserInfo,
     logout,
-  }
-})
+  };
+});

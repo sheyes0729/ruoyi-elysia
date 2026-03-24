@@ -13,7 +13,9 @@ const backendSrc = fileURLToPath(new URL("../backend/src", import.meta.url));
 export default defineConfig({
   plugins: [
     vue(),
-    VuePages(),
+    VuePages({
+      exclude: ["**/components/**.vue"],
+    }),
     VueLayouts(),
     UnoCSS(),
     AutoImport({
@@ -37,6 +39,7 @@ export default defineConfig({
       "/api": {
         target: "http://localhost:4000",
         changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },
   },
