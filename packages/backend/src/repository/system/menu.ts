@@ -9,8 +9,6 @@ export interface MenuRepository extends Repository<SystemMenu, number> {
 }
 
 export class DrizzleMenuRepository implements MenuRepository {
-  private readonly table = sys_menu;
-
   private toEntity(row: typeof sys_menu.$inferSelect): SystemMenu {
     return {
       menuId: row.menuId,
@@ -25,8 +23,6 @@ export class DrizzleMenuRepository implements MenuRepository {
       status: row.status as "0" | "1",
     };
   }
-
-  private readonly pkColumn = sys_menu.menuId;
 
   async findAll(): Promise<SystemMenu[]> {
     const result = await db.select().from(sys_menu);

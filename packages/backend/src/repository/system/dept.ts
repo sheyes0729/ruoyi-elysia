@@ -10,8 +10,6 @@ export interface DeptRepository extends Repository<SystemDept, number> {
 }
 
 export class DrizzleDeptRepository implements DeptRepository {
-  private readonly table = sys_dept;
-
   private toEntity(row: typeof sys_dept.$inferSelect): SystemDept {
     return {
       deptId: row.deptId,
@@ -21,8 +19,6 @@ export class DrizzleDeptRepository implements DeptRepository {
       status: row.status as "0" | "1",
     };
   }
-
-  private readonly pkColumn = sys_dept.deptId;
 
   async findAll(): Promise<SystemDept[]> {
     const result = await db.select().from(sys_dept);

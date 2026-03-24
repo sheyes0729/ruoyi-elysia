@@ -21,7 +21,6 @@ import {
   NSelect,
   NPopconfirm,
   useMessage,
-  NCardMeta,
 } from 'naive-ui'
 import type { DataTableColumns, FormRules } from 'naive-ui'
 import { api } from '@/api'
@@ -42,7 +41,6 @@ interface Role {
 }
 
 const message = useMessage()
-const loading = ref(false)
 const tableLoading = ref(false)
 const users = ref<User[]>([])
 const roles = ref<Role[]>([])
@@ -134,7 +132,7 @@ const fetchUsers = async () => {
   tableLoading.value = true
   try {
     const res = await api.api.system.user.list.get({
-      query: {
+      $query: {
         pageNum: page.value,
         pageSize: pageSize.value,
         username: usernameSearch.value || undefined,
@@ -150,7 +148,7 @@ const fetchUsers = async () => {
 }
 
 const fetchRoles = async () => {
-  const res = await api.api.system.role.list.get({ query: { pageSize: 100 } })
+  const res = await api.api.system.role.list.get({ $query: { pageSize: 100 } })
   if (res.data?.code === 200) {
     roles.value = res.data.data.rows
     roleOptions.value = res.data.data.rows.map((r) => ({
@@ -207,12 +205,10 @@ const handleSubmit = async () => {
   try {
     if (isEdit.value) {
       const res = await api.api.system.user.edit.put({
-        body: {
-          userId: formData.value.userId!,
-          nickName: formData.value.nickName,
-          status: formData.value.status,
-          roleIds: formData.value.roleIds,
-        },
+        userId: formData.value.userId!,
+        nickName: formData.value.nickName,
+        status: formData.value.status,
+        roleIds: formData.value.roleIds,
       })
       if (res.data?.code === 200) {
         message.success('修改成功')
@@ -223,13 +219,11 @@ const handleSubmit = async () => {
       }
     } else {
       const res = await api.api.system.user.add.post({
-        body: {
-          username: formData.value.username,
-          nickName: formData.value.nickName,
-          password: formData.value.password,
-          status: formData.value.status,
-          roleIds: formData.value.roleIds,
-        },
+        username: formData.value.username,
+        nickName: formData.value.nickName,
+        password: formData.value.password,
+        status: formData.value.status,
+        roleIds: formData.value.roleIds,
       })
       if (res.data?.code === 200) {
         message.success('新增成功')
@@ -246,7 +240,7 @@ const handleSubmit = async () => {
 
 const handleDelete = async (userId: number) => {
   const res = await api.api.system.user["batch"].delete({
-    body: { ids: [userId] },
+    ids: [userId],
   })
   if (res.data?.code === 200) {
     message.success('删除成功')
@@ -286,7 +280,7 @@ onMounted(() => {
         page: page,
         pageSize: pageSize,
         pageSizes: [10, 20, 50],
-        total,
+        itemCount: total,
         showSizePicker: true,
         onUpdatePage: handlePageChange,
         onUpdatePageSize: handlePageSizeChange,
@@ -305,7 +299,7 @@ onMounted(() => {
   >
     <n-form
       :model="formData"
-      :rules="isEdit ? { password: undefined } : formRules"
+      :rules="isEdit ? {} : formRules"
       label-placement="left"
       label-width="80"
     >

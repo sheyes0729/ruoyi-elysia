@@ -9,8 +9,6 @@ export interface ConfigRepository extends Repository<SystemConfig, number> {
 }
 
 export class DrizzleConfigRepository implements ConfigRepository {
-  private readonly table = sys_config;
-
   private toEntity(row: typeof sys_config.$inferSelect): SystemConfig {
     return {
       configId: row.configId,
@@ -20,8 +18,6 @@ export class DrizzleConfigRepository implements ConfigRepository {
       configType: row.configType as "Y" | "N",
     };
   }
-
-  private readonly pkColumn = sys_config.configId;
 
   async findAll(): Promise<SystemConfig[]> {
     const result = await db.select().from(sys_config);

@@ -145,7 +145,7 @@ const fetchLogs = async () => {
       query.endTime = dayjs(searchForm.value.dateRange[1]).format('YYYY-MM-DD HH:mm:ss')
     }
 
-    const res = await api.api.monitor.operlog.list.get({ query })
+    const res = await api.api.monitor.operlog.list.get({ $query: query })
     if (res.data?.code === 200) {
       logs.value = res.data.data.rows
       total.value = res.data.data.total
@@ -205,7 +205,7 @@ const handleExport = async () => {
       query.status = searchForm.value.status
     }
 
-    const res = await api.api.monitor.operlog.export.post({ query })
+    const res = await api.api.monitor.operlog.export.post({ $query: query })
     if (res.data) {
       const blob = new Blob([res.data as any], { type: 'text/csv;charset=utf-8' })
       const url = window.URL.createObjectURL(blob)
@@ -285,7 +285,7 @@ onMounted(() => {
         page: page,
         pageSize: pageSize,
         pageSizes: [10, 20, 50],
-        total,
+        itemCount: total,
         showSizePicker: true,
         onUpdatePage: handlePageChange,
         onUpdatePageSize: handlePageSizeChange,

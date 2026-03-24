@@ -8,8 +8,6 @@ export class DrizzleNoticeRepository implements Repository<
   SystemNotice,
   number
 > {
-  private readonly table = sys_notice;
-
   private toEntity(row: typeof sys_notice.$inferSelect): SystemNotice {
     return {
       noticeId: row.noticeId,
@@ -19,8 +17,6 @@ export class DrizzleNoticeRepository implements Repository<
       createTime: row.createTime?.toISOString() ?? new Date().toISOString(),
     };
   }
-
-  private readonly pkColumn = sys_notice.noticeId;
 
   async findAll(): Promise<SystemNotice[]> {
     const result = await db.select().from(sys_notice);

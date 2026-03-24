@@ -120,7 +120,7 @@ const fetchNotices = async () => {
   loading.value = true
   try {
     const res = await api.api.system.notice.list.get({
-      query: {
+      $query: {
         pageNum: page.value,
         pageSize: pageSize.value,
         noticeTitle: noticeTitleSearch.value || undefined,
@@ -184,12 +184,10 @@ const handleSubmit = async () => {
   try {
     if (isEdit.value) {
       const res = await api.api.system.notice.edit.put({
-        body: {
-          noticeId: formData.value.noticeId!,
-          noticeTitle: formData.value.noticeTitle,
-          noticeType: formData.value.noticeType,
-          status: formData.value.status,
-        },
+        noticeId: formData.value.noticeId!,
+        noticeTitle: formData.value.noticeTitle,
+        noticeType: formData.value.noticeType,
+        status: formData.value.status,
       })
       if (res.data?.code === 200) {
         message.success('修改成功')
@@ -200,11 +198,9 @@ const handleSubmit = async () => {
       }
     } else {
       const res = await api.api.system.notice.add.post({
-        body: {
-          noticeTitle: formData.value.noticeTitle,
-          noticeType: formData.value.noticeType,
-          status: formData.value.status,
-        },
+        noticeTitle: formData.value.noticeTitle,
+        noticeType: formData.value.noticeType,
+        status: formData.value.status,
       })
       if (res.data?.code === 200) {
         message.success('新增成功')
@@ -221,7 +217,7 @@ const handleSubmit = async () => {
 
 const handleDelete = async (noticeId: number) => {
   const res = await api.api.system.notice["batch"].delete({
-    body: { ids: [noticeId] },
+    ids: [noticeId],
   })
   if (res.data?.code === 200) {
     message.success('删除成功')
@@ -260,7 +256,7 @@ onMounted(() => {
         page: page,
         pageSize: pageSize,
         pageSizes: [10, 20, 50],
-        total,
+        itemCount: total,
         showSizePicker: true,
         onUpdatePage: handlePageChange,
         onUpdatePageSize: handlePageSizeChange,

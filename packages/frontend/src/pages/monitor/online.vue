@@ -162,7 +162,7 @@ onBeforeUnmount(() => {
         page: page,
         pageSize: pageSize,
         pageSizes: [10, 20, 50],
-        total: total,
+        itemCount: total,
         showSizePicker: true,
         onUpdatePage: handlePageChange,
         onUpdatePageSize: handlePageSizeChange,

@@ -23,6 +23,7 @@ import {
   NPopconfirm,
   useMessage,
   NEmpty,
+  type TreeOption,
 } from "naive-ui";
 import { api } from "@/api";
 
@@ -90,15 +91,16 @@ const flattenDepts = (deptList: DeptTreeItem[]): DeptTreeItem[] => {
 const fetchDepts = async () => {
   loading.value = true;
   try {
-    const res = await api.api.system.dept.list.get();
+    const res = await api.api.system.dept.list.get({
+      $query: {},
+    });
     if (res.data?.code === 200) {
       depts.value = res.data.data;
-      const allDepts = flattenDepts(res.data.data);
+      flattenDepts(res.data.data);
       parentDeptOptions.value = [
         { label: "顶级部门", value: 0 },
         ...buildDeptOptions(res.data.data),
       ];
-      // Auto expand first level
       expandedKeys.value = res.data.data.map((d: DeptTreeItem) => d.deptId);
     }
   } finally {
@@ -106,9 +108,16 @@ const fetchDepts = async () => {
   }
 };
 
-const handleSelect = (keys: (string | number)[], option: any[]) => {
-  if (option && option.length > 0) {
-    selectedDept.value = option[0].rawNode as DeptTreeItem;
+const handleSelect = (
+  _: Array<string | number>,
+  __: Array<TreeOption | null>,
+  meta: {
+    node: TreeOption | null;
+    action: "select" | "unselect";
+  },
+) => {
+  if (meta.node) {
+    selectedDept.value = meta.node as unknown as DeptTreeItem;
   } else {
     selectedDept.value = null;
   }
@@ -190,7 +199,7 @@ const handleDelete = async () => {
     return;
   }
   const res = await api.api.system.dept["batch"].delete({
-    body: { ids: [selectedDept.value.deptId] },
+    ids: [selectedDept.value.deptId],
   });
   if (res.data?.code === 200) {
     message.success("删除成功");
@@ -201,13 +210,19 @@ const handleDelete = async () => {
   }
 };
 
-const renderLabel = (node: DeptTreeItem) => {
+const renderLabel = (node: {
+  check: boolean;
+  option: DeptTreeItem;
+  selected: boolean;
+}) => {
+  console.log("node:", node);
+
   return h(NSpace, { size: 4 }, () => [
-    h("span", {}, node.deptName),
+    h("span", {}, node.option.deptName),
     h(
       NTag,
-      { size: "small", type: node.status === "0" ? "success" : "error" },
-      () => (node.status === "0" ? "正常" : "停用"),
+      { size: "small", type: node.option.status === "0" ? "success" : "error" },
+      () => (node.option.status === "0" ? "正常" : "停用"),
     ),
   ]);
 };
@@ -258,8 +273,8 @@ onMounted(() => {
           expand-on-click
           @update:expanded-keys="(keys) => (expandedKeys = keys)"
           @update:selected-keys="handleSelect"
-          :render-label="(node: DeptTreeItem) => renderLabel(node)"
-          :node-props="(node: DeptTreeItem) => ({ dataKey: node.deptId })"
+          :render-label="(node: any) => renderLabel(node)"
+          :node-props="(node: any) => ({ dataKey: node.option.deptId })"
         />
       </n-card>
 

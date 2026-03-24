@@ -9,8 +9,6 @@ export interface DictTypeRepository extends Repository<SystemDictType, number> {
 }
 
 export class DrizzleDictTypeRepository implements DictTypeRepository {
-  private readonly table = sys_dict_type;
-
   private toEntity(row: typeof sys_dict_type.$inferSelect): SystemDictType {
     return {
       dictId: row.dictId,
@@ -19,8 +17,6 @@ export class DrizzleDictTypeRepository implements DictTypeRepository {
       status: row.status as "0" | "1",
     };
   }
-
-  private readonly pkColumn = sys_dict_type.dictId;
 
   async findAll(): Promise<SystemDictType[]> {
     const result = await db.select().from(sys_dict_type);

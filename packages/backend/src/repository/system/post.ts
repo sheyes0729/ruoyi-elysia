@@ -9,8 +9,6 @@ export interface PostRepository extends Repository<SystemPost, number> {
 }
 
 export class DrizzlePostRepository implements PostRepository {
-  private readonly table = sys_post;
-
   private toEntity(row: typeof sys_post.$inferSelect): SystemPost {
     return {
       postId: row.postId,
@@ -20,8 +18,6 @@ export class DrizzlePostRepository implements PostRepository {
       status: row.status as "0" | "1",
     };
   }
-
-  private readonly pkColumn = sys_post.postId;
 
   async findAll(): Promise<SystemPost[]> {
     const result = await db.select().from(sys_post);

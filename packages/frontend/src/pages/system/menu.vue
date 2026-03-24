@@ -96,15 +96,26 @@ const buildMenuOptions = (
   return result;
 };
 
-const flattenMenus = (menuList: MenuItem[]): MenuItem[] => {
-  const result: MenuItem[] = [];
+const buildTree = (
+  menuList: MenuItem[],
+): MenuItem[] => {
+  const map = new Map<number, MenuItem>();
+  const roots: MenuItem[] = [];
+
   for (const menu of menuList) {
-    result.push(menu);
-    if (menu.children && menu.children.length > 0) {
-      result.push(...flattenMenus(menu.children));
+    map.set(menu.menuId, { ...menu, children: [] });
+  }
+
+  for (const menu of map.values()) {
+    if (menu.parentId === 0 || !map.has(menu.parentId)) {
+      roots.push(menu);
+    } else {
+      const parent = map.get(menu.parentId);
+      parent?.children?.push(menu);
     }
   }
-  return result;
+
+  return roots;
 };
 
 const getMenuTypeTagType = (type: string) => {
@@ -139,24 +150,25 @@ const fetchMenus = async () => {
     const res = await api.api.system.menu.list.get({
       $query: {
         pageNum: 1,
-        pageSize: 10,
+        pageSize: 100,
       },
     });
     if (res.data?.code === 200) {
       const menuRows = res.data.data.rows;
-      menus.value = menuRows;
+      const treeData = buildTree(menuRows);
+      menus.value = treeData;
       parentMenuOptions.value = [
         { label: "顶级菜单", value: 0 },
-        ...buildMenuOptions(menuRows),
+        ...buildMenuOptions(treeData),
       ];
-      expandedKeys.value = menuRows.map((m: MenuItem) => m.menuId);
+      expandedKeys.value = treeData.map((m: MenuItem) => m.menuId);
     }
   } finally {
     loading.value = false;
   }
 };
 
-const handleSelect = (keys: (string | number)[], option: any[]) => {
+const handleSelect = (_keys: (string | number)[], option: any[]) => {
   if (option && option.length > 0) {
     selectedMenu.value = option[0].rawNode as MenuItem;
   } else {
@@ -260,7 +272,7 @@ const handleDelete = async () => {
     return;
   }
   const res = await api.api.system.menu["batch"].delete({
-    body: { ids: [selectedMenu.value.menuId] },
+    ids: [selectedMenu.value.menuId],
   });
   if (res.data?.code === 200) {
     message.success("删除成功");
@@ -331,8 +343,8 @@ onMounted(() => {
           expand-on-click
           @update:expanded-keys="(keys) => (expandedKeys = keys)"
           @update:selected-keys="handleSelect"
-          :render-label="(node: MenuItem) => renderLabel(node)"
-          :node-props="(node: MenuItem) => ({ dataKey: node.menuId })"
+          :render-label="(node: any) => renderLabel(node)"
+          :node-props="(node: any) => ({ dataKey: node.menuId })"
         />
       </n-card>
 

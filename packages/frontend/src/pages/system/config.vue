@@ -107,7 +107,7 @@ const fetchConfigs = async () => {
   loading.value = true
   try {
     const res = await api.api.system.config.list.get({
-      query: {
+      $query: {
         pageNum: page.value,
         pageSize: pageSize.value,
         configName: configNameSearch.value || undefined,
@@ -172,13 +172,11 @@ const handleSubmit = async () => {
   try {
     if (isEdit.value) {
       const res = await api.api.system.config.edit.put({
-        body: {
-          configId: formData.value.configId!,
-          configName: formData.value.configName,
-          configKey: formData.value.configKey,
-          configValue: formData.value.configValue,
-          configType: formData.value.configType,
-        },
+        configId: formData.value.configId!,
+        configName: formData.value.configName,
+        configKey: formData.value.configKey,
+        configValue: formData.value.configValue,
+        configType: formData.value.configType,
       })
       if (res.data?.code === 200) {
         message.success('修改成功')
@@ -189,12 +187,10 @@ const handleSubmit = async () => {
       }
     } else {
       const res = await api.api.system.config.add.post({
-        body: {
-          configName: formData.value.configName,
-          configKey: formData.value.configKey,
-          configValue: formData.value.configValue,
-          configType: formData.value.configType,
-        },
+        configName: formData.value.configName,
+        configKey: formData.value.configKey,
+        configValue: formData.value.configValue,
+        configType: formData.value.configType,
       })
       if (res.data?.code === 200) {
         message.success('新增成功')
@@ -211,7 +207,7 @@ const handleSubmit = async () => {
 
 const handleDelete = async (configId: number) => {
   const res = await api.api.system.config["batch"].delete({
-    body: { ids: [configId] },
+    ids: [configId],
   })
   if (res.data?.code === 200) {
     message.success('删除成功')
@@ -257,7 +253,7 @@ onMounted(() => {
         page: page,
         pageSize: pageSize,
         pageSizes: [10, 20, 50],
-        total,
+        itemCount: total,
         showSizePicker: true,
         onUpdatePage: handlePageChange,
         onUpdatePageSize: handlePageSizeChange,

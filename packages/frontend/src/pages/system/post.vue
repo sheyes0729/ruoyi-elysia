@@ -107,7 +107,7 @@ const fetchPosts = async () => {
   loading.value = true
   try {
     const res = await api.api.system.post.list.get({
-      query: {
+      $query: {
         pageNum: page.value,
         pageSize: pageSize.value,
         postName: postNameSearch.value || undefined,
@@ -171,12 +171,11 @@ const handleSubmit = async () => {
   try {
     if (isEdit.value) {
       const res = await api.api.system.post.edit.put({
-        body: {
-          postId: formData.value.postId!,
-          postName: formData.value.postName,
-          postSort: formData.value.postSort,
-          status: formData.value.status,
-        },
+        postId: formData.value.postId!,
+        postCode: formData.value.postCode,
+        postName: formData.value.postName,
+        postSort: formData.value.postSort,
+        status: formData.value.status,
       })
       if (res.data?.code === 200) {
         message.success('修改成功')
@@ -187,12 +186,10 @@ const handleSubmit = async () => {
       }
     } else {
       const res = await api.api.system.post.add.post({
-        body: {
-          postCode: formData.value.postCode,
-          postName: formData.value.postName,
-          postSort: formData.value.postSort,
-          status: formData.value.status,
-        },
+        postCode: formData.value.postCode,
+        postName: formData.value.postName,
+        postSort: formData.value.postSort,
+        status: formData.value.status,
       })
       if (res.data?.code === 200) {
         message.success('新增成功')
@@ -209,7 +206,7 @@ const handleSubmit = async () => {
 
 const handleDelete = async (postId: number) => {
   const res = await api.api.system.post["batch"].delete({
-    body: { ids: [postId] },
+    ids: [postId],
   })
   if (res.data?.code === 200) {
     message.success('删除成功')
@@ -248,7 +245,7 @@ onMounted(() => {
         page: page,
         pageSize: pageSize,
         pageSizes: [10, 20, 50],
-        total,
+        itemCount: total,
         showSizePicker: true,
         onUpdatePage: handlePageChange,
         onUpdatePageSize: handlePageSizeChange,

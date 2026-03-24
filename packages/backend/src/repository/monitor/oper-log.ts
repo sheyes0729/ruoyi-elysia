@@ -26,8 +26,6 @@ export interface ListOperLogQuery {
 }
 
 export class DrizzleOperLogRepository {
-  private readonly table = sys_oper_log;
-
   private toEntity(row: typeof sys_oper_log.$inferSelect): OperLogRecord {
     return {
       operId: row.operId,

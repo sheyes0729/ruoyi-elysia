@@ -9,8 +9,6 @@ export interface DictDataRepository extends Repository<SystemDictData, number> {
 }
 
 export class DrizzleDictDataRepository implements DictDataRepository {
-  private readonly table = sys_dict_data;
-
   private toEntity(row: typeof sys_dict_data.$inferSelect): SystemDictData {
     return {
       dictCode: row.dictCode,
@@ -21,8 +19,6 @@ export class DrizzleDictDataRepository implements DictDataRepository {
       status: row.status as "0" | "1",
     };
   }
-
-  private readonly pkColumn = sys_dict_data.dictCode;
 
   async findAll(): Promise<SystemDictData[]> {
     const result = await db.select().from(sys_dict_data);

@@ -21,7 +21,6 @@ import {
   NSelect,
   NPopconfirm,
   useMessage,
-  NSwitch,
 } from 'naive-ui'
 import type { DataTableColumns, FormRules } from 'naive-ui'
 import { api } from '@/api'
@@ -130,7 +129,7 @@ const fetchRoles = async () => {
   tableLoading.value = true
   try {
     const res = await api.api.system.role.list.get({
-      query: {
+      $query: {
         pageNum: page.value,
         pageSize: pageSize.value,
         roleName: roleNameSearch.value || undefined,
@@ -193,13 +192,11 @@ const handleSubmit = async () => {
   try {
     if (isEdit.value) {
       const res = await api.api.system.role.edit.put({
-        body: {
-          roleId: formData.value.roleId!,
-          roleName: formData.value.roleName,
-          status: formData.value.status,
-          dataScope: formData.value.dataScope,
-          deptCheckStrictly: formData.value.deptCheckStrictly,
-        },
+        roleId: formData.value.roleId!,
+        roleName: formData.value.roleName,
+        status: formData.value.status,
+        dataScope: formData.value.dataScope,
+        deptCheckStrictly: formData.value.deptCheckStrictly,
       })
       if (res.data?.code === 200) {
         message.success('修改成功')
@@ -210,13 +207,11 @@ const handleSubmit = async () => {
       }
     } else {
       const res = await api.api.system.role.add.post({
-        body: {
-          roleKey: formData.value.roleKey,
-          roleName: formData.value.roleName,
-          status: formData.value.status,
-          dataScope: formData.value.dataScope,
-          deptCheckStrictly: formData.value.deptCheckStrictly,
-        },
+        roleKey: formData.value.roleKey,
+        roleName: formData.value.roleName,
+        status: formData.value.status,
+        dataScope: formData.value.dataScope,
+        deptCheckStrictly: formData.value.deptCheckStrictly,
       })
       if (res.data?.code === 200) {
         message.success('新增成功')
@@ -233,7 +228,7 @@ const handleSubmit = async () => {
 
 const handleDelete = async (roleId: number) => {
   const res = await api.api.system.role["batch"].delete({
-    body: { ids: [roleId] },
+    ids: [roleId],
   })
   if (res.data?.code === 200) {
     message.success('删除成功')
@@ -279,7 +274,7 @@ onMounted(() => {
         page: page,
         pageSize: pageSize,
         pageSizes: [10, 20, 50],
-        total,
+        itemCount: total,
         showSizePicker: true,
         onUpdatePage: handlePageChange,
         onUpdatePageSize: handlePageSizeChange,

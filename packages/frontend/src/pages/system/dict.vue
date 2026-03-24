@@ -7,7 +7,7 @@
 </route>
 
 <script setup lang="ts">
-import { ref, onMounted, h, computed } from 'vue'
+import { ref, onMounted, h } from 'vue'
 import {
   NCard,
   NDataTable,
@@ -21,8 +21,6 @@ import {
   NSelect,
   NPopconfirm,
   useMessage,
-  NTabs,
-  NTabPane,
 } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
 import { api } from '@/api'
@@ -55,7 +53,6 @@ const page = ref(1)
 const pageSize = ref(10)
 
 const selectedDictType = ref<DictType | null>(null)
-const searchValue = ref('')
 
 const showTypeModal = ref(false)
 const showDataModal = ref(false)
@@ -195,7 +192,7 @@ const fetchDictTypes = async () => {
   loading.value = true
   try {
     const res = await api.api.system.dict.type.list.get({
-      query: { pageNum: 1, pageSize: 100 },
+      $query: { pageNum: 1, pageSize: 100 },
     })
     if (res.data?.code === 200) {
       dictTypes.value = res.data.data.rows
@@ -210,7 +207,7 @@ const fetchDictData = async () => {
   loading.value = true
   try {
     const res = await api.api.system.dict.data.list.get({
-      query: {
+      $query: {
         pageNum: page.value,
         pageSize: pageSize.value,
         dictType: selectedDictType.value.dictType,
@@ -269,11 +266,10 @@ const handleTypeSubmit = async () => {
   try {
     if (isEdit.value) {
       const res = await api.api.system.dict.type.edit.put({
-        body: {
-          dictId: typeFormData.value.dictId!,
-          dictName: typeFormData.value.dictName,
-          status: typeFormData.value.status,
-        },
+        dictId: typeFormData.value.dictId!,
+        dictName: typeFormData.value.dictName,
+        dictType: typeFormData.value.dictType,
+        status: typeFormData.value.status,
       })
       if (res.data?.code === 200) {
         message.success('修改成功')
@@ -284,11 +280,9 @@ const handleTypeSubmit = async () => {
       }
     } else {
       const res = await api.api.system.dict.type.add.post({
-        body: {
-          dictName: typeFormData.value.dictName,
-          dictType: typeFormData.value.dictType,
-          status: typeFormData.value.status,
-        },
+        dictName: typeFormData.value.dictName,
+        dictType: typeFormData.value.dictType,
+        status: typeFormData.value.status,
       })
       if (res.data?.code === 200) {
         message.success('新增成功')
@@ -305,7 +299,7 @@ const handleTypeSubmit = async () => {
 
 const handleDeleteType = async (dictId: number) => {
   const res = await api.api.system.dict.type["batch"].delete({
-    body: { ids: [dictId] },
+    ids: [dictId],
   })
   if (res.data?.code === 200) {
     message.success('删除成功')
@@ -361,15 +355,12 @@ const handleDataSubmit = async () => {
   try {
     if (isEdit.value) {
       const res = await api.api.system.dict.data.edit.put({
-        body: {
-          dictCode: dataFormData.value.dictCode!,
-          dictLabel: dataFormData.value.dictLabel,
-          dictValue: dataFormData.value.dictValue,
-          dictSort: dataFormData.value.dictSort,
-          status: dataFormData.value.status,
-          cssClass: dataFormData.value.cssClass,
-          listClass: dataFormData.value.listClass,
-        },
+        dictCode: dataFormData.value.dictCode!,
+        dictLabel: dataFormData.value.dictLabel,
+        dictValue: dataFormData.value.dictValue,
+        dictSort: dataFormData.value.dictSort,
+        dictType: selectedDictType.value!.dictType,
+        status: dataFormData.value.status,
       })
       if (res.data?.code === 200) {
         message.success('修改成功')
@@ -380,15 +371,11 @@ const handleDataSubmit = async () => {
       }
     } else {
       const res = await api.api.system.dict.data.add.post({
-        body: {
-          dictType: selectedDictType.value!.dictType,
-          dictLabel: dataFormData.value.dictLabel,
-          dictValue: dataFormData.value.dictValue,
-          dictSort: dataFormData.value.dictSort,
-          status: dataFormData.value.status,
-          cssClass: dataFormData.value.cssClass,
-          listClass: dataFormData.value.listClass,
-        },
+        dictType: selectedDictType.value!.dictType,
+        dictLabel: dataFormData.value.dictLabel,
+        dictValue: dataFormData.value.dictValue,
+        dictSort: dataFormData.value.dictSort,
+        status: dataFormData.value.status,
       })
       if (res.data?.code === 200) {
         message.success('新增成功')
@@ -405,7 +392,7 @@ const handleDataSubmit = async () => {
 
 const handleDeleteData = async (dictCode: number) => {
   const res = await api.api.system.dict.data["batch"].delete({
-    body: { ids: [dictCode] },
+    ids: [dictCode],
   })
   if (res.data?.code === 200) {
     message.success('删除成功')
@@ -469,7 +456,7 @@ onMounted(() => {
               page: page,
               pageSize: pageSize,
               pageSizes: [10, 20, 50],
-              total,
+              itemCount: total,
               showSizePicker: true,
               onUpdatePage: handlePageChange,
               onUpdatePageSize: handlePageSizeChange,

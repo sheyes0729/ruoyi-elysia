@@ -11,8 +11,6 @@ export interface UserRepository extends Repository<SystemUser, number> {
 }
 
 export class DrizzleUserRepository implements UserRepository {
-  private readonly table = sys_user;
-
   private toEntity(row: typeof sys_user.$inferSelect): SystemUser {
     return {
       userId: row.userId,
@@ -24,8 +22,6 @@ export class DrizzleUserRepository implements UserRepository {
       deptId: row.deptId ?? undefined,
     };
   }
-
-  private readonly pkColumn = sys_user.userId;
 
   async findAll(): Promise<SystemUser[]> {
     const result = await db.select().from(sys_user);

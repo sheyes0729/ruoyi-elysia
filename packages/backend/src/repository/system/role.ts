@@ -9,8 +9,6 @@ export interface RoleRepository extends Repository<SystemRole, number> {
 }
 
 export class DrizzleRoleRepository implements RoleRepository {
-  private readonly table = sys_role;
-
   private toEntity(row: typeof sys_role.$inferSelect): SystemRole {
     return {
       roleId: row.roleId,
@@ -26,8 +24,6 @@ export class DrizzleRoleRepository implements RoleRepository {
       deptIds: row.deptIds ? (JSON.parse(row.deptIds) as number[]) : [],
     };
   }
-
-  private readonly pkColumn = sys_role.roleId;
 
   async findAll(): Promise<SystemRole[]> {
     const result = await db.select().from(sys_role);
