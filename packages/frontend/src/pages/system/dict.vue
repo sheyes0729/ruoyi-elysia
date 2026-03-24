@@ -1,3 +1,11 @@
+<route>
+  {
+    meta: {
+      title: '字典管理',
+    }
+  }
+</route>
+
 <script setup lang="ts">
 import { ref, onMounted, h, computed } from 'vue'
 import {

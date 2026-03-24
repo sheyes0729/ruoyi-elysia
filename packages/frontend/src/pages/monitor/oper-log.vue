@@ -1,3 +1,11 @@
+<route>
+  {
+    meta: {
+      title: '操作日志',
+    }
+  }
+</route>
+
 <script setup lang="ts">
 import { ref, onMounted, h } from 'vue'
 import {

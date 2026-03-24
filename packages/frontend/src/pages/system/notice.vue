@@ -1,3 +1,11 @@
+<route>
+  {
+    meta: {
+      title: '通知公告',
+    }
+  }
+</route>
+
 <script setup lang="ts">
 import { ref, onMounted, h } from 'vue'
 import {

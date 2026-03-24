@@ -1,3 +1,11 @@
+<route>
+  {
+    meta: {
+      title: '角色管理',
+    }
+  }
+</route>
+
 <script setup lang="ts">
 import { ref, onMounted, h } from 'vue'
 import {
