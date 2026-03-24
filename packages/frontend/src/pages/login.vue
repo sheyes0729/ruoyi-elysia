@@ -34,7 +34,9 @@ const getCaptcha = async () => {
     const res = await api.api.auth.captcha.get()
     if (res.data?.code === 200) {
       formValue.value.uuid = res.data.data.uuid
-      captchaImg.value = res.data.data.img
+      // Convert SVG to data URI for img src
+      const svg = res.data.data.img
+      captchaImg.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
     }
   } finally {
     captchaLoading.value = false
