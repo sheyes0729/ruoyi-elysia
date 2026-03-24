@@ -92,8 +92,8 @@ onMounted(() => {
       </n-card>
 
       <!-- 统计卡片 -->
-      <n-grid :cols="4" :x-gap="16" :y-gap="16" responsive="screen" :item-responsive="true">
-        <n-gi v-for="stat in stats" :key="stat.label" :span="24:xs(12) 24:sm(12) 24:md(6) 24:lg(6)">
+      <n-grid :cols="4" :x-gap="16" :y-gap="16" responsive="screen" class="stat-grid">
+        <n-gi v-for="stat in stats" :key="stat.label">
           <n-card class="stat-card" :bordered="false">
             <div class="stat-content">
               <div class="stat-info">
@@ -115,8 +115,8 @@ onMounted(() => {
       </n-grid>
 
       <!-- 快捷入口 & 系统信息 -->
-      <n-grid :cols="2" :x-gap="16" :y-gap="16" class="bottom-grid" responsive="screen" :item-responsive="true">
-        <n-gi :span="24:xs(24) 24:sm(24) 24:md(14) 24:lg(14)">
+      <n-grid :cols="2" :x-gap="16" :y-gap="16" class="bottom-grid" responsive="screen">
+        <n-gi>
           <n-card title="快捷入口" :bordered="false">
             <div class="shortcuts">
               <div
@@ -134,7 +134,7 @@ onMounted(() => {
           </n-card>
         </n-gi>
 
-        <n-gi :span="24:xs(24) 24:sm(24) 24:md(10) 24:lg(10)">
+        <n-gi>
           <n-card title="系统信息" :bordered="false">
             <div class="system-info">
               <div class="info-item">
@@ -240,10 +240,31 @@ onMounted(() => {
   flex: 1;
 }
 
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+}
+
 .shortcuts {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
+}
+
+@media (max-width: 1024px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .stat-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .shortcuts {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 .shortcut-item {
