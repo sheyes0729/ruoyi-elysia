@@ -8,16 +8,17 @@
 </route>
 
 <script setup lang="ts">
-import { NCard, NForm, NFormItem, NInput, NButton, NCheckbox, useMessage } from 'naive-ui'
+import { NCard, NForm, NFormItem, NInput, NButton, NCheckbox } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { api } from '@/api'
 import { useAuthStore } from '@/stores/auth'
+import { useApi } from '@/composables/useApi'
 
 const router = useRouter()
-const message = useMessage()
-const loading = ref(false)
+const { post, get, loading } = useApi()
+const loadingRef = ref(false)
 const captchaLoading = ref(false)
 const formValue = ref({
   username: '',
@@ -34,9 +35,7 @@ const getCaptcha = async () => {
     const res = await api.api.auth.captcha.get()
     if (res.data?.code === 200) {
       formValue.value.uuid = res.data.data.uuid
-      // Convert SVG to data URI for img src
-      const svg = res.data.data.img
-      captchaImg.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`
+      captchaImg.value = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(res.data.data.img)}`
     }
   } finally {
     captchaLoading.value = false
@@ -45,37 +44,29 @@ const getCaptcha = async () => {
 
 const handleLogin = async () => {
   if (!formValue.value.username || !formValue.value.password) {
-    message.warning('请输入用户名和密码')
     return
   }
   if (!formValue.value.code || formValue.value.code.length !== 4) {
-    message.warning('请输入4位验证码')
     return
   }
 
-  loading.value = true
-  try {
-    const res = await api.api.auth.login.post({
-      username: formValue.value.username,
-      password: formValue.value.password,
-      uuid: formValue.value.uuid,
-      code: formValue.value.code,
-    })
+  loadingRef.value = true
+  const authStore = useAuthStore()
 
-    if (res.data?.code === 200) {
-      const authStore = useAuthStore()
-      authStore.setToken(res.data.data.token, res.data.data.refreshToken)
-      message.success('登录成功')
-      router.push('/')
-    } else {
-      message.error(res.data?.msg || '登录失败')
-      getCaptcha()
-    }
-  } catch (err: any) {
-    message.error(err?.message || '网络错误')
+  const res = await api.api.auth.login.post({
+    username: formValue.value.username,
+    password: formValue.value.password,
+    uuid: formValue.value.uuid,
+    code: formValue.value.code,
+  })
+
+  loadingRef.value = false
+
+  if (res.data?.code === 200) {
+    authStore.setToken(res.data.data.token, res.data.data.refreshToken)
+    router.push('/')
+  } else {
     getCaptcha()
-  } finally {
-    loading.value = false
   }
 }
 
@@ -160,7 +151,7 @@ onMounted(() => {
               type="primary"
               size="large"
               block
-              :loading="loading"
+              :loading="loadingRef"
               attr-type="submit"
             >
               登 录
