@@ -127,9 +127,10 @@ const fetchMenus = async () => {
   try {
     const res = await api.api.system.menu.list.get()
     if (res.data?.code === 200) {
-      menus.value = res.data.data
-      parentMenuOptions.value = [{ label: '顶级菜单', value: 0 }, ...buildMenuOptions(res.data.data)]
-      expandedKeys.value = res.data.data.map((m: MenuItem) => m.menuId)
+      const menuRows = res.data.data.rows
+      menus.value = menuRows
+      parentMenuOptions.value = [{ label: '顶级菜单', value: 0 }, ...buildMenuOptions(menuRows)]
+      expandedKeys.value = menuRows.map((m: MenuItem) => m.menuId)
     }
   } finally {
     loading.value = false
