@@ -181,8 +181,8 @@ const handleDelete = async () => {
     message.warning("请先选择部门");
     return;
   }
-  const res = await api.api.system.dept.remove.delete({
-    query: { ids: [selectedDept.value.deptId] },
+  const res = await api.api.system.dept["batch"].delete({
+    body: { ids: [selectedDept.value.deptId] },
   });
   if (res.data?.code === 200) {
     message.success("删除成功");

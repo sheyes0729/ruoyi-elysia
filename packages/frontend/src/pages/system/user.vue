@@ -237,8 +237,8 @@ const handleSubmit = async () => {
 }
 
 const handleDelete = async (userId: number) => {
-  const res = await api.api.system.user.remove.delete({
-    query: { ids: [userId] },
+  const res = await api.api.system.user["batch"].delete({
+    body: { ids: [userId] },
   })
   if (res.data?.code === 200) {
     message.success('删除成功')

@@ -202,8 +202,8 @@ const handleSubmit = async () => {
 }
 
 const handleDelete = async (configId: number) => {
-  const res = await api.api.system.config.remove.delete({
-    query: { ids: [configId] },
+  const res = await api.api.system.config["batch"].delete({
+    body: { ids: [configId] },
   })
   if (res.data?.code === 200) {
     message.success('删除成功')

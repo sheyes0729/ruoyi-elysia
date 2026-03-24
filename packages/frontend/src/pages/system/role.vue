@@ -224,8 +224,8 @@ const handleSubmit = async () => {
 }
 
 const handleDelete = async (roleId: number) => {
-  const res = await api.api.system.role.remove.delete({
-    query: { ids: [roleId] },
+  const res = await api.api.system.role["batch"].delete({
+    body: { ids: [roleId] },
   })
   if (res.data?.code === 200) {
     message.success('删除成功')

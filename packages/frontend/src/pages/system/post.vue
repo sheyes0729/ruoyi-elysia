@@ -200,8 +200,8 @@ const handleSubmit = async () => {
 }
 
 const handleDelete = async (postId: number) => {
-  const res = await api.api.system.post.remove.delete({
-    query: { ids: [postId] },
+  const res = await api.api.system.post["batch"].delete({
+    body: { ids: [postId] },
   })
   if (res.data?.code === 200) {
     message.success('删除成功')

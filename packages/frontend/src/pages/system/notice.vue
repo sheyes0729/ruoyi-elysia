@@ -212,8 +212,8 @@ const handleSubmit = async () => {
 }
 
 const handleDelete = async (noticeId: number) => {
-  const res = await api.api.system.notice.remove.delete({
-    query: { ids: [noticeId] },
+  const res = await api.api.system.notice["batch"].delete({
+    body: { ids: [noticeId] },
   })
   if (res.data?.code === 200) {
     message.success('删除成功')

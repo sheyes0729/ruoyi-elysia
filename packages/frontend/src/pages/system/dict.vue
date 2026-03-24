@@ -296,8 +296,8 @@ const handleTypeSubmit = async () => {
 }
 
 const handleDeleteType = async (dictId: number) => {
-  const res = await api.api.system.dict.type.remove.delete({
-    query: { ids: [dictId] },
+  const res = await api.api.system.dict.type["batch"].delete({
+    body: { ids: [dictId] },
   })
   if (res.data?.code === 200) {
     message.success('删除成功')
@@ -396,8 +396,8 @@ const handleDataSubmit = async () => {
 }
 
 const handleDeleteData = async (dictCode: number) => {
-  const res = await api.api.system.dict.data.remove.delete({
-    query: { ids: [dictCode] },
+  const res = await api.api.system.dict.data["batch"].delete({
+    body: { ids: [dictCode] },
   })
   if (res.data?.code === 200) {
     message.success('删除成功')
