@@ -1,5 +1,14 @@
+<route>
+  {
+    meta: {
+      title: '登录',
+      layout: 'blank',
+    }
+  }
+</route>
+
 <script setup lang="ts">
-import { NCard, NForm, NFormItem, NInput, NButton, NCheckbox, NIcon, useMessage } from 'naive-ui'
+import { NCard, NForm, NFormItem, NInput, NButton, NCheckbox, useMessage } from 'naive-ui'
 import { Icon } from '@iconify/vue'
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
@@ -15,6 +24,7 @@ const formValue = ref({
   password: '',
   code: '',
   uuid: '',
+  rememberMe: false,
 })
 const captchaImg = ref('')
 
@@ -139,7 +149,7 @@ onMounted(() => {
             </div>
           </n-form-item>
           <n-form-item>
-            <n-checkbox v-model:checked="formValue.remember">
+            <n-checkbox v-model:checked="formValue.rememberMe">
               记住我
             </n-checkbox>
           </n-form-item>

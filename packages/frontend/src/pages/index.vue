@@ -53,7 +53,8 @@ const handleShortcut = (route: string) => {
 
     <!-- 统计卡片 -->
     <n-grid :cols="4" :x-gap="16" :y-gap="16" responsive="screen" :item-responsive="true">
-      <n-gi v-for="stat in stats" :key="stat.label" :span="24:xs(12) 24:sm(12) 24:md(6) 24:lg(6)">
+      <!-- <n-gi v-for="stat in stats" :key="stat.label" :span="24:xs(12) 24:sm(12) 24:md(6) 24:lg(6)"> -->
+        <n-gi v-for="stat in stats" :key="stat.label" :span="24">
         <n-card class="stat-card" :bordered="false">
           <div class="stat-content">
             <div class="stat-info">
@@ -75,7 +76,8 @@ const handleShortcut = (route: string) => {
     <!-- 快捷入口 & 最新操作 -->
     <n-grid :cols="2" :x-gap="16" :y-gap="16" class="bottom-grid">
       <!-- 快捷入口 -->
-      <n-gi :span="24:xs(24) 24:sm(24) 24:md(10) 24:lg(10)">
+      <!-- <n-gi :span="24:xs(24) 24:sm(24) 24:md(10) 24:lg(10)"> -->
+        <n-gi :span="24">
         <n-card title="快捷入口" :bordered="false">
           <template #header-extra>
             <n-button text type="primary">
@@ -102,7 +104,8 @@ const handleShortcut = (route: string) => {
       </n-gi>
 
       <!-- 系统信息 -->
-      <n-gi :span="24:xs(24) 24:sm(24) 24:md(14) 24:lg(14)">
+      <!-- <n-gi :span="24:xs(24) 24:sm(24) 24:md(14) 24:lg(14)"> -->
+        <n-gi :span="24">
         <n-card title="系统信息" :bordered="false">
           <n-space vertical size="large">
             <div class="info-item">

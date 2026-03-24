@@ -3,6 +3,6 @@
 
 <template>
   <div h-full w-full>
-    <slot />
+    <router-view />
   </div>
 </template>

@@ -1,33 +1,26 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { routes, handleHotUpdate } from "vue-router/auto-routes";
-import { setupLayouts } from "virtual:generated-layouts";
+import generatedPages from "virtual:generated-pages";
+import { setupLayouts } from "virtual:meta-layouts";
 import { useAuthStore } from "@/stores/auth";
-import blankLayout from "@/layouts/blank.vue";
-import loginPage from "@/pages/login.vue";
 
-// Create a custom login route without layout
-const loginRoute = {
-  path: "/login",
-  component: blankLayout,
-  children: [
-    {
-      path: "",
-      component: loginPage,
-    },
-  ],
-};
 
-// Filter out the auto-generated login route and prepend our custom one
-const filteredRoutes = routes.filter((r) => r.path !== "/login");
 
 const router = createRouter({
   history: createWebHistory(),
-  routes: setupLayouts([loginRoute, ...filteredRoutes]),
+  routes: setupLayouts(generatedPages),
+  scrollBehavior: (_,__, savedPosition) => {
+    if(savedPosition) {
+      return savedPosition;
+    }
+    return { top: 0, left: 0 };
+  },
 });
 
 const whiteList = ["/login"];
 
 router.beforeEach(async (to) => {
+  console.log("before:", to);
+  
   const authStore = useAuthStore();
 
   if (whiteList.includes(to.path)) {
@@ -48,9 +41,5 @@ router.beforeEach(async (to) => {
 
   return true;
 });
-
-if (import.meta.hot) {
-  handleHotUpdate(router);
-}
 
 export default router;
