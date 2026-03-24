@@ -19,7 +19,7 @@ async function seed() {
     {
       username: "admin",
       nickName: "若依管理员",
-      password: "$2a$10$Sp.3bjpSqNi/o3nADfvKaOTCo2iFQMK23iX6.8jLLUPruozt7Eyy.",
+      password: "$2a$10$DKB2Tde0gAkksZGtSiGMN.wSQXHVyjENuPECQ6H0f2XnPxpP15bM.",
       status: "0",
     },
     {
