@@ -1,133 +1,163 @@
 <script setup lang="ts">
-import { NCard, NStatistic, NGrid, NGi, NIcon, NSpace, NTag, NAvatar, NButton } from 'naive-ui'
+import { NCard, NGrid, NGi, NIcon, NSpace, NTag, NStatistic, NSpin, NEmpty } from 'naive-ui'
 import { Icon } from '@iconify/vue'
-import { h } from 'vue'
+import { h, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import dayjs from 'dayjs'
+import { api } from '@/api'
+import { useAuthStore } from '@/stores/auth'
 
-const stats = [
-  { label: '用户总数', value: 128, icon: 'lucide:users', color: '#18a058', type: 'success' },
-  { label: '角色总数', value: 12, icon: 'lucide:shield', color: '#2080f0', type: 'info' },
-  { label: '菜单总数', value: 86, icon: 'lucide:menu', color: '#f0a020', type: 'warning' },
-  { label: '在线用户', value: 5, icon: 'lucide:activity', color: '#d03050', type: 'error' },
-]
+const router = useRouter()
+const authStore = useAuthStore()
+
+const loading = ref(true)
+const stats = ref([
+  { label: '用户总数', value: 0, icon: 'lucide:users', color: '#18a058', loading: true },
+  { label: '角色总数', value: 0, icon: 'lucide:shield', color: '#2080f0', loading: true },
+  { label: '在线用户', value: 0, icon: 'lucide:activity', color: '#d03050', loading: true },
+  { label: '操作日志', value: 0, icon: 'lucide:file-text', color: '#f0a020', loading: true },
+])
 
 const shortcuts = [
   { label: '用户管理', icon: 'lucide:user-plus', route: '/system/user', color: '#18a058' },
   { label: '角色管理', icon: 'lucide:shield-plus', route: '/system/role', color: '#2080f0' },
   { label: '菜单管理', icon: 'lucide:list', route: '/system/menu', color: '#f0a020' },
-  { label: '操作日志', icon: 'lucide:file-text', route: '/monitor/oper-log', color: '#d03050' },
+  { label: '部门管理', icon: 'lucide:building', route: '/system/dept', color: '#d03050' },
+  { label: '字典管理', icon: 'lucide:book', route: '/system/dict', color: '#18a058' },
+  { label: '参数配置', icon: 'lucide:sliders', route: '/system/config', color: '#2080f0' },
 ]
 
+const systemInfo = ref({
+  version: '1.0.0',
+  database: 'MySQL 8.0',
+  runtime: 'Bun + Elysia',
+  lastLogin: '',
+})
+
 const handleShortcut = (route: string) => {
-  // TODO: navigate to route
+  router.push(route)
 }
+
+const fetchStats = async () => {
+  try {
+    const [userRes, roleRes, onlineRes, operRes] = await Promise.all([
+      api.api.system.user.list.get({ query: { pageSize: 1 } }),
+      api.api.system.role.list.get({ query: { pageSize: 1 } }),
+      api.api.monitor.online.list.get({ query: { pageSize: 1 } }),
+      api.api.monitor.operlog.list.get({ query: { pageSize: 1 } }),
+    ])
+
+    if (userRes.data?.code === 200) {
+      stats.value[0].value = userRes.data.data.total
+      stats.value[0].loading = false
+    }
+    if (roleRes.data?.code === 200) {
+      stats.value[1].value = roleRes.data.data.total
+      stats.value[1].loading = false
+    }
+    if (onlineRes.data?.code === 200) {
+      stats.value[2].value = onlineRes.data.data.total
+      stats.value[2].loading = false
+    }
+    if (operRes.data?.code === 200) {
+      stats.value[3].value = operRes.data.data.total
+      stats.value[3].loading = false
+    }
+  } catch (err) {
+    console.error('Failed to fetch stats:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  fetchStats()
+})
 </script>
 
 <template>
   <div class="dashboard h-full">
-    <!-- 欢迎区域 -->
-    <n-card class="welcome-card" :bordered="false">
-      <div class="welcome-content">
-        <div class="welcome-info">
-          <h1 class="welcome-title">工作台</h1>
-          <p class="welcome-subtitle">
-            欢迎回来，<span class="username">管理员</span>！今天是 {{ dayjs().format('YYYY年MM月DD日 dddd') }}。
-          </p>
-        </div>
-        <div class="welcome-actions">
-          <n-button type="primary" size="small">
-            <template #icon>
-              <Icon icon="lucide:plus" />
-            </template>
-            新建用户
-          </n-button>
-          <n-button size="small">
-            <template #icon>
-              <Icon icon="lucide:settings" />
-            </template>
-            系统设置
-          </n-button>
-        </div>
-      </div>
-    </n-card>
-
-    <!-- 统计卡片 -->
-    <n-grid :cols="4" :x-gap="16" :y-gap="16" responsive="screen" :item-responsive="true">
-      <!-- <n-gi v-for="stat in stats" :key="stat.label" :span="24:xs(12) 24:sm(12) 24:md(6) 24:lg(6)"> -->
-        <n-gi v-for="stat in stats" :key="stat.label" :span="24">
-        <n-card class="stat-card" :bordered="false">
-          <div class="stat-content">
-            <div class="stat-info">
-              <span class="stat-label">{{ stat.label }}</span>
-              <n-statistic :value="stat.value" :type="stat.type">
-                <template #suffix>
-                  <span class="stat-unit">人</span>
-                </template>
-              </n-statistic>
-            </div>
-            <div class="stat-icon" :style="{ backgroundColor: stat.color + '15' }">
-              <Icon :icon="stat.icon" :style="{ color: stat.color }" />
-            </div>
+    <n-spin :show="loading">
+      <!-- 欢迎区域 -->
+      <n-card class="welcome-card" :bordered="false">
+        <div class="welcome-content">
+          <div class="welcome-info">
+            <h1 class="welcome-title">工作台</h1>
+            <p class="welcome-subtitle">
+              欢迎回来，<span class="username">{{ authStore.userInfo?.nickName || authStore.userInfo?.username || '管理员' }}</span>！
+              今天是 {{ dayjs().format('YYYY年MM月DD日 dddd') }}。
+            </p>
           </div>
-        </n-card>
-      </n-gi>
-    </n-grid>
+        </div>
+      </n-card>
 
-    <!-- 快捷入口 & 最新操作 -->
-    <n-grid :cols="2" :x-gap="16" :y-gap="16" class="bottom-grid">
-      <!-- 快捷入口 -->
-      <!-- <n-gi :span="24:xs(24) 24:sm(24) 24:md(10) 24:lg(10)"> -->
-        <n-gi :span="24">
-        <n-card title="快捷入口" :bordered="false">
-          <template #header-extra>
-            <n-button text type="primary">
-              <template #icon>
-                <Icon icon="lucide:plus" />
-              </template>
-              添加
-            </n-button>
-          </template>
-          <div class="shortcuts">
-            <div
-              v-for="item in shortcuts"
-              :key="item.label"
-              class="shortcut-item"
-              @click="handleShortcut(item.route)"
-            >
-              <div class="shortcut-icon" :style="{ backgroundColor: item.color + '15' }">
-                <Icon :icon="item.icon" :style="{ color: item.color }" />
+      <!-- 统计卡片 -->
+      <n-grid :cols="4" :x-gap="16" :y-gap="16" responsive="screen" :item-responsive="true">
+        <n-gi v-for="stat in stats" :key="stat.label" :span="24:xs(12) 24:sm(12) 24:md(6) 24:lg(6)">
+          <n-card class="stat-card" :bordered="false">
+            <div class="stat-content">
+              <div class="stat-info">
+                <span class="stat-label">{{ stat.label }}</span>
+                <n-spin :show="stat.loading" size="small">
+                  <n-statistic :value="stat.value">
+                    <template #suffix>
+                      <span class="stat-unit">{{ stat.label.includes('用户') || stat.label.includes('日志') ? '条' : '个' }}</span>
+                    </template>
+                  </n-statistic>
+                </n-spin>
               </div>
-              <span class="shortcut-label">{{ item.label }}</span>
+              <div class="stat-icon" :style="{ backgroundColor: stat.color + '15' }">
+                <Icon :icon="stat.icon" :style="{ color: stat.color }" />
+              </div>
             </div>
-          </div>
-        </n-card>
-      </n-gi>
+          </n-card>
+        </n-gi>
+      </n-grid>
 
-      <!-- 系统信息 -->
-      <!-- <n-gi :span="24:xs(24) 24:sm(24) 24:md(14) 24:lg(14)"> -->
-        <n-gi :span="24">
-        <n-card title="系统信息" :bordered="false">
-          <n-space vertical size="large">
-            <div class="info-item">
-              <span class="info-label">系统版本</span>
-              <n-tag type="success" size="small">v1.0.0</n-tag>
+      <!-- 快捷入口 & 系统信息 -->
+      <n-grid :cols="2" :x-gap="16" :y-gap="16" class="bottom-grid" responsive="screen" :item-responsive="true">
+        <n-gi :span="24:xs(24) 24:sm(24) 24:md(14) 24:lg(14)">
+          <n-card title="快捷入口" :bordered="false">
+            <div class="shortcuts">
+              <div
+                v-for="item in shortcuts"
+                :key="item.label"
+                class="shortcut-item"
+                @click="handleShortcut(item.route)"
+              >
+                <div class="shortcut-icon" :style="{ backgroundColor: item.color + '15' }">
+                  <Icon :icon="item.icon" :style="{ color: item.color }" />
+                </div>
+                <span class="shortcut-label">{{ item.label }}</span>
+              </div>
             </div>
-            <div class="info-item">
-              <span class="info-label">数据库版本</span>
-              <n-tag type="info" size="small">MySQL 8.0</n-tag>
+          </n-card>
+        </n-gi>
+
+        <n-gi :span="24:xs(24) 24:sm(24) 24:md(10) 24:lg(10)">
+          <n-card title="系统信息" :bordered="false">
+            <div class="system-info">
+              <div class="info-item">
+                <span class="info-label">系统版本</span>
+                <n-tag type="success" size="small">{{ systemInfo.version }}</n-tag>
+              </div>
+              <div class="info-item">
+                <span class="info-label">数据库</span>
+                <n-tag type="info" size="small">{{ systemInfo.database }}</n-tag>
+              </div>
+              <div class="info-item">
+                <span class="info-label">运行环境</span>
+                <n-tag type="warning" size="small">{{ systemInfo.runtime }}</n-tag>
+              </div>
+              <div class="info-item">
+                <span class="info-label">当前时间</span>
+                <span class="info-value">{{ dayjs().format('YYYY-MM-DD HH:mm:ss') }}</span>
+              </div>
             </div>
-            <div class="info-item">
-              <span class="info-label">运行环境</span>
-              <n-tag type="warning" size="small">Bun + Node.js</n-tag>
-            </div>
-            <div class="info-item">
-              <span class="info-label">最后登录</span>
-              <span class="info-value">{{ dayjs().subtract(2, 'hour').format('YYYY-MM-DD HH:mm:ss') }}</span>
-            </div>
-          </n-space>
-        </n-card>
-      </n-gi>
-    </n-grid>
+          </n-card>
+        </n-gi>
+      </n-grid>
+    </n-spin>
   </div>
 </template>
 
@@ -166,11 +196,6 @@ const handleShortcut = (route: string) => {
 
 .username {
   font-weight: 600;
-}
-
-.welcome-actions {
-  display: flex;
-  gap: 8px;
 }
 
 .stat-card {
@@ -217,7 +242,7 @@ const handleShortcut = (route: string) => {
 
 .shortcuts {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
 }
 
@@ -252,6 +277,12 @@ const handleShortcut = (route: string) => {
 .shortcut-label {
   font-size: 13px;
   color: var(--n-text-color-2);
+}
+
+.system-info {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .info-item {
